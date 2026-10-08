@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>比比看 Compara y Adivina</title>
+<style>
+:root{--acc:#ff7a59;--acc2:#ffe8e0;--ink:#222;--mut:#777;--ok:#2e9d5b;--bad:#e0464b;--bg:#fff;--panel:#f6f6f7}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif}
+#app{max-width:520px;margin:0 auto;padding:14px 16px 40px}
+h1{text-align:center;margin:10px 0 0;font-size:2rem;letter-spacing:.1em}
+.sub{text-align:center;color:var(--mut);margin-bottom:14px}
+small,.fo{display:block;font-size:.72em;color:var(--mut);font-weight:400}
+.panel{background:var(--panel);border-radius:14px;padding:12px 14px;margin:10px 0}
+.panel h3{margin:0 0 8px;font-size:1rem}
+.opts{display:flex;gap:8px;flex-wrap:wrap}
+.opt{flex:1;min-width:80px;border:2px solid #ddd;background:#fff;border-radius:12px;padding:9px 6px;font-size:1rem;cursor:pointer;text-align:center;color:var(--ink)}
+.opt.on{border-color:var(--acc);background:var(--acc2);font-weight:700}
+.lvl{display:block;width:100%;text-align:left;border:2px solid #eee;background:#fff;border-radius:14px;padding:12px 14px;margin:8px 0;cursor:pointer;font-size:1.05rem;color:var(--ink)}
+.lvl b{color:var(--acc);margin-right:6px}
+.lvl .d{font-size:.85rem;color:var(--mut);margin-top:4px}
+.big{display:block;width:100%;border:0;border-radius:14px;padding:13px;font-size:1.15rem;background:var(--acc);color:#fff;cursor:pointer;margin:10px 0;font-weight:700}
+.big.sec{background:#eee;color:var(--ink)}
+.big small{color:inherit;opacity:.8}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.95rem}
+.top .x{border:0;background:#eee;border-radius:10px;padding:6px 10px;cursor:pointer;font-size:.95rem}
+.bar{height:6px;background:#eee;border-radius:3px;margin:8px 0 4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--acc);transition:width .3s}
+.q{font-size:1.35rem;line-height:1.9;margin:12px 0 6px;text-align:center}
+.q .nm{color:#2a5bd7;font-weight:700;margin:0 .15em}
+.q .blank{display:inline-block;min-width:2.6em;border-bottom:3px solid var(--acc);margin:0 .2em;color:var(--acc);font-weight:700}
+.q .ask{display:block;font-weight:700;margin-top:4px}
+ruby rt{font-size:.5em;color:var(--mut);font-weight:400}
+.dict{border:0;background:var(--acc2);border-radius:10px;padding:4px 10px;cursor:pointer;font-size:.9rem}
+.dictBox{background:#fffaf2;border:1px solid #f3dcc0;border-radius:12px;padding:8px 12px;margin:6px 0;font-size:.95rem}
+.dictBox div{margin:3px 0}
+.cards{display:flex;gap:10px;justify-content:center;align-items:flex-end;margin:12px 0}
+.cards.wrap{flex-wrap:wrap}
+.card{flex:1;max-width:170px;background:#fff;border:2px solid #eee;border-radius:14px;padding:6px;cursor:pointer;text-align:center;transition:transform .15s}
+.card.full{border:0;background:transparent;padding:0 2px;max-width:120px}
+.card:active{transform:scale(.97)}
+.card .crop{position:relative;overflow:hidden;border-radius:10px;background:#f3f6fa;margin:0 auto}
+.card .crop img{position:absolute;top:0;left:50%;transform:translateX(-50%);display:block;width:auto;max-width:none}
+.fb .nm,.ob .nm{color:#2a5bd7;font-weight:700;margin:0 .15em}
+.card.full .fig{display:flex;justify-content:center;align-items:flex-end;border-bottom:3px solid #ccc}
+.card.full .fig img{display:block}
+.card .lab{margin-top:4px;font-weight:700}
+.card .lab:empty{display:none}
+.card .tag{display:inline-block;background:#eef3fb;border-radius:8px;padding:1px 7px;font-size:.85rem;margin-top:3px;color:#335}
+.card.right{border-color:var(--ok);animation:pop .35s}
+.card.wrong{border-color:var(--bad);animation:shake .35s;opacity:.55}
+.card.full.right .fig{filter:drop-shadow(0 0 6px #2e9d5b)}
+.card.full.wrong{opacity:.4}
+.ground{height:3px;background:#ccc;border-radius:2px;margin:-12px 0 12px}
+.btns{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.btns.row{flex-direction:row}
+.ob{border:2px solid #e3e3e3;background:#fff;border-radius:12px;padding:10px;font-size:1.15rem;cursor:pointer;line-height:1.8;color:var(--ink)}
+.btns.row .ob{flex:1}
+.ob.right{border-color:var(--ok);background:#eaf7ef;animation:pop .35s}
+.ob.wrong{border-color:var(--bad);background:#fdecec;animation:shake .35s}
+.fb{border-radius:12px;padding:10px 12px;margin:8px 0;font-size:1rem}
+.fb.ok{background:#eaf7ef}.fb.no{background:#fdecec}
+.fb .tr{color:#555;font-size:.92rem;margin-top:4px}
+.score{text-align:center;font-size:3rem;font-weight:800;color:var(--acc);margin:16px 0 0}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.note{color:var(--mut);font-size:.85rem;text-align:center}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ===== 人物資料（依 comparatives-50-people-v2；w/h/face 為圖片尺寸與臉部裁切比例）=====
+const PEOPLE=[{"id":"P01","name":"Noah","sex":"M","age":53,"h":184,"build":2,"muscle":3,"hair":1,"tex":3,"skin":3,"eyes":3,"nose":3,"w":301,"ih":760,"face":0.21},{"id":"P02","name":"Diana","sex":"F","age":22,"h":156,"build":1,"muscle":1,"hair":2,"tex":1,"skin":3,"eyes":3,"nose":2,"w":209,"ih":760,"face":0.21},{"id":"P03","name":"Helen","sex":"F","age":46,"h":158,"build":3,"muscle":2,"hair":3,"tex":1,"skin":3,"eyes":1,"nose":3,"w":295,"ih":760,"face":0.21},{"id":"P04","name":"Jack","sex":"M","age":11,"h":144,"build":2,"muscle":1,"hair":1,"tex":3,"skin":1,"eyes":2,"nose":1,"w":222,"ih":760,"face":0.26},{"id":"P05","name":"Paul","sex":"M","age":84,"h":172,"build":2,"muscle":1,"hair":1,"tex":2,"skin":3,"eyes":2,"nose":1,"w":253,"ih":760,"face":0.21},{"id":"P06","name":"Max","sex":"M","age":30,"h":169,"build":1,"muscle":1,"hair":1,"tex":3,"skin":2,"eyes":1,"nose":1,"w":216,"ih":760,"face":0.21},{"id":"P07","name":"Ian","sex":"M","age":43,"h":178,"build":1,"muscle":1,"hair":1,"tex":1,"skin":3,"eyes":3,"nose":2,"w":234,"ih":760,"face":0.21},{"id":"P08","name":"Mia","sex":"F","age":27,"h":159,"build":3,"muscle":1,"hair":1,"tex":3,"skin":3,"eyes":2,"nose":2,"w":270,"ih":760,"face":0.21},{"id":"P09","name":"Mark","sex":"M","age":33,"h":185,"build":1,"muscle":1,"hair":2,"tex":1,"skin":1,"eyes":1,"nose":1,"w":219,"ih":760,"face":0.21},{"id":"P10","name":"Leo","sex":"M","age":18,"h":182,"build":3,"muscle":3,"hair":1,"tex":3,"skin":1,"eyes":1,"nose":2,"w":328,"ih":760,"face":0.21},{"id":"P11","name":"Oliver","sex":"M","age":9,"h":132,"build":2,"muscle":1,"hair":1,"tex":1,"skin":1,"eyes":1,"nose":2,"w":234,"ih":760,"face":0.26},{"id":"P12","name":"Nora","sex":"F","age":26,"h":167,"build":3,"muscle":1,"hair":3,"tex":3,"skin":1,"eyes":2,"nose":2,"w":292,"ih":760,"face":0.21},{"id":"P13","name":"Eric","sex":"M","age":77,"h":157,"build":1,"muscle":1,"hair":1,"tex":3,"skin":2,"eyes":2,"nose":1,"w":233,"ih":760,"face":0.21},{"id":"P14","name":"Adam","sex":"M","age":20,"h":190,"build":2,"muscle":1,"hair":1,"tex":2,"skin":2,"eyes":2,"nose":3,"w":218,"ih":760,"face":0.21},{"id":"P15","name":"Sarah","sex":"F","age":6,"h":113,"build":2,"muscle":1,"hair":3,"tex":3,"skin":1,"eyes":1,"nose":2,"w":235,"ih":760,"face":0.29},{"id":"P16","name":"Emily","sex":"F","age":55,"h":169,"build":2,"muscle":1,"hair":2,"tex":3,"skin":3,"eyes":2,"nose":1,"w":235,"ih":760,"face":0.21},{"id":"P17","name":"Chloe","sex":"F","age":17,"h":162,"build":2,"muscle":1,"hair":1,"tex":1,"skin":3,"eyes":3,"nose":3,"w":221,"ih":760,"face":0.23},{"id":"P18","name":"Tom","sex":"M","age":35,"h":174,"build":2,"muscle":1,"hair":1,"tex":1,"skin":2,"eyes":3,"nose":2,"w":231,"ih":760,"face":0.21},{"id":"P19","name":"Amy","sex":"F","age":61,"h":157,"build":1,"muscle":1,"hair":1,"tex":2,"skin":2,"eyes":3,"nose":2,"w":232,"ih":760,"face":0.21},{"id":"P20","name":"Peter","sex":"M","age":39,"h":163,"build":2,"muscle":2,"hair":1,"tex":2,"skin":2,"eyes":1,"nose":1,"w":272,"ih":760,"face":0.21},{"id":"P21","name":"David","sex":"M","age":14,"h":161,"build":2,"muscle":1,"hair":1,"tex":1,"skin":1,"eyes":3,"nose":2,"w":219,"ih":760,"face":0.23},{"id":"P22","name":"Emma","sex":"F","age":47,"h":160,"build":3,"muscle":1,"hair":3,"tex":2,"skin":1,"eyes":3,"nose":3,"w":286,"ih":760,"face":0.21},{"id":"P23","name":"Eva","sex":"F","age":65,"h":143,"build":2,"muscle":1,"hair":1,"tex":1,"skin":1,"eyes":2,"nose":3,"w":244,"ih":760,"face":0.21},{"id":"P24","name":"Maya","sex":"F","age":67,"h":166,"build":2,"muscle":1,"hair":3,"tex":2,"skin":3,"eyes":1,"nose":3,"w":231,"ih":760,"face":0.21},{"id":"P25","name":"Olivia","sex":"F","age":8,"h":122,"build":2,"muscle":1,"hair":3,"tex":1,"skin":1,"eyes":2,"nose":1,"w":222,"ih":760,"face":0.29},{"id":"P26","name":"Alice","sex":"F","age":41,"h":159,"build":2,"muscle":2,"hair":3,"tex":3,"skin":1,"eyes":2,"nose":2,"w":228,"ih":760,"face":0.21},{"id":"P27","name":"Alex","sex":"M","age":68,"h":166,"build":1,"muscle":1,"hair":2,"tex":1,"skin":3,"eyes":3,"nose":2,"w":232,"ih":760,"face":0.21},{"id":"P28","name":"Anna","sex":"F","age":36,"h":166,"build":1,"muscle":1,"hair":2,"tex":3,"skin":2,"eyes":2,"nose":1,"w":207,"ih":760,"face":0.21},{"id":"P29","name":"Julia","sex":"F","age":42,"h":156,"build":2,"muscle":1,"hair":3,"tex":1,"skin":2,"eyes":2,"nose":2,"w":231,"ih":760,"face":0.21},{"id":"P30","name":"Lily","sex":"F","age":13,"h":149,"build":2,"muscle":1,"hair":1,"tex":2,"skin":2,"eyes":2,"nose":2,"w":216,"ih":760,"face":0.23},{"id":"P31","name":"Ruby","sex":"F","age":25,"h":167,"build":2,"muscle":2,"hair":3,"tex":1,"skin":1,"eyes":2,"nose":2,"w":247,"ih":760,"face":0.21},{"id":"P32","name":"Nick","sex":"M","age":34,"h":172,"build":3,"muscle":1,"hair":2,"tex":1,"skin":1,"eyes":1,"nose":2,"w":314,"ih":760,"face":0.21},{"id":"P33","name":"Henry","sex":"M","age":31,"h":171,"build":1,"muscle":1,"hair":2,"tex":2,"skin":1,"eyes":3,"nose":3,"w":230,"ih":760,"face":0.21},{"id":"P34","name":"Grace","sex":"F","age":60,"h":159,"build":2,"muscle":1,"hair":3,"tex":3,"skin":3,"eyes":3,"nose":1,"w":236,"ih":760,"face":0.21},{"id":"P35","name":"Lucy","sex":"F","age":38,"h":160,"build":3,"muscle":1,"hair":1,"tex":1,"skin":3,"eyes":1,"nose":3,"w":283,"ih":760,"face":0.21},{"id":"P36","name":"Carl","sex":"M","age":37,"h":170,"build":2,"muscle":2,"hair":1,"tex":1,"skin":1,"eyes":3,"nose":3,"w":290,"ih":760,"face":0.21},{"id":"P37","name":"Liam","sex":"M","age":49,"h":182,"build":3,"muscle":2,"hair":1,"tex":2,"skin":1,"eyes":2,"nose":3,"w":291,"ih":760,"face":0.21},{"id":"P38","name":"Dan","sex":"M","age":52,"h":173,"build":3,"muscle":2,"hair":1,"tex":3,"skin":3,"eyes":2,"nose":2,"w":298,"ih":760,"face":0.21},{"id":"P39","name":"Rose","sex":"F","age":29,"h":166,"build":2,"muscle":1,"hair":1,"tex":2,"skin":1,"eyes":1,"nose":2,"w":230,"ih":760,"face":0.21},{"id":"P40","name":"Kate","sex":"F","age":79,"h":142,"build":3,"muscle":1,"hair":3,"tex":1,"skin":2,"eyes":2,"nose":1,"w":271,"ih":760,"face":0.21},{"id":"P41","name":"Kevin","sex":"M","age":56,"h":163,"build":2,"muscle":1,"hair":1,"tex":1,"skin":2,"eyes":1,"nose":1,"w":233,"ih":760,"face":0.21},{"id":"P42","name":"Luke","sex":"M","age":73,"h":164,"build":3,"muscle":1,"hair":1,"tex":2,"skin":1,"eyes":2,"nose":1,"w":266,"ih":760,"face":0.21},{"id":"P43","name":"Hannah","sex":"F","age":57,"h":156,"build":3,"muscle":1,"hair":1,"tex":1,"skin":1,"eyes":2,"nose":1,"w":273,"ih":760,"face":0.21},{"id":"P44","name":"Ryan","sex":"M","age":69,"h":177,"build":2,"muscle":1,"hair":1,"tex":2,"skin":3,"eyes":3,"nose":2,"w":244,"ih":760,"face":0.21},{"id":"P45","name":"Sam","sex":"M","age":16,"h":170,"build":3,"muscle":1,"hair":2,"tex":1,"skin":3,"eyes":3,"nose":1,"w":281,"ih":760,"face":0.23},{"id":"P46","name":"Hugo","sex":"M","age":48,"h":175,"build":2,"muscle":2,"hair":1,"tex":1,"skin":3,"eyes":1,"nose":1,"w":264,"ih":760,"face":0.21},{"id":"P47","name":"Sophia","sex":"F","age":32,"h":165,"build":1,"muscle":1,"hair":2,"tex":3,"skin":3,"eyes":1,"nose":1,"w":219,"ih":760,"face":0.21},{"id":"P48","name":"Zoe","sex":"F","age":7,"h":121,"build":1,"muscle":1,"hair":1,"tex":1,"skin":2,"eyes":1,"nose":1,"w":240,"ih":760,"face":0.29},{"id":"P49","name":"Jake","sex":"M","age":45,"h":175,"build":2,"muscle":2,"hair":1,"tex":2,"skin":3,"eyes":3,"nose":2,"w":254,"ih":760,"face":0.21},{"id":"P50","name":"Ava","sex":"F","age":21,"h":166,"build":3,"muscle":1,"hair":3,"tex":3,"skin":1,"eyes":2,"nose":2,"w":280,"ih":760,"face":0.21}];
+const T2S={"個":"个","內":"内","兩":"两","厲":"厉","問":"问","單":"单","嗎":"吗","圖":"图","壯":"壮","對":"对","徵":"征","態":"态","戰":"战","戲":"戏","捲":"卷","擇":"择","數":"数","樣":"样","機":"机","歲":"岁","沒":"没","為":"为","無":"无","狀":"状","現":"现","異":"异","確":"确","碼":"码","簡":"简","結":"结","繼":"继","續":"续","膚":"肤","臉":"脸","與":"与","設":"设","詞":"词","試":"试","語":"语","誰":"谁","譯":"译","資":"资","較":"较","輔":"辅","這":"这","連":"连","進":"进","遊":"游","選":"选","還":"还","錯":"错","鎖":"锁","長":"长","門":"门","開":"开","關":"关","階":"阶","離":"离","難":"难","頭":"头","題":"题","顯":"显","體":"体","髮":"发","麼":"么","點":"点"};
+// ===== 設定 =====
+let cfg={simp:false,help:'es',py:false};
+try{Object.assign(cfg,JSON.parse(localStorage.getItem('bbk_cfg')||'{}'));}catch(e){}
+function saveCfg(){try{localStorage.setItem('bbk_cfg',JSON.stringify(cfg));}catch(e){}}
+const app=document.getElementById('app');
+const zh=s=>cfg.simp?[...s].map(c=>T2S[c]||c).join(''):s;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const U={
+ title:['比比看','Compara y Adivina','Compara y Adivina'],
+ script:['中文字形','Escritura china','Chinese script'],trad:['繁體','',''],simp:['簡體','',''],
+ help:['輔助語言','Idioma de apoyo','Helper language'],none:['無','',''],
+ py:['拼音','Pinyin','Pinyin'],off:['關','No','Off'],on:['開','Sí','On'],
+ choose:['選擇難度','Elige el nivel','Choose a level'],
+ l1:['入門','Básico','Basic'],l2:['進階','Intermedio','Intermediate'],l3:['挑戰','Desafío','Challenge'],
+ d1:['比、比較、一樣、差不多、不一樣｜2 個人','比, 比較, 一樣, 差不多, 不一樣 · 2 personas','比, 比較, 一樣, 差不多, 不一樣 · 2 people'],
+ d2:['加上 沒有…那麼、一點、很多｜3 個人','+ 沒有…那麼, 一點, 很多 · 3 personas','+ 沒有…那麼, 一點, 很多 · 3 people'],
+ d3:['加上 更、還、最、具體差距｜3–4 個人','+ 更, 還, 最, diferencias exactas · 3–4 personas','+ 更, 還, 最, exact differences · 3–4 people'],
+ q:['題','Pregunta','Question'],pts:['分','pts','pts'],quit:['離開','Salir','Quit'],
+ quitQ:['要離開這一回合嗎？','¿Salir de esta ronda?','Leave this round?'],
+ right:['答對了！','¡Correcto!','Correct!'],wrong:['不對，再試一次','No, inténtalo otra vez','Not quite, try again'],
+ ans:['正確答案','Respuesta correcta','Correct answer'],next:['下一題','Siguiente','Next'],
+ finish:['看結果','Ver resultado','See result'],
+ dict:['小字典','Diccionario','Dictionary'],
+ res:['回合結束','Fin de la ronda','Round over'],
+ clear:['破關了！要繼續下一關嗎？','¡Nivel superado! ¿Pasar al siguiente?','Level cleared! Go to the next level?'],
+ allClear:['三關都破了，太厲害了！','¡Superaste los tres niveles!','You cleared all three levels!'],
+ tryAgain:['60 分以上就破關，再試一次吧！','Con 60 puntos o más superas el nivel. ¡Inténtalo otra vez!','Score 60 or more to clear the level. Try again!'],
+ nextLv:['下一關','Siguiente nivel','Next level'],again:['再玩一次','Jugar otra vez','Play again'],menu:['主選單','Menú principal','Main menu'],
+ lvName:['第 {n} 關','Nivel {n}','Level {n}'],
+ tf_t:['對','Verdadero','True'],tf_f:['錯','Falso','False'],
+};
+function u(k,i){const v=U[k];return i===undefined?zh(v[0]):v[i];}
+function fo(k){if(cfg.help==='none')return '';const v=U[k][cfg.help==='es'?1:2];return v?`<small>${esc(v)}</small>`:'';}
+function L(k){return `${esc(u(k))}${fo(k)}`;}
+// ===== 詞語與拼音 =====
+const W={比:'bǐ',跟:'gēn',沒有:'méiyǒu',那麼:'nàme',一樣:'yíyàng',差不多:'chàbuduō',不:'bù',誰:'shéi',是:'shì',比較:'bǐjiào',最:'zuì',更:'gèng',還:'hái',一點:'yìdiǎn',很多:'hěn duō',多了:'duō le',的:'de',公分:'gōngfēn',歲:'suì',對:'duì',錯:'cuò',哪:'nǎ',一句:'yí jù',選出:'xuǎnchū',正確:'zhèngquè',詞:'cí',還是:'háishì'};
+const tk=(t,p)=>({t,p:p===undefined?(W[t]||''):p});
+const NM=p=>({t:p.name,nm:1});
+const P_=t=>({t,p:'',punc:1});
+const BL={blank:1};
+const NUMPY={一:'yī',二:'èr',三:'sān',四:'sì',五:'wǔ',六:'liù',七:'qī',八:'bā',九:'jiǔ',十:'shí'};
+function cnNum(n){const d='零一二三四五六七八九';let s;
+  if(n<10)s=d[n];else if(n<20)s='十'+(n%10?d[n%10]:'');else s=d[Math.floor(n/10)]+'十'+(n%10?d[n%10]:'');
+  return tk(s,[...s].map(c=>NUMPY[c]).join(''));}
+// ===== 比較特徵 =====
+// v: 取值；num: 數字型；thr: 至少差多少才出「比」；near: 差多少以內算「差不多」
+const DIMS={
+ height:{v:p=>p.h,num:1,thr:8,near:3,crop:'full',lv:1,
+   pos:{z:'高',p:'gāo',es:['alto','alta'],en:['tall','taller','tallest']},neg:{z:'矮',p:'ǎi',es:['bajo','baja'],en:['short','shorter','shortest']},
+   unit:tk('公分'),esU:'cm',enU:'cm',esSame:'la misma estatura',enSame:'are not the same height',same:1,diff:1},
+ age:{v:p=>p.age,num:1,thr:3,near:2,crop:'face',lv:1,tag:'age',noMas:1,
+   pos:{z:'大',p:'dà',es:['mayor','mayor'],en:['old','older','oldest']},neg:{z:'小',p:'xiǎo',es:['menor','menor'],en:['young','younger','youngest']},
+   unit:tk('歲'),esU:'años',enU:'years',esSame:'la misma edad',enSame:'are not the same age',same:1,diff:1},
+ build:{v:p=>p.build,thr:1,crop:'half',lv:1,eq:1,
+   pos:{z:'胖',p:'pàng',es:['gordo','gorda'],en:['heavy','heavier','heaviest']},neg:{z:'瘦',p:'shòu',es:['delgado','delgada'],en:['thin','thinner','thinnest']}},
+ hair:{v:p=>p.hair,thr:1,crop:'face',lv:1,eq:1,poss:{z:'頭髮',p:'tóufa',es:'el pelo',en:'hair',be:'is'},
+   pos:{z:'長',p:'cháng',es:'largo',en:['long','longer','longest']},neg:{z:'短',p:'duǎn',es:'corto',en:['short','shorter','shortest']},
+   esSame:'el pelo del mismo largo',enSame:'do not have the same hair length',same:1},
+ eyes:{v:p=>p.eyes,thr:2,crop:'face',lv:1,poss:{z:'眼睛',p:'yǎnjing',es:'los ojos',en:'eyes',be:'are'},
+   pos:{z:'大',p:'dà',es:'grandes',en:['big','bigger','biggest']},neg:{z:'小',p:'xiǎo',es:'pequeños',en:['small','smaller','smallest']}},
+ nose:{v:p=>p.nose,thr:2,crop:'face',lv:1,poss:{z:'鼻子',p:'bízi',es:'la nariz',en:'nose',be:'is'},
+   pos:{z:'大',p:'dà',es:'grande',en:['big','bigger','biggest']},neg:{z:'小',p:'xiǎo',es:'pequeña',en:['small','smaller','smallest']}},
+ muscle:{v:p=>p.muscle,thr:1,crop:'half',lv:2,eq:1,
+   pos:{z:'壯',p:'zhuàng',es:['fuerte','fuerte'],en:['strong','stronger','strongest']},neg:null},
+ tex:{v:p=>p.tex,thr:1,crop:'face',lv:2,eq:1,poss:{z:'頭髮',p:'tóufa',es:'el pelo',en:'hair',be:'is'},
+   pos:{z:'捲',p:'juǎn',es:'rizado',en:['curly','curlier','curliest']},neg:{z:'直',p:'zhí',es:'lacio',en:['straight','straighter','straightest']}},
+ skin:{v:p=>4-p.skin,thr:1,crop:'face',lv:2,eq:1,poss:{z:'皮膚',p:'pífū',es:'la piel',en:'skin',be:'is'},
+   pos:{z:'白',p:'bái',es:'clara',en:['light','lighter','lightest']},neg:{z:'黑',p:'hēi',es:'oscura',en:['dark','darker','darkest']}},
+};
+for(const k in DIMS)DIMS[k].key=k;
+const R=n=>Math.floor(Math.random()*n);
+const pick=a=>{if(a.length&&a[0]&&a[0].key&&a[0].v){let t=0;for(const d of a)t+=WT[d.key];let r=Math.random()*t;for(const d of a){r-=WT[d.key];if(r<=0)return d;}return a[a.length-1];}return a[R(a.length)];};
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=R(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
+function cmp(d,a,b){const x=d.v(a)-d.v(b),ax=Math.abs(x);
+  if(d.num){if(ax<=d.near)return 0;if(ax>=d.thr)return Math.sign(x);return null;}
+  if(x===0)return 0;if(ax>=d.thr)return Math.sign(x);return null;}
+function degree(d,a,b){const ax=Math.abs(d.v(a)-d.v(b));
+  if(d.key==='height')return ax>=8&&ax<=12?1:ax>=20?2:0;
+  if(d.key==='age')return ax>=3&&ax<=5?1:ax>=15?2:0;
+  return ax===1?1:ax===2?2:0;}
+const adj=(d,pol)=>pol>0?d.pos:d.neg;
+const tkA=(d,pol)=>tk(adj(d,pol).z,adj(d,pol).p);
+// 主語（含「的頭髮」）
+const subj=(d,a)=>d.poss?[NM(a),tk('的'),tk(d.poss.z,d.poss.p)]:[NM(a)];
+// ===== 句子：中文 tokens + 西／英翻譯 =====
+function esA(d,pol,p){const e=adj(d,pol).es;return Array.isArray(e)?e[p&&p.sex==='F'?1:0]:e;}
+function esMas(d,pol,p,pre){const a=esA(d,pol,p);return (pre||'')+(d.noMas?a:'más '+a);}
+function enC(d,pol){return adj(d,pol).en[1];}
+// st: {f, d, a, b, pol, deg, n}
+function sent(st){const {f,d,a,b,pol}=st;let z,es,en;const ps=d.poss;
+  const esS=(core)=>ps?`${a.name} tiene ${ps.es} ${core} que ${b.name}`:`${a.name} es ${core} que ${b.name}`;
+  const enS=(core)=>ps?`${a.name}'s ${ps.en} ${ps.be} ${core} than ${b.name}'s`:`${a.name} is ${core} than ${b.name}`;
+  if(f==='BI'){z=[...subj(d,a),tk('比'),NM(b),tkA(d,pol)];es=esS(esMas(d,pol,a));en=enS(enC(d,pol));}
+  else if(f==='DEG'){const w=st.deg===1?'一點':(st.alt?'多了':'很多');z=[...subj(d,a),tk('比'),NM(b),tkA(d,pol),tk(w)];
+    es=esS(esMas(d,pol,a,st.deg===1?'un poco ':'mucho '));en=enS((st.deg===1?'a bit ':'much ')+enC(d,pol));}
+  else if(f==='DIFF'){z=[NM(a),tk('比'),NM(b),tkA(d,pol),cnNum(st.n),d.unit];
+    es=`${a.name} es ${st.n} ${d.esU} ${esMas(d,pol,a)} que ${b.name}`;en=`${a.name} is ${st.n} ${d.enU} ${enC(d,pol)} than ${b.name}`;}
+  else if(f==='GENG'){const w=st.alt?'還':'更';z=[...subj(d,a),tk('比'),NM(b),tk(w),tkA(d,pol)];es=esS(esMas(d,pol,a,'aún '));en=enS('even '+enC(d,pol));}
+  else if(f==='MEI'){z=[...subj(d,a),tk('沒有'),NM(b),tk('那麼'),tkA(d,pol)];
+    es=ps?`${a.name} no tiene ${ps.es} tan ${esA(d,pol,a)} como ${b.name}`:`${a.name} no es tan ${esA(d,pol,a)} como ${b.name}`;
+    en=ps?`${a.name}'s ${ps.en} ${ps.be} not as ${adj(d,pol).en[0]} as ${b.name}'s`:`${a.name} is not as ${adj(d,pol).en[0]} as ${b.name}`;}
+  else if(f==='SAME'){z=[...subj(d,a),tk('跟'),NM(b),tk('一樣'),tkA(d,pol)];
+    es=ps?`${a.name} tiene ${ps.es} tan ${esA(d,pol,a)} como ${b.name}`:`${a.name} es tan ${esA(d,pol,a)} como ${b.name}`;
+    en=ps?`${a.name}'s ${ps.en} ${ps.be} as ${adj(d,pol).en[0]} as ${b.name}'s`:`${a.name} is as ${adj(d,pol).en[0]} as ${b.name}`;}
+  else if(f==='ABOUT'){z=[NM(a),tk('跟'),NM(b),tk('差不多'),tkA(d,1)];
+    es=d.key==='age'?`${a.name} y ${b.name} tienen casi la misma edad`:`${a.name} es casi tan ${esA(d,1,a)} como ${b.name}`;
+    en=d.key==='age'?`${a.name} is about the same age as ${b.name}`:`${a.name} is about as ${adj(d,1).en[0]} as ${b.name}`;}
+  else if(f==='DIFFER'){z=ps?[NM(a),tk('跟'),NM(b),tk('的'),tk(ps.z,ps.p),tk('不'),tk('一樣'),tkA(d,1)]:[NM(a),tk('跟'),NM(b),tk('不'),tk('一樣'),tkA(d,1)];
+    es=`${a.name} y ${b.name} no tienen ${d.esSame}`;en=`${a.name} and ${b.name} ${d.enSame}`;}
+  return {z,es,en};
+}
+function truth(st){const {f,d,a,b,pol}=st;const c=cmp(d,a,b);
+  if(f==='BI'||f==='GENG')return c===null?null:c===pol;
+  if(f==='DEG'){if(c===null)return null;if(c!==pol)return false;const g=degree(d,a,b);return g===0?null:g===st.deg;}
+  if(f==='DIFF')return (d.v(a)-d.v(b))*pol===st.n;
+  if(f==='MEI')return c===null||c===0?null:c===-pol;
+  if(f==='SAME'){if(c===null)return null;if(c!==0)return false;const lv=d.v(a);const want=pol>0?3:1;return lv===want?true:null;}
+  if(f==='ABOUT')return c===null?null:c===0;
+  if(f==='DIFFER')return c===null?null:c!==0;
+  return null;}
+// 問句
+function ask(kind,d,o){const ps=d.poss;let z,es,en;const pol=o.pol;
+  if(kind==='WHO'){z=[tk('誰'),tk('是'),NM(o.a),P_('？')];es=`¿Quién es ${o.a.name}?`;en=`Who is ${o.a.name}?`;}
+  else if(kind==='MORE'){z=[NM(o.a),tk('跟'),NM(o.b),P_('，'),tk('誰'),...(ps?[tk('的'),tk(ps.z,ps.p)]:[]),tk('比較'),tkA(d,pol),P_('？')];
+    es=ps?`${o.a.name} y ${o.b.name}, ¿quién tiene ${ps.es} ${esMas(d,pol,null)}?`:`${o.a.name} y ${o.b.name}, ¿quién es ${esMas(d,pol,null)}?`;
+    en=ps?`${o.a.name} or ${o.b.name}: whose ${ps.en} ${ps.be} ${enC(d,pol)}?`:`${o.a.name} or ${o.b.name}: who is ${enC(d,pol)}?`;}
+  else if(kind==='WHOBI'){z=[tk('誰'),...(ps?[tk('的'),tk(ps.z,ps.p)]:[]),tk('比'),NM(o.t),tkA(d,pol),P_('？')];
+    es=ps?`¿Quién tiene ${ps.es} ${esMas(d,pol,null)} que ${o.t.name}?`:`¿Quién es ${esMas(d,pol,null)} que ${o.t.name}?`;
+    en=ps?`Whose ${ps.en} ${ps.be} ${enC(d,pol)} than ${o.t.name}'s?`:`Who is ${enC(d,pol)} than ${o.t.name}?`;}
+  else if(kind==='BIWHO'){z=[...subj(d,o.t),tk('比'),tk('誰'),tkA(d,pol),P_('？')];
+    es=ps?`${o.t.name} tiene ${ps.es} ${esMas(d,pol,o.t)} que… ¿quién?`:`${o.t.name} es ${esMas(d,pol,o.t)} que… ¿quién?`;
+    en=ps?`${o.t.name}'s ${ps.en} ${ps.be} ${enC(d,pol)} than whose?`:`${o.t.name} is ${enC(d,pol)} than whom?`;}
+  else if(kind==='MOST'){z=[tk('誰'),...(ps?[tk('的'),tk(ps.z,ps.p)]:[]),tk('最'),tkA(d,pol),P_('？')];
+    es=ps?`¿Quién tiene ${ps.es} ${esMas(d,pol,null)}?`:`¿Quién es ${d.noMas?'el '+esA(d,pol,null):'el '+esMas(d,pol,null)}?`;
+    en=ps?`Whose ${ps.en} ${ps.be} the ${adj(d,pol).en[2]}?`:`Who is the ${adj(d,pol).en[2]}?`;}
+  else if(kind==='TF'){z=[tk('對'),tk('還是'),tk('錯'),P_('？')];es='¿Verdadero o falso?';en='True or false?';}
+  else if(kind==='PICK'){z=[tk('哪'),tk('一句'),tk('是'),tk('對'),tk('的'),P_('？')];es='¿Qué frase es correcta?';en='Which sentence is correct?';}
+  else if(kind==='FILL'){z=[tk('選出'),tk('正確'),tk('的'),tk('詞'),P_('。')];es='Elige la palabra correcta.';en='Choose the correct word.';}
+  return {z,es,en};}
+// ===== 出題 =====
+const LV_DIMS=lv=>Object.values(DIMS).filter(d=>d.lv<=lv);
+// 各特徵出現機率（眼睛、鼻子在圖上差異較小，比較少出）
+const WT={height:3,age:2,build:2,hair:3,eyes:1,nose:1,muscle:1.5,tex:2,skin:1.5};
+function people(n,cond,tries=400){for(let i=0;i<tries;i++){const s=shuffle(PEOPLE).slice(0,n);if(cond(...s))return s;}return null;}
+const clear=(d,a,b)=>{const c=cmp(d,a,b);return c===1||c===-1?c:null;};
+function polOK(d,pol){return pol>0||!!d.neg;}
+function rPol(d){return d.neg&&Math.random()<.5?-1:1;}
+function mkQ(type,d,ppl,o){return Object.assign({type,d,ppl,crop:d.crop,tag:d.tag||null},o);}
+const GEN={
+ // 解碼：兩人不顯示名字
+ decode(lv){const d=pick(LV_DIMS(lv).filter(d=>d.neg||true));
+   const forms=lv>=2?['BI','BI','MEI','DEG']:['BI'];const f=pick(forms);
+   for(let i=0;i<60;i++){const s=people(2,(a,b)=>clear(d,a,b)!==null);if(!s)return null;const [a,b]=s;let pol=rPol(d);
+     let st={f,d,a,b,pol};
+     if(f==='MEI'){st.pol=pol;if(truth(st)!==true){st={f,d,a:b,b:a,pol};}}
+     else if(f==='DEG'){const g=degree(d,a,b);if(!g)continue;st.deg=g;st.alt=Math.random()<.4;if(truth(st)!==true)st={...st,pol:-pol};if(!polOK(d,st.pol))continue;}
+     else{if(truth(st)!==true)st.pol=-pol;if(!polOK(d,st.pol)){st={f,d,a:b,b:a,pol:1};}}
+     if(!polOK(d,st.pol)||truth(st)!==true)continue;
+     const who=Math.random()<.5?st.a:st.b;
+     return mkQ('decode',d,shuffle([a,b]),{hide:1,sents:[sent(st)],q:ask('WHO',d,{a:who}),ans:who.id});}
+   return null;},
+ // 對錯
+ tf(lv){const d=pick(LV_DIMS(lv));
+   for(let i=0;i<80;i++){const [a,b]=shuffle(PEOPLE).slice(0,2);const c=cmp(d,a,b);if(c===null)continue;
+     const cands=[];
+     for(const pol of [1,-1]){if(!polOK(d,pol))continue;cands.push({f:'BI',d,a,b,pol},{f:'BI',d,a:b,b:a,pol});if(d.eq)cands.push({f:'SAME',d,a,b,pol});}
+     if(d.num)cands.push({f:'ABOUT',d,a,b});if(d.same)cands.push({f:'DIFFER',d,a,b});
+     const want=Math.random()<.5;const ok=cands.filter(s=>truth(s)===want);if(!ok.length)continue;
+     const st=pick(ok);
+     return mkQ('tf',d,[a,b],{sents:[sent(st)],q:ask('TF',d,{}),btns:[{z:[tk('對')],ok:want},{z:[tk('錯')],ok:!want}],tf:1});}
+   return null;},
+ // 看圖選句子
+ pick(lv){const d=pick(LV_DIMS(lv).filter(d=>lv<3||d.num||Math.random()<.5));
+   for(let i=0;i<80;i++){const [a,b]=shuffle(PEOPLE).slice(0,2);if(cmp(d,a,b)===null)continue;
+     const c=[];
+     for(const pol of [1,-1]){if(!polOK(d,pol))continue;
+       for(const [x,y] of [[a,b],[b,a]]){c.push({f:'BI',d,a:x,b:y,pol});
+         if(lv>=2){c.push({f:'MEI',d,a:x,b:y,pol});c.push({f:'DEG',d,a:x,b:y,pol,deg:1},{f:'DEG',d,a:x,b:y,pol,deg:2});}
+         if(lv>=3&&d.num){const n0=Math.abs(d.v(a)-d.v(b));for(const n of [n0,n0+5,Math.max(3,n0-5)])if(n>=3&&n<100)c.push({f:'DIFF',d,a:x,b:y,pol,n});}}
+       if(d.eq)c.push({f:'SAME',d,a,b,pol});}
+     if(d.num)c.push({f:'ABOUT',d,a,b});if(d.same&&lv<3)c.push({f:'DIFFER',d,a,b});
+     let T=c.filter(s=>truth(s)===true),F=c.filter(s=>truth(s)===false);
+     if(lv>=3&&d.num){const t2=T.filter(s=>s.f==='DIFF');if(t2.length)T=t2;}
+     if(!T.length||F.length<2)continue;
+     const t=pick(T);const zs=new Set([sent(t).z.map(x=>x.t).join('')]);const fs=[];
+     for(const s of shuffle(F)){const k=sent(s).z.map(x=>x.t).join('');if(!zs.has(k)){zs.add(k);fs.push(s);}if(fs.length===2)break;}
+     if(fs.length<2)continue;
+     const btns=shuffle([{st:t,ok:true},...fs.map(s=>({st:s,ok:false}))]).map(o=>({z:sent(o.st).z,ok:o.ok,tr:sent(o.st)}));
+     return mkQ('pick',d,[a,b],{q:ask('PICK',d,{}),btns,tagCm:t.f==='DIFF'});}
+   return null;},
+ // 誰比較…（兩人）
+ more(lv){const d=pick(LV_DIMS(lv));
+   const s=people(2,(a,b)=>clear(d,a,b)!==null);if(!s)return null;const [a,b]=s;const pol=rPol(d);
+   const win=clear(d,a,b)===pol?a:b;
+   return mkQ('more',d,[a,b],{q:ask('MORE',d,{a,b,pol}),ans:win.id,expl:[sent({f:'BI',d,a:win,b:win===a?b:a,pol})]});},
+ // 誰比 T …（三人）
+ whobi(lv){const d=pick(LV_DIMS(lv));const pol=rPol(d);
+   const s=people(3,(t,x,y)=>clear(d,x,t)===pol&&clear(d,y,t)===-pol);if(!s)return null;const [t,x,y]=s;
+   return mkQ('whobi',d,shuffle([t,x,y]),{q:ask('WHOBI',d,{t,pol}),ans:x.id,expl:[sent({f:'BI',d,a:x,b:t,pol})]});},
+ // T 比誰…（三人）
+ biwho(lv){const d=pick(LV_DIMS(lv));const pol=rPol(d);
+   const s=people(3,(t,y,z)=>clear(d,t,y)===pol&&clear(d,t,z)===-pol);if(!s)return null;const [t,y,z]=s;
+   return mkQ('biwho',d,shuffle([t,y,z]),{q:ask('BIWHO',d,{t,pol}),ans:y.id,expl:[sent({f:'BI',d,a:t,b:y,pol})]});},
+ // 填空
+ fill(lv){const d=pick(LV_DIMS(lv));
+   for(let i=0;i<80;i++){const [a,b]=shuffle(PEOPLE).slice(0,2);const c=cmp(d,a,b);if(c===null)continue;const kinds=[];
+     if(c!==0)kinds.push('bi','mei','deg');if(c===0&&d.eq&&(d.v(a)===1||d.v(a)===3))kinds.push('same');if(!kinds.length)continue;
+     const k=pick(kinds);let st,z,words,ans;
+     if(k==='bi'){const pol=polOK(d,c)?c:null;if(!pol)continue;st={f:'BI',d,a,b,pol};z=[...subj(d,a),BL,NM(b),tkA(d,pol)];words=['比','跟','沒有'];ans='比';}
+     else if(k==='mei'){const pol=-c;if(!polOK(d,pol))continue;st={f:'MEI',d,a,b,pol};z=[...subj(d,a),BL,NM(b),tk('那麼'),tkA(d,pol)];words=['比','跟','沒有'];ans='沒有';}
+     else if(k==='same'){const pol=d.v(a)===3?1:-1;if(!polOK(d,pol))continue;st={f:'SAME',d,a,b,pol};z=[...subj(d,a),BL,NM(b),tk('一樣'),tkA(d,pol)];words=['比','跟','沒有'];ans='跟';}
+     else{const pol=polOK(d,c)?c:null;if(!pol)continue;const g=degree(d,a,b);if(!g)continue;st={f:'DEG',d,a,b,pol,deg:g};z=[...subj(d,a),tk('比'),NM(b),tkA(d,pol),BL];words=['一點','很多','一樣'];ans=g===1?'一點':'很多';}
+     if(truth(st)!==true)continue;
+     return mkQ('fill',d,[a,b],{blankZ:z,fillAns:ans,q:ask('FILL',d,{}),btns:words.map(w=>({z:[tk(w)],ok:w===ans,w})),full:sent(st),row:1});}
+   return null;},
+ // 連鎖解碼（三人，更／還）
+ chain(lv){const ds=LV_DIMS(lv).filter(d=>d.key!=='eyes'&&d.key!=='nose');const d=pick(ds);
+   const s=people(3,(x,y,z)=>clear(d,x,y)===1&&clear(d,y,z)===1);if(!s)return null;const [x,y,z]=s;
+   let s1,s2;if(d.neg&&Math.random()<.5){s1={f:'BI',d,a:y,b:x,pol:-1};s2={f:'GENG',d,a:z,b:y,pol:-1,alt:Math.random()<.5};}
+   else{s1={f:'BI',d,a:y,b:z,pol:1};s2={f:'GENG',d,a:x,b:y,pol:1,alt:Math.random()<.5};}
+   const who=pick([x,y,z]);
+   return mkQ('chain',d,shuffle([x,y,z]),{hide:1,sents:[sent(s1),sent(s2)],q:ask('WHO',d,{a:who}),ans:who.id});},
+ // 誰最…（3–4 人）
+ most(lv){const d=pick(LV_DIMS(lv));const pol=rPol(d);const n=Math.random()<.5?3:4;
+   const s=people(n,(w,...r)=>r.every(o=>clear(d,w,o)===pol));if(!s)return null;
+   const w=s[0],ps=d.poss;
+   const ex={z:[...subj(d,w),tk('最'),tkA(d,pol)],
+     es:ps?`${w.name} tiene ${ps.es} ${esMas(d,pol,w)}`:`${w.name} es ${d.noMas?(w.sex==='F'?'la ':'el ')+esA(d,pol,w):(w.sex==='F'?'la ':'el ')+esMas(d,pol,w)}`,
+     en:ps?`${w.name}'s ${ps.en} ${ps.be} the ${adj(d,pol).en[2]}`:`${w.name} is the ${adj(d,pol).en[2]}`};
+   return mkQ('most',d,shuffle(s),{q:ask('MOST',d,{pol}),ans:w.id,expl:[ex]});},
+};
+const POOL={1:['decode','tf','pick','more'],2:['decode','pick','whobi','biwho','fill'],3:['chain','most','whobi','biwho','pick']};
+function makeRound(lv){const types=shuffle(POOL[lv]).slice(0,3);const counts=[4,3,3];const list=[];
+  types.forEach((t,i)=>{for(let k=0;k<counts[i];k++)list.push(t);});
+  const qs=[];for(const t of shuffle(list)){let q=null;for(let i=0;i<20&&!q;i++)q=GEN[t](lv);
+    if(!q)for(const t2 of POOL[lv]){q=GEN[t2](lv);if(q)break;}
+    if(q)qs.push(q);}
+  return qs;}
+// ===== 顯示 =====
+function rt(tokens,blankHtml){return tokens.map(x=>{
+  if(x.blank)return blankHtml||'<span class="blank">　</span>';
+  if(x.nm)return `<span class="nm">${esc(x.t)}</span>`;
+  if(x.punc||!cfg.py||!x.p)return esc(zh(x.t));
+  return `<ruby>${esc(zh(x.t))}<rt>${esc(x.p)}</rt></ruby>`;}).join('');}
+function trOf(o){if(cfg.help==='none'||!o)return '';return cfg.help==='es'?o.es:o.en;}
+function cardHtml(p,i,q){const name=q.hide&&!S.done?'':esc(p.name);let tag='';
+  if(q.tag==='age')tag=`<div class="tag">${p.age} ${esc(zh('歲'))}</div>`;
+  if(q.tagCm)tag=`<div class="tag">${p.h} cm</div>`;
+  if(q.crop==='full'){const maxH=Math.max(...q.ppl.map(x=>x.h));const H=Math.round(250*p.h/maxH);const w=Math.round(p.w*H/p.ih);
+    return `<div class="card full" data-i="${i}" onclick="pickCard(${i})"><div class="fig" style="height:250px"><img src="img/${p.id}.webp" alt="" style="height:${H}px;width:${w}px"></div><div class="lab">${name}</div>${tag}</div>`;}
+  const fr=q.crop==='face'?p.face*1.15:0.52;const ar=q.crop==='face'?1:0.78;
+  return `<div class="card" data-i="${i}" onclick="pickCard(${i})"><div class="crop" style="aspect-ratio:${ar};width:100%"><img src="img/${p.id}.webp" alt="" style="height:${(100/fr).toFixed(1)}%"></div><div class="lab">${name}</div>${tag}</div>`;}
+// ===== 遊戲狀態 =====
+let S=null;
+function renderMenu(){S=null;
+  app.innerHTML=`<h1>${esc(u('title'))}</h1><div class="sub">Compara y Adivina</div>
+  <div class="panel"><h3>${L('script')}</h3><div class="opts">
+    <button class="opt ${!cfg.simp?'on':''}" onclick="setC('simp',false)">繁體</button><button class="opt ${cfg.simp?'on':''}" onclick="setC('simp',true)">简体</button></div></div>
+  <div class="panel"><h3>${L('help')}</h3><div class="opts">
+    <button class="opt ${cfg.help==='es'?'on':''}" onclick="setC('help','es')">Español</button><button class="opt ${cfg.help==='en'?'on':''}" onclick="setC('help','en')">English</button><button class="opt ${cfg.help==='none'?'on':''}" onclick="setC('help','none')">${esc(u('none'))}</button></div></div>
+  <div class="panel"><h3>${L('py')}</h3><div class="opts">
+    <button class="opt ${!cfg.py?'on':''}" onclick="setC('py',false)">${L('off')}</button><button class="opt ${cfg.py?'on':''}" onclick="setC('py',true)">${L('on')}</button></div></div>
+  <h3 style="margin:16px 0 4px">${L('choose')}</h3>
+  ${[1,2,3].map(n=>`<button class="lvl" onclick="startRound(${n})"><b>${n}</b>${esc(u('l'+n))}${fo('l'+n)}<div class="d">${esc(zh(U['d'+n][0]))}${cfg.help!=='none'?'<br>'+esc(U['d'+n][cfg.help==='es'?1:2]):''}</div></button>`).join('')}`;}
+function setC(k,v){cfg[k]=v;saveCfg();if(S)renderQ();else renderMenu();}
+function startRound(lv){S={lv,qs:makeRound(lv),i:0,score:0,tries:0,done:false,wrong:[],dict:false};renderQ();window.scrollTo(0,0);}
+function quit(){if(confirm(u('quitQ')))renderMenu();}
+function renderQ(){const q=S.qs[S.i];const n=S.qs.length;
+  let body='';
+  if(q.sents)body+=q.sents.map(s=>rt(s.z)+esc(zh('。'))).join('<br>');
+  if(q.blankZ){const bh=S.done?`<span class="blank">${esc(zh(q.fillAns))}</span>`:null;body+=rt(q.blankZ,bh)+esc(zh('。'));}
+  const qline=`<span class="ask">${rt(q.q.z)}</span>`;
+  const cards=`<div class="cards ${q.ppl.length>3&&q.crop!=='full'?'wrap':''}">${q.ppl.map((p,i)=>cardHtml(p,i,q)).join('')}</div>`;
+  let btns='';
+  if(q.btns)btns=`<div class="btns ${q.row||q.tf?'row':''}">${q.btns.map((b,i)=>`<button class="ob" data-b="${i}" onclick="pickBtn(${i})">${rt(b.z)}${q.tf&&cfg.help!=='none'?`<small>${esc(U[i?'tf_f':'tf_t'][cfg.help==='es'?1:2])}</small>`:''}</button>`).join('')}</div>`;
+  const dd=q.d,dl=[dd.pos,dd.neg].filter(Boolean).map(a=>`<div><b style="font-size:1.2rem">${esc(zh(a.z))}</b> ${esc(a.p)}${cfg.help!=='none'?' — '+esc(cfg.help==='es'?(Array.isArray(a.es)?a.es.join(' / '):a.es):a.en[0]):''}</div>`).join('');
+  const poss=dd.poss?`<div><b>${esc(zh(dd.poss.z))}</b> ${esc(dd.poss.p)}${cfg.help!=='none'?' — '+esc(cfg.help==='es'?dd.poss.es:dd.poss.en):''}</div>`:'';
+  app.innerHTML=`<div class="top"><span>${esc(zh(U.lvName[0].replace('{n}',S.lv)))} · ${S.i+1} / ${n}</span><span><b>${S.score}</b> ${esc(u('pts'))}</span><button class="x" onclick="quit()">✕</button></div>
+  <div class="bar"><i style="width:${(S.i/n*100).toFixed(0)}%"></i></div>
+  <div style="text-align:right"><button class="dict" onclick="S.dict=!S.dict;renderQ()">📖 ${esc(u('dict'))}</button></div>
+  ${S.dict?`<div class="dictBox">${poss}${dl}</div>`:''}
+  <div class="q">${body}${qline}</div>
+  ${q.btns&&!q.tf&&!q.row?'':''}
+  ${cards}${btns}<div id="fb">${S.done?fbHtml():''}</div>`;
+  markState();}
+function markState(){const q=S.qs[S.i];
+  S.wrong.forEach(k=>{const el=k[0]==='c'?document.querySelector(`.card[data-i="${k.slice(1)}"]`):document.querySelector(`.ob[data-b="${k.slice(1)}"]`);if(el)el.classList.add('wrong');});
+  if(S.done){const ci=q.btns?q.btns.findIndex(b=>b.ok):q.ppl.findIndex(p=>p.id===q.ans);
+    const el=q.btns?document.querySelector(`.ob[data-b="${ci}"]`):document.querySelector(`.card[data-i="${ci}"]`);if(el)el.classList.add('right');}}
+function fbHtml(){const q=S.qs[S.i];const ok=S.gain>0;let lines=[];
+  const add=(s)=>lines.push(`<div>${rt(s.z)}${esc(zh('。'))}</div>${trOf(s)?`<div class="tr">${esc(trOf(s))}.</div>`:''}`);
+  if(q.sents)q.sents.forEach(add);
+  if(q.full)add(q.full);
+  if(q.expl)q.expl.forEach(add);
+  if(q.btns&&q.type==='pick'){const t=q.btns.find(b=>b.ok);add(t.tr);}
+  if(q.tf&&q.sents){}
+  const qt=trOf(q.q);
+  const last=S.i===S.qs.length-1;
+  return `<div class="fb ${ok?'ok':'no'}"><b>${ok?esc(u('right'))+' +'+S.gain:esc(u('ans'))}</b>${qt?`<div class="tr">${esc(qt)}</div>`:''}${lines.join('')}</div>
+  <button class="big" onclick="nextQ()">${L(last?'finish':'next')}</button>`;}
+function judge(ok,key){const q=S.qs[S.i];if(S.done)return;
+  const nopt=q.btns?q.btns.length:q.ppl.length;
+  if(ok){S.gain=S.tries===0?10:5;S.score+=S.gain;S.done=true;renderQ();return;}
+  S.wrong.push(key);S.tries++;
+  if(S.tries>=2||nopt<=2){S.gain=0;S.done=true;renderQ();return;}
+  renderQ();const fb=document.getElementById('fb');fb.innerHTML=`<div class="fb no"><b>${esc(u('wrong'))}</b>${fo('wrong')}</div>`;}
+function pickCard(i){const q=S.qs[S.i];if(q.btns||S.done||S.wrong.includes('c'+i))return;judge(q.ppl[i].id===q.ans,'c'+i);}
+function pickBtn(i){const q=S.qs[S.i];if(S.done||S.wrong.includes('b'+i))return;judge(q.btns[i].ok,'b'+i);}
+function nextQ(){S.i++;S.tries=0;S.done=false;S.wrong=[];S.gain=0;S.dict=false;
+  if(S.i>=S.qs.length)return renderResult();renderQ();window.scrollTo(0,0);}
+function renderResult(){const sc=S.score,lv=S.lv,pass=sc>=60;
+  let msg,btn='';
+  if(pass&&lv<3){msg=L('clear');btn=`<button class="big" onclick="startRound(${lv+1})">${L('nextLv')}</button>`;}
+  else if(pass)msg=L('allClear');else msg=L('tryAgain');
+  app.innerHTML=`<h1>${esc(u('title'))}</h1><div class="sub">${esc(zh(U.lvName[0].replace('{n}',lv)))} · ${L('res')}</div>
+  <div class="score">${sc}<span style="font-size:1.2rem;color:#999"> / ${S.qs.length*10}</span></div>
+  <p style="text-align:center;font-size:1.1rem">${msg}</p>
+  ${btn}<button class="big ${btn?'sec':''}" onclick="startRound(${lv})">${L('again')}</button>
+  <button class="big sec" onclick="renderMenu()">${L('menu')}</button>`;}
+renderMenu();
+</script>
+</body>
+</html>
