@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>比比看 人物特徵校正</title>
+<style>
+:root{--acc:#ff7a59;--acc2:#ffe8e0;--ink:#222;--mut:#777;--line:#e6e6e6}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;color:var(--ink);background:#fff}
+header{position:sticky;top:0;background:#fff;z-index:5;border-bottom:1px solid var(--line);padding:10px 12px 8px}
+h1{font-size:1.15rem;margin:0 0 4px}
+.hint{font-size:.85rem;color:var(--mut);margin:0 0 8px}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.tab{flex:none;border:2px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font-size:.95rem;cursor:pointer;color:var(--ink)}
+.tab.on{border-color:var(--acc);background:var(--acc2);font-weight:700}
+.tab .ok{color:#2e9d5b;margin-left:3px}
+.cols{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 8px 120px;max-width:1100px;margin:0 auto}
+.col{background:#f7f7f8;border-radius:12px;padding:6px;min-height:200px}
+.col h2{font-size:.95rem;text-align:center;margin:2px 0 6px}
+.col h2 small{display:block;color:var(--mut);font-weight:400;font-size:.75rem}
+.col.zero{background:#fbf2f2}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px}
+.card{background:#fff;border:2px solid transparent;border-radius:10px;padding:3px;cursor:pointer;text-align:center;position:relative}
+.card.sel{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc2)}
+.crop{position:relative;overflow:hidden;border-radius:8px;background:#eef3f8;width:100%}
+.crop img{position:absolute;top:0;left:50%;transform:translateX(-50%);display:block;width:auto;max-width:none}
+.nm{font-size:.75rem;line-height:1.2;margin-top:2px}
+.nm b{font-weight:700}
+.chg{position:absolute;top:4px;right:4px;width:9px;height:9px;border-radius:50%;background:var(--acc)}
+.bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:8px 10px calc(8px + env(safe-area-inset-bottom));z-index:6}
+.bar .row{display:flex;gap:6px;max-width:700px;margin:0 auto;align-items:center}
+.bar button{flex:1;border:0;border-radius:10px;padding:10px 4px;font-size:1rem;cursor:pointer;background:#eee;color:var(--ink)}
+.bar button.pri{background:var(--acc);color:#fff;font-weight:700}
+.bar .who{flex:none;font-size:.85rem;color:var(--mut);min-width:64px}
+.bar .lvl button.cur{outline:3px solid var(--acc)}
+#out{width:100%;height:160px;font-family:monospace;font-size:12px}
+.dlg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:9;padding:16px}
+.dlg.show{display:flex}
+.dlg .box{background:#fff;border-radius:14px;padding:14px;max-width:560px;width:100%}
+.dlg .box button{border:0;border-radius:10px;padding:10px 14px;font-size:1rem;margin-top:8px;cursor:pointer}
+@media (max-width:700px){.cols{grid-template-columns:1fr}.col{min-height:0}}
+</style>
+</head>
+<body>
+<header>
+  <h1>比比看 人物特徵校正</h1>
+  <p class="hint">依「圖上看起來」分類，不是依原本的資料。點一個人，再按下方按鈕移到正確欄位；看不清楚、會有爭議的人放「不出題」。橘點＝和原資料不同。</p>
+  <div class="tabs" id="tabs"></div>
+</header>
+<div class="cols" id="cols"></div>
+<div class="bar"><div class="row" id="bar"></div></div>
+<div class="dlg" id="dlg"><div class="box">
+  <b>校正結果</b>
+  <p class="hint" style="margin:6px 0">已複製到剪貼簿。直接貼給 Claude 即可（沒複製成功的話，全選下面的文字再複製）。</p>
+  <textarea id="out" readonly></textarea>
+  <div style="text-align:right"><button onclick="document.getElementById('dlg').classList.remove('show')">關閉</button></div>
+</div></div>
+<script>
+const PEOPLE=[{"id":"P01","name":"Noah","sex":"M","age":53,"h":184,"build":2,"muscle":3,"hair":1,"tex":3,"skin":3,"eyes":3,"nose":3,"w":301,"ih":760,"face":0.21},{"id":"P02","name":"Diana","sex":"F","age":22,"h":156,"build":1,"muscle":1,"hair":2,"tex":1,"skin":3,"eyes":1,"nose":2,"w":209,"ih":760,"face":0.21},{"id":"P03","name":"Helen","sex":"F","age":46,"h":158,"build":3,"muscle":2,"hair":3,"tex":1,"skin":3,"eyes":1,"nose":3,"w":295,"ih":760,"face":0.21},{"id":"P04","name":"Jack","sex":"M","age":11,"h":144,"build":2,"muscle":1,"hair":1,"tex":3,"skin":1,"eyes":1,"nose":1,"w":222,"ih":760,"face":0.26},{"id":"P05","name":"Paul","sex":"M","age":84,"h":172,"build":2,"muscle":1,"hair":1,"tex":2,"skin":3,"eyes":1,"nose":1,"w":253,"ih":760,"face":0.21},{"id":"P06","name":"Max","sex":"M","age":30,"h":169,"build":1,"muscle":1,"hair":1,"tex":3,"skin":2,"eyes":1,"nose":1,"w":216,"ih":760,"face":0.21},{"id":"P07","name":"Ian","sex":"M","age":43,"h":178,"build":1,"muscle":1,"hair":1,"tex":1,"skin":3,"eyes":3,"nose":2,"w":234,"ih":760,"face":0.21},{"id":"P08","name":"Mia","sex":"F","age":27,"h":159,"build":3,"muscle":1,"hair":1,"tex":3,"skin":3,"eyes":1,"nose":2,"w":270,"ih":760,"face":0.21},{"id":"P09","name":"Mark","sex":"M","age":33,"h":185,"build":1,"muscle":1,"hair":2,"tex":1,"skin":1,"eyes":1,"nose":1,"w":219,"ih":760,"face":0.21},{"id":"P10","name":"Leo","sex":"M","age":18,"h":182,"build":3,"muscle":3,"hair":1,"tex":3,"skin":1,"eyes":1,"nose":2,"w":328,"ih":760,"face":0.21},{"id":"P11","name":"Oliver","sex":"M","age":9,"h":132,"build":2,"muscle":1,"hair":1,"tex":1,"skin":1,"eyes":1,"nose":2,"w":234,"ih":760,"face":0.26},{"id":"P12","name":"Nora","sex":"F","age":26,"h":167,"build":3,"muscle":1,"hair":3,"tex":3,"skin":1,"eyes":1,"nose":2,"w":292,"ih":760,"face":0.21},{"id":"P13","name":"Eric","sex":"M","age":77,"h":157,"build":1,"muscle":1,"hair":1,"tex":3,"skin":2,"eyes":1,"nose":1,"w":233,"ih":760,"face":0.21},{"id":"P14","name":"Adam","sex":"M","age":20,"h":190,"build":2,"muscle":1,"hair":1,"tex":2,"skin":2,"eyes":1,"nose":3,"w":218,"ih":760,"face":0.21},{"id":"P15","name":"Sarah","sex":"F","age":6,"h":113,"build":2,"muscle":1,"hair":3,"tex":3,"skin":1,"eyes":1,"nose":2,"w":235,"ih":760,"face":0.29},{"id":"P16","name":"Emily","sex":"F","age":55,"h":169,"build":2,"muscle":1,"hair":2,"tex":3,"skin":3,"eyes":1,"nose":1,"w":235,"ih":760,"face":0.21},{"id":"P17","name":"Chloe","sex":"F","age":17,"h":162,"build":2,"muscle":1,"hair":1,"tex":1,"skin":3,"eyes":1,"nose":3,"w":221,"ih":760,"face":0.23},{"id":"P18","name":"Tom","sex":"M","age":35,"h":174,"build":2,"muscle":1,"hair":1,"tex":1,"skin":2,"eyes":1,"nose":2,"w":231,"ih":760,"face":0.21},{"id":"P19","name":"Amy","sex":"F","age":61,"h":157,"build":1,"muscle":1,"hair":1,"tex":2,"skin":2,"eyes":1,"nose":2,"w":232,"ih":760,"face":0.21},{"id":"P20","name":"Peter","sex":"M","age":39,"h":163,"build":2,"muscle":2,"hair":1,"tex":2,"skin":2,"eyes":1,"nose":1,"w":272,"ih":760,"face":0.21},{"id":"P21","name":"David","sex":"M","age":14,"h":161,"build":2,"muscle":1,"hair":1,"tex":1,"skin":1,"eyes":3,"nose":2,"w":219,"ih":760,"face":0.23},{"id":"P22","name":"Emma","sex":"F","age":47,"h":160,"build":3,"muscle":1,"hair":3,"tex":2,"skin":1,"eyes":1,"nose":3,"w":286,"ih":760,"face":0.21},{"id":"P23","name":"Eva","sex":"F","age":65,"h":143,"build":2,"muscle":1,"hair":1,"tex":1,"skin":1,"eyes":1,"nose":3,"w":244,"ih":760,"face":0.21},{"id":"P24","name":"Maya","sex":"F","age":67,"h":166,"build":2,"muscle":1,"hair":3,"tex":2,"skin":3,"eyes":1,"nose":3,"w":231,"ih":760,"face":0.21},{"id":"P25","name":"Olivia","sex":"F","age":8,"h":122,"build":2,"muscle":1,"hair":3,"tex":1,"skin":1,"eyes":1,"nose":1,"w":222,"ih":760,"face":0.29},{"id":"P26","name":"Alice","sex":"F","age":41,"h":159,"build":2,"muscle":2,"hair":3,"tex":3,"skin":1,"eyes":1,"nose":2,"w":228,"ih":760,"face":0.21},{"id":"P27","name":"Alex","sex":"M","age":68,"h":166,"build":1,"muscle":1,"hair":2,"tex":1,"skin":3,"eyes":1,"nose":2,"w":232,"ih":760,"face":0.21},{"id":"P28","name":"Anna","sex":"F","age":36,"h":166,"build":1,"muscle":1,"hair":2,"tex":3,"skin":2,"eyes":1,"nose":1,"w":207,"ih":760,"face":0.21},{"id":"P29","name":"Julia","sex":"F","age":42,"h":156,"build":2,"muscle":1,"hair":3,"tex":1,"skin":2,"eyes":1,"nose":2,"w":231,"ih":760,"face":0.21},{"id":"P30","name":"Lily","sex":"F","age":13,"h":149,"build":2,"muscle":1,"hair":1,"tex":2,"skin":2,"eyes":1,"nose":2,"w":216,"ih":760,"face":0.23},{"id":"P31","name":"Ruby","sex":"F","age":25,"h":167,"build":2,"muscle":2,"hair":3,"tex":1,"skin":1,"eyes":1,"nose":2,"w":247,"ih":760,"face":0.21},{"id":"P32","name":"Nick","sex":"M","age":34,"h":172,"build":3,"muscle":1,"hair":2,"tex":1,"skin":1,"eyes":1,"nose":2,"w":314,"ih":760,"face":0.21},{"id":"P33","name":"Henry","sex":"M","age":31,"h":171,"build":1,"muscle":1,"hair":2,"tex":2,"skin":1,"eyes":1,"nose":3,"w":230,"ih":760,"face":0.21},{"id":"P34","name":"Grace","sex":"F","age":60,"h":159,"build":2,"muscle":1,"hair":3,"tex":3,"skin":3,"eyes":1,"nose":1,"w":236,"ih":760,"face":0.21},{"id":"P35","name":"Lucy","sex":"F","age":38,"h":160,"build":3,"muscle":1,"hair":1,"tex":1,"skin":3,"eyes":1,"nose":3,"w":283,"ih":760,"face":0.21},{"id":"P36","name":"Carl","sex":"M","age":37,"h":170,"build":2,"muscle":2,"hair":1,"tex":1,"skin":1,"eyes":1,"nose":3,"w":290,"ih":760,"face":0.21},{"id":"P37","name":"Liam","sex":"M","age":49,"h":182,"build":3,"muscle":2,"hair":1,"tex":2,"skin":1,"eyes":1,"nose":3,"w":291,"ih":760,"face":0.21},{"id":"P38","name":"Dan","sex":"M","age":52,"h":173,"build":3,"muscle":2,"hair":1,"tex":3,"skin":3,"eyes":1,"nose":2,"w":298,"ih":760,"face":0.21},{"id":"P39","name":"Rose","sex":"F","age":29,"h":166,"build":2,"muscle":1,"hair":1,"tex":2,"skin":1,"eyes":1,"nose":2,"w":230,"ih":760,"face":0.21},{"id":"P40","name":"Kate","sex":"F","age":79,"h":142,"build":3,"muscle":1,"hair":3,"tex":1,"skin":2,"eyes":1,"nose":1,"w":271,"ih":760,"face":0.21},{"id":"P41","name":"Kevin","sex":"M","age":56,"h":163,"build":2,"muscle":1,"hair":1,"tex":1,"skin":2,"eyes":1,"nose":1,"w":233,"ih":760,"face":0.21},{"id":"P42","name":"Luke","sex":"M","age":73,"h":164,"build":3,"muscle":1,"hair":1,"tex":2,"skin":1,"eyes":1,"nose":1,"w":266,"ih":760,"face":0.21},{"id":"P43","name":"Hannah","sex":"F","age":57,"h":156,"build":3,"muscle":1,"hair":1,"tex":1,"skin":1,"eyes":1,"nose":1,"w":273,"ih":760,"face":0.21},{"id":"P44","name":"Ryan","sex":"M","age":69,"h":177,"build":2,"muscle":1,"hair":1,"tex":2,"skin":3,"eyes":3,"nose":2,"w":244,"ih":760,"face":0.21},{"id":"P45","name":"Sam","sex":"M","age":16,"h":170,"build":3,"muscle":1,"hair":2,"tex":1,"skin":3,"eyes":3,"nose":1,"w":281,"ih":760,"face":0.23},{"id":"P46","name":"Hugo","sex":"M","age":48,"h":175,"build":2,"muscle":2,"hair":1,"tex":1,"skin":3,"eyes":1,"nose":1,"w":264,"ih":760,"face":0.21},{"id":"P47","name":"Sophia","sex":"F","age":32,"h":165,"build":1,"muscle":1,"hair":2,"tex":3,"skin":3,"eyes":1,"nose":1,"w":219,"ih":760,"face":0.21},{"id":"P48","name":"Zoe","sex":"F","age":7,"h":121,"build":1,"muscle":1,"hair":1,"tex":1,"skin":2,"eyes":1,"nose":1,"w":240,"ih":760,"face":0.29},{"id":"P49","name":"Jake","sex":"M","age":45,"h":175,"build":2,"muscle":2,"hair":1,"tex":2,"skin":3,"eyes":1,"nose":2,"w":254,"ih":760,"face":0.21},{"id":"P50","name":"Ava","sex":"F","age":21,"h":166,"build":3,"muscle":1,"hair":3,"tex":3,"skin":1,"eyes":1,"nose":2,"w":280,"ih":760,"face":0.21}];
+const FEATS=[
+ {k:'hair',name:'頭髮長短',crop:'face',lv:['短','中','長']},
+ {k:'tex',name:'髮質',crop:'face',lv:['直','波浪','捲']},
+ {k:'build',name:'胖瘦',crop:'half',lv:['瘦','普通','胖']},
+ {k:'muscle',name:'壯',crop:'half',lv:['普通','壯','很壯']},
+ {k:'skin',name:'膚色',crop:'face',lv:['淺','中','深']},
+ {k:'eyes',name:'眼睛',crop:'face',lv:['小','中','大']},
+ {k:'nose',name:'鼻子',crop:'face',lv:['小','中','大']},
+];
+const KEY='bbk_calib_v1';
+let st={vals:{},done:{}};
+try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&s.vals)st=s;}catch(e){}
+for(const f of FEATS){st.vals[f.k]=st.vals[f.k]||{};for(const p of PEOPLE)if(st.vals[f.k][p.id]===undefined)st.vals[f.k][p.id]=p[f.k];}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}}
+let cur=FEATS[0].k,sel=null;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function card(p,f){const v=st.vals[f.k][p.id];const fr=f.crop==='face'?p.face*1.15:0.52,ar=f.crop==='face'?1:0.78;
+  return `<div class="card ${sel===p.id?'sel':''}" onclick="pickP('${p.id}')">${v!==p[f.k]?'<span class="chg"></span>':''}
+  <div class="crop" style="aspect-ratio:${ar}"><img loading="lazy" src="img/${p.id}.webp" alt="" style="height:${(100/fr).toFixed(1)}%"></div>
+  <div class="nm"><b>${p.id}</b> ${esc(p.name)}</div></div>`;}
+function render(){const f=FEATS.find(x=>x.k===cur);
+  document.getElementById('tabs').innerHTML=FEATS.map(x=>`<button class="tab ${x.k===cur?'on':''}" onclick="setTab('${x.k}')">${x.name}${st.done[x.k]?'<span class="ok">✓</span>':''}</button>`).join('');
+  const cols=[1,2,3,0].map(l=>{const ps=PEOPLE.filter(p=>st.vals[f.k][p.id]===l);
+    const title=l===0?'不出題':f.lv[l-1];
+    return `<div class="col ${l===0?'zero':''}"><h2>${title}<small>${ps.length} 人</small></h2><div class="grid">${ps.map(p=>card(p,f)).join('')}</div></div>`;}).join('');
+  document.getElementById('cols').innerHTML=cols;renderBar();}
+function renderBar(){const f=FEATS.find(x=>x.k===cur);const b=document.getElementById('bar');
+  if(sel){const p=PEOPLE.find(x=>x.id===sel),v=st.vals[f.k][sel];
+    b.innerHTML=`<span class="who">${p.id} ${esc(p.name)}</span><span class="lvl" style="display:flex;gap:6px;flex:1">${[1,2,3,0].map(l=>`<button class="${v===l?'cur':''}" onclick="setLv(${l})">${l===0?'不出題':f.lv[l-1]}</button>`).join('')}</span><button style="flex:none" onclick="sel=null;render()">✕</button>`;}
+  else b.innerHTML=`<button onclick="toggleDone()">${st.done[cur]?'✓ 已確認（點此取消）':'這一項確認完成'}</button><button onclick="resetTab()">還原這一項</button><button class="pri" onclick="exportAll()">複製結果</button>`;}
+function setTab(k){cur=k;sel=null;render();window.scrollTo(0,0);}
+function pickP(id){sel=sel===id?null:id;render();}
+function setLv(l){st.vals[cur][sel]=l;save();sel=null;render();}
+function toggleDone(){st.done[cur]=!st.done[cur];save();render();}
+function resetTab(){if(!confirm('把這一項全部還原成原本的資料？'))return;for(const p of PEOPLE)st.vals[cur][p.id]=p[cur];st.done[cur]=false;save();render();}
+function exportAll(){const out={};for(const f of FEATS){const o={};for(const p of PEOPLE)o[p.id]=st.vals[f.k][p.id];out[f.k]=o;}
+  out.confirmed=FEATS.filter(f=>st.done[f.k]).map(f=>f.k);
+  const changed=[];for(const f of FEATS)for(const p of PEOPLE)if(st.vals[f.k][p.id]!==p[f.k])changed.push(`${p.id}.${f.k}:${p[f.k]}→${st.vals[f.k][p.id]}`);
+  const txt='比比看校正結果\n修改 '+changed.length+' 處：'+changed.join(', ')+'\n'+JSON.stringify(out);
+  const ta=document.getElementById('out');ta.value=txt;document.getElementById('dlg').classList.add('show');
+  try{navigator.clipboard.writeText(txt);}catch(e){}}
+render();
+</script>
+</body>
+</html>
