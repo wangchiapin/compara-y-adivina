@@ -81,6 +81,7 @@ function saveCfg(){try{localStorage.setItem('bbk_cfg',JSON.stringify(cfg));}catc
 const app=document.getElementById('app');
 const zh=s=>cfg.simp?[...s].map(c=>T2S[c]||c).join(''):s;
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const PASS={1:80,2:75,3:70};   // 各關及格分數（10 題，每題最多 10 分）。第一關很多題只有 2 個選項、容易猜中，所以門檻較高
 const U={
  title:['比比看','Compara y Adivina','Compara y Adivina'],
  script:['中文字形','Escritura china','Chinese script'],trad:['繁體','',''],simp:['簡體','',''],
@@ -89,8 +90,8 @@ const U={
  choose:['選擇難度','Elige el nivel','Choose a level'],
  l1:['入門','Básico','Basic'],l2:['進階','Intermedio','Intermediate'],l3:['挑戰','Desafío','Challenge'],
  d1:['比、比較、一樣、差不多、不一樣｜2 個人','比, 比較, 一樣, 差不多, 不一樣 · 2 personas','比, 比較, 一樣, 差不多, 不一樣 · 2 people'],
- d2:['加上 沒有…那麼、一點、很多｜3 個人','+ 沒有…那麼, 一點, 很多 · 3 personas','+ 沒有…那麼, 一點, 很多 · 3 people'],
- d3:['加上 更、還、最、具體差距｜3–4 個人','+ 更, 還, 最, diferencias exactas · 3–4 personas','+ 更, 還, 最, exact differences · 3–4 people'],
+ d2:['加上 沒有…那麼、一點、很多、誰比…／…比誰｜2–3 個人','+ 沒有…那麼, 一點, 很多, 誰比… / …比誰 · 2–3 personas','+ 沒有…那麼, 一點, 很多, 誰比… / …比誰 · 2–3 people'],
+ d3:['加上 更、還、最、具體差距｜2–4 個人','+ 更, 還, 最, diferencias exactas · 2–4 personas','+ 更, 還, 最, exact differences · 2–4 people'],
  q:['題','Pregunta','Question'],pts:['分','pts','pts'],quit:['離開','Salir','Quit'],
  quitQ:['要離開這一回合嗎？','¿Salir de esta ronda?','Leave this round?'],
  right:['答對了！','¡Correcto!','Correct!'],wrong:['不對，再試一次','No, inténtalo otra vez','Not quite, try again'],
@@ -100,7 +101,7 @@ const U={
  res:['回合結束','Fin de la ronda','Round over'],
  clear:['破關了！要繼續下一關嗎？','¡Nivel superado! ¿Pasar al siguiente?','Level cleared! Go to the next level?'],
  allClear:['三關都破了，太厲害了！','¡Superaste los tres niveles!','You cleared all three levels!'],
- tryAgain:['60 分以上就破關，再試一次吧！','Con 60 puntos o más superas el nivel. ¡Inténtalo otra vez!','Score 60 or more to clear the level. Try again!'],
+ tryAgain:['{n} 分以上就破關，再試一次吧！','Con {n} puntos o más superas el nivel. ¡Inténtalo otra vez!','Score {n} or more to clear the level. Try again!'],
  nextLv:['下一關','Siguiente nivel','Next level'],again:['再玩一次','Jugar otra vez','Play again'],menu:['主選單','Menú principal','Main menu'],
  lvName:['第 {n} 關','Nivel {n}','Level {n}'],
  tf_t:['對','Verdadero','True'],tf_f:['錯','Falso','False'],
@@ -145,7 +146,7 @@ const DIMS={
 };
 for(const k in DIMS)DIMS[k].key=k;
 const R=n=>Math.floor(Math.random()*n);
-const pick=a=>{if(a.length&&a[0]&&a[0].key&&a[0].v){let t=0;for(const d of a)t+=WT[d.key];let r=Math.random()*t;for(const d of a){r-=WT[d.key];if(r<=0)return d;}return a[a.length-1];}return a[R(a.length)];};
+const pick=a=>{if(a.length&&a[0]&&a[0].key&&a[0].v){let t=0;for(const d of a)t+=dimW(d);let r=Math.random()*t;for(const d of a){r-=dimW(d);if(r<=0)return d;}return a[a.length-1];}return a[R(a.length)];};
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=R(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
 function cmp(d,a,b){if(a[d.key]===0||b[d.key]===0)return null;   // 0 = 校正時標為不出題
   const x=d.v(a)-d.v(b),ax=Math.abs(x);
@@ -217,12 +218,45 @@ function ask(kind,d,o){const ps=d.poss;let z,es,en;const pol=o.pol;
 // ===== 出題 =====
 const LV_DIMS=lv=>Object.values(DIMS).filter(d=>d.lv<=lv);
 // 各特徵出現機率（眼睛、鼻子在圖上差異較小，比較少出）
-const WT={height:3,age:2,build:2,hair:3,eyes:1,nose:1,muscle:1.5,tex:2,skin:1.5};
+const WT={height:2.5,age:2,build:2,hair:2.5,eyes:1.5,nose:1.5,muscle:1.5,tex:2,skin:1.5};
+let USED={};const dimW=d=>WT[d.key]*Math.pow(.4,USED[d.key]||0);   // 同一回合已出過的特徵，權重每次乘 0.4
 function people(n,cond,tries=400){for(let i=0;i<tries;i++){const s=shuffle(PEOPLE).slice(0,n);if(cond(...s))return s;}return null;}
 const clear=(d,a,b)=>{const c=cmp(d,a,b);return c===1||c===-1?c:null;};
 function polOK(d,pol){return pol>0||!!d.neg;}
 function rPol(d){return d.neg&&Math.random()<.5?-1:1;}
 function mkQ(type,d,ppl,o){return Object.assign({type,d,ppl,crop:d.crop,tag:d.tag||null},o);}
+// ===== 輔助：字面真假、依人物資料找出題條件 =====
+// 字面真假：不看「差不多」門檻，只看實際數值；用來確保同一題不會有兩個選項同時為真
+function litTrue(st){const {f,d,a,b,pol}=st;const x=d.v(a)-d.v(b),s=Math.sign(x);
+  if(f==='BI'||f==='GENG')return s===pol;
+  if(f==='MEI')return s===-pol;
+  if(f==='SAME')return x===0;
+  if(f==='ABOUT')return Math.abs(x)<=d.near;
+  if(f==='DIFFER')return x!==0;
+  if(f==='DEG'){if(s!==pol)return false;const g=degree(d,a,b);return g===0||g===st.deg;}
+  if(f==='DIFF')return x*pol===st.n;
+  return false;}
+const REL={};
+function rel(d,t){const k=d.key+t.id;if(REL[k])return REL[k];const up=[],dn=[];
+  for(const p of PEOPLE){if(p===t)continue;const c=clear(d,p,t);if(c===1)up.push(p);else if(c===-1)dn.push(p);}
+  return REL[k]={up,dn};}
+// 回傳 [同方向, 反方向]：同方向 = 在 t 的 pol 那一邊（pol=1 是比 t 高／大／長…）的人
+const sideOf=(d,t,pol)=>{const r=rel(d,t);return pol>0?[r.up,r.dn]:[r.dn,r.up];};
+const sample=(a,n)=>shuffle(a).slice(0,n);
+// 依權重挑一個「人物資料真的湊得出題目」的特徵與方向（不會再抽到湊不出來的特徵而白白重試）
+function chooseDP(lv,ok){const o=[];
+  for(const d of LV_DIMS(lv)){const pols=[1,-1].filter(p=>polOK(d,p)&&ok(d,p));if(pols.length)o.push({d,pols});}
+  if(!o.length)return null;
+  let t=0;for(const x of o)t+=dimW(x.d);let r=Math.random()*t,c=o[o.length-1];
+  for(const x of o){r-=dimW(x.d);if(r<=0){c=x;break;}}
+  return {d:c.d,pol:c.pols[R(c.pols.length)]};}
+const triT=(d,pol,n,kind)=>PEOPLE.filter(t=>{const [s,o]=sideOf(d,t,pol);return kind==='who'?s.length>=1&&o.length>=n-2:o.length>=1&&s.length>=n-2;});
+const mostW=(d,pol,n)=>PEOPLE.filter(w=>sideOf(d,w,pol)[1].length>=n-1);
+const CH={};
+function chains(d){if(CH[d.key])return CH[d.key];const out=[];
+  for(const x of PEOPLE)for(const y of PEOPLE){if(x===y||x.sex!==y.sex||clear(d,x,y)!==1)continue;
+    for(const z of PEOPLE){if(z===x||z===y||z.sex!==x.sex||clear(d,y,z)!==1)continue;out.push([x,y,z]);}}
+  return CH[d.key]=out;}
 const GEN={
  // 解碼：兩人不顯示名字
  decode(lv){const d=pick(LV_DIMS(lv).filter(d=>d.neg||true));
@@ -242,13 +276,13 @@ const GEN={
      const cands=[];
      for(const pol of [1,-1]){if(!polOK(d,pol))continue;cands.push({f:'BI',d,a,b,pol},{f:'BI',d,a:b,b:a,pol});if(d.eq)cands.push({f:'SAME',d,a,b,pol});}
      if(d.num)cands.push({f:'ABOUT',d,a,b});if(d.same)cands.push({f:'DIFFER',d,a,b});
-     const want=Math.random()<.5;const ok=cands.filter(s=>truth(s)===want);if(!ok.length)continue;
+     const want=Math.random()<.5;const ok=cands.filter(s=>truth(s)===want&&litTrue(s)===want);if(!ok.length)continue;
      const st=pick(ok);
      return mkQ('tf',d,[a,b],{sents:[sent(st)],q:ask('TF',d,{}),btns:[{z:[tk('對')],ok:want},{z:[tk('錯')],ok:!want}],tf:1});}
    return null;},
  // 看圖選句子
- pick(lv){const d=pick(LV_DIMS(lv).filter(d=>lv<3||d.num||Math.random()<.5));
-   for(let i=0;i<80;i++){const [a,b]=shuffle(PEOPLE).slice(0,2);if(cmp(d,a,b)===null)continue;
+ pick(lv){const d=pick(LV_DIMS(lv).filter(d=>lv<3||d.num||Math.random()<.5));const nd=lv>=2?3:2;   // 干擾項：L1 兩個（共 3 選項）、L2 以上三個（共 4 選項）
+   for(let i=0;i<120;i++){const [a,b]=shuffle(PEOPLE).slice(0,2);if(cmp(d,a,b)===null)continue;
      const c=[];
      for(const pol of [1,-1]){if(!polOK(d,pol))continue;
        for(const [x,y] of [[a,b],[b,a]]){c.push({f:'BI',d,a:x,b:y,pol});
@@ -256,11 +290,12 @@ const GEN={
          if(lv>=3&&d.num){const n0=Math.abs(d.v(a)-d.v(b));for(const n of [n0,n0+5,Math.max(3,n0-5)])if(n>=3&&n<100)c.push({f:'DIFF',d,a:x,b:y,pol,n});}}
        if(d.eq)c.push({f:'SAME',d,a,b,pol});}
      if(d.num)c.push({f:'ABOUT',d,a,b});if(d.same&&lv<3)c.push({f:'DIFFER',d,a,b});
-     let T=c.filter(s=>truth(s)===true),F=c.filter(s=>truth(s)===false);
+     // 正確選項必須「遊戲判斷」與「字面」都為真；干擾項則兩者都為假，這樣一題只會有一個為真的選項
+     let T=c.filter(s=>truth(s)===true&&litTrue(s)),F=c.filter(s=>truth(s)===false&&!litTrue(s));
      if(lv>=3&&d.num){const t2=T.filter(s=>s.f==='DIFF');if(t2.length)T=t2;}
      if(!T.length||F.length<2)continue;
      const t=pick(T);const zs=new Set([sent(t).z.map(x=>x.t).join('')]);const fs=[];
-     for(const s of shuffle(F)){const k=sent(s).z.map(x=>x.t).join('');if(!zs.has(k)){zs.add(k);fs.push(s);}if(fs.length===2)break;}
+     for(const s of shuffle(F)){const k=sent(s).z.map(x=>x.t).join('');if(!zs.has(k)){zs.add(k);fs.push(s);}if(fs.length===nd)break;}
      if(fs.length<2)continue;
      const btns=shuffle([{st:t,ok:true},...fs.map(s=>({st:s,ok:false}))]).map(o=>({z:sent(o.st).z,ok:o.ok,tr:sent(o.st)}));
      return mkQ('pick',d,[a,b],{q:ask('PICK',d,{}),btns,tagCm:d.key==='height'&&(lv>=2||t.f==='DIFF')});}
@@ -270,14 +305,14 @@ const GEN={
    const s=people(2,(a,b)=>clear(d,a,b)!==null);if(!s)return null;const [a,b]=s;const pol=rPol(d);
    const win=clear(d,a,b)===pol?a:b;
    return mkQ('more',d,[a,b],{q:ask('MORE',d,{a,b,pol}),ans:win.id,expl:[sent({f:'BI',d,a:win,b:win===a?b:a,pol})]});},
- // 誰比 T …（三人）
- whobi(lv){const d=pick(LV_DIMS(lv));const pol=rPol(d);
-   const s=people(3,(t,x,y)=>clear(d,x,t)===pol&&clear(d,y,t)===-pol);if(!s)return null;const [t,x,y]=s;
-   return mkQ('whobi',d,shuffle([t,x,y]),{q:ask('WHOBI',d,{t,pol}),ans:x.id,expl:[sent({f:'BI',d,a:x,b:t,pol})]});},
- // T 比誰…（三人）
- biwho(lv){const d=pick(LV_DIMS(lv));const pol=rPol(d);
-   const s=people(3,(t,y,z)=>clear(d,t,y)===pol&&clear(d,t,z)===-pol);if(!s)return null;const [t,y,z]=s;
-   return mkQ('biwho',d,shuffle([t,y,z]),{q:ask('BIWHO',d,{t,pol}),ans:y.id,expl:[sent({f:'BI',d,a:t,b:y,pol})]});},
+ // 誰比 T …（L2 三人、L3 四人）
+ whobi(lv){const n=lv>=3?4:3;const ch=chooseDP(lv,(d,pol)=>triT(d,pol,n,'who').length>0);if(!ch)return null;const {d,pol}=ch;
+   const ts=triT(d,pol,n,'who'),t=ts[R(ts.length)],[s,o]=sideOf(d,t,pol),x=s[R(s.length)];
+   return mkQ('whobi',d,shuffle([t,x,...sample(o,n-2)]),{q:ask('WHOBI',d,{t,pol}),ans:x.id,expl:[sent({f:'BI',d,a:x,b:t,pol})]});},
+ // T 比誰…（L2 三人、L3 四人）
+ biwho(lv){const n=lv>=3?4:3;const ch=chooseDP(lv,(d,pol)=>triT(d,pol,n,'bi').length>0);if(!ch)return null;const {d,pol}=ch;
+   const ts=triT(d,pol,n,'bi'),t=ts[R(ts.length)],[s,o]=sideOf(d,t,pol),y=o[R(o.length)];
+   return mkQ('biwho',d,shuffle([t,y,...sample(s,n-2)]),{q:ask('BIWHO',d,{t,pol}),ans:y.id,expl:[sent({f:'BI',d,a:t,b:y,pol})]});},
  // 填空
  fill(lv){const d=pick(LV_DIMS(lv));
    for(let i=0;i<80;i++){const [a,b]=shuffle(PEOPLE).slice(0,2);const c=cmp(d,a,b);if(c===null)continue;const kinds=[];
@@ -291,27 +326,29 @@ const GEN={
      return mkQ('fill',d,[a,b],{blankZ:z,fillAns:ans,q:ask('FILL',d,{}),btns:words.map(w=>({z:[tk(w)],ok:w===ans,w})),full:sent(st),row:1,tagCm:k==='deg'&&d.key==='height'});}
    return null;},
  // 連鎖解碼（三人，更／還）
- chain(lv){const ds=LV_DIMS(lv).filter(d=>d.key!=='eyes'&&d.key!=='nose');const d=pick(ds);
-   const s=people(3,(x,y,z)=>x.sex===y.sex&&y.sex===z.sex&&clear(d,x,y)===1&&clear(d,y,z)===1);if(!s)return null;const [x,y,z]=s;
-   let s1,s2;if(d.neg&&Math.random()<.5){s1={f:'BI',d,a:y,b:x,pol:-1};s2={f:'GENG',d,a:z,b:y,pol:-1,alt:Math.random()<.5};}
+ chain(lv){const ch=chooseDP(lv,d=>chains(d).length>0);if(!ch)return null;const {d,pol}=ch;
+   const cs=chains(d),[x,y,z]=cs[R(cs.length)];
+   let s1,s2;if(pol<0){s1={f:'BI',d,a:y,b:x,pol:-1};s2={f:'GENG',d,a:z,b:y,pol:-1,alt:Math.random()<.5};}
    else{s1={f:'BI',d,a:y,b:z,pol:1};s2={f:'GENG',d,a:x,b:y,pol:1,alt:Math.random()<.5};}
-   const who=pick([x,y,z]);
+   const who=[x,y,z][R(3)];
    return mkQ('chain',d,shuffle([x,y,z]),{hide:1,sents:[sent(s1),sent(s2)],q:ask('WHO',d,{a:who}),ans:who.id});},
  // 誰最…（3–4 人）
- most(lv){const d=pick(LV_DIMS(lv));const pol=rPol(d);const n=Math.random()<.5?3:4;
-   const s=people(n,(w,...r)=>r.every(o=>clear(d,w,o)===pol));if(!s)return null;
-   const w=s[0],ps=d.poss;
+ most(lv){let n=Math.random()<.5?3:4;let ch=chooseDP(lv,(d,pol)=>mostW(d,pol,n).length>0);
+   if(!ch){n=3;ch=chooseDP(lv,(d,pol)=>mostW(d,pol,n).length>0);}if(!ch)return null;
+   const {d,pol}=ch,ws=mostW(d,pol,n),w=ws[R(ws.length)],ps=d.poss;
    const ex={z:[...subj(d,w),tk('最'),tkA(d,pol)],
      es:ps?`${w.name} tiene ${ps.es} ${esMas(d,pol,w)}`:`${w.name} es ${d.noMas?(w.sex==='F'?'la ':'el ')+esA(d,pol,w):(w.sex==='F'?'la ':'el ')+esMas(d,pol,w)}`,
      en:ps?`${w.name}'s ${ps.en} ${ps.be} the ${adj(d,pol).en[2]}`:`${w.name} is the ${adj(d,pol).en[2]}`};
-   return mkQ('most',d,shuffle(s),{q:ask('MOST',d,{pol}),ans:w.id,expl:[ex]});},
+   return mkQ('most',d,shuffle([w,...sample(sideOf(d,w,pol)[1],n-1)]),{q:ask('MOST',d,{pol}),ans:w.id,expl:[ex]});},
 };
 const POOL={1:['decode','tf','pick','more'],2:['decode','pick','whobi','biwho','fill'],3:['chain','most','whobi','biwho','pick']};
-function makeRound(lv){const types=shuffle(POOL[lv]).slice(0,3);const counts=[4,3,3];const list=[];
+const qKey=q=>q.type+q.d.key+q.ppl.map(p=>p.id).sort().join();
+function makeRound(lv){USED={};const types=shuffle(POOL[lv]).slice(0,3);const counts=[4,3,3];const list=[];
   types.forEach((t,i)=>{for(let k=0;k<counts[i];k++)list.push(t);});
-  const qs=[];for(const t of shuffle(list)){let q=null;for(let i=0;i<20&&!q;i++)q=GEN[t](lv);
-    if(!q)for(const t2 of POOL[lv]){q=GEN[t2](lv);if(q)break;}
-    if(q)qs.push(q);}
+  const qs=[],seen=new Set();   // seen：同一回合不出完全相同的題目
+  for(const t of shuffle(list)){let q=null;
+    for(const tt of [t,...shuffle(POOL[lv].filter(x=>x!==t))]){for(let i=0;i<(tt===t?20:6)&&!q;i++){const c=GEN[tt](lv);if(c&&!seen.has(qKey(c)))q=c;}if(q)break;}
+    if(q){seen.add(qKey(q));USED[q.d.key]=(USED[q.d.key]||0)+1;qs.push(q);}}   // 已出過的特徵之後權重變低，讓眼睛、鼻子等也有機會出現
   return qs;}
 // ===== 顯示 =====
 function rt(tokens,blankHtml){return tokens.map(x=>{
@@ -385,10 +422,11 @@ function pickCard(i){const q=S.qs[S.i];if(q.btns||S.done||S.wrong.includes('c'+i
 function pickBtn(i){const q=S.qs[S.i];if(S.done||S.wrong.includes('b'+i))return;judge(q.btns[i].ok,'b'+i);}
 function nextQ(){S.i++;S.tries=0;S.done=false;S.wrong=[];S.gain=0;S.dict=false;
   if(S.i>=S.qs.length)return renderResult();renderQ();window.scrollTo(0,0);}
-function renderResult(){const sc=S.score,lv=S.lv,pass=sc>=60;
+function tryMsg(lv){const n=PASS[lv],v=U.tryAgain;return esc(zh(v[0].replace('{n}',n)))+(cfg.help==='none'?'':`<small>${esc(v[cfg.help==='es'?1:2].replace('{n}',n))}</small>`);}
+function renderResult(){const sc=S.score,lv=S.lv,pass=sc>=PASS[lv];
   let msg,btn='';
   if(pass&&lv<3){msg=L('clear');btn=`<button class="big" onclick="startRound(${lv+1})">${L('nextLv')}</button>`;}
-  else if(pass)msg=L('allClear');else msg=L('tryAgain');
+  else if(pass)msg=L('allClear');else msg=tryMsg(lv);
   app.innerHTML=`<h1>${esc(u('title'))}</h1><div class="sub">${esc(zh(U.lvName[0].replace('{n}',lv)))} · ${L('res')}</div>
   <div class="score">${sc}<span style="font-size:1.2rem;color:#999"> / ${S.qs.length*10}</span></div>
   <p style="text-align:center;font-size:1.1rem">${msg}</p>
