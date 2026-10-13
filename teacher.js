@@ -11,7 +11,7 @@ const TN={   // 題型名稱：[中, 西]
   more:['誰比較…','¿Quién es más…?'],whobi:['誰比…','¿Quién … que X?'],biwho:['…比誰','X … que ¿quién?'],
   fill:['填空','Completa la frase'],chain:['連鎖解碼','Decodifica en cadena'],most:['誰最…','¿Quién es el más…?'],
 };
-const T={lv:1,offD:[],offT:[],n:10,ans:true,open:false,locked:false,msg:''};
+const T={lv:1,offD:[],offT:[],n:10,ans:true,open:false,locked:false,msg:'',pending:false,name:'',note:''};
 let SHEET=null;   // 目前的練習紙 {qs}
 
 // ---- 讀取已存的設定 ----
@@ -35,8 +35,11 @@ function feasible(k){if(!onD().length)return false;const key=T.lv+k+onD().join()
   return FEAS[key]=ok;}
 function rangeOf(){const d=onD(),t=onT();return {lv:T.lv,dims:d.length===availD().length?[]:d,types:t.length===availT().length?[]:t,n:T.n};}
 
-// ---- 分享連結：?lv=2&d=height,age&t=pick,tf&n=10 ----
-(function fromLink(){const q=new URLSearchParams(location.search);if(!q.has('lv'))return;
+// ---- 老師管理中心的範圍代碼：?r=<代碼>（classroom.js 去中心專案 shared_bbk 讀，讀到後呼叫 tc.applyCode）----
+const RCODE=(()=>{const r=(new URLSearchParams(location.search).get('r')||'').trim().toLowerCase();return /^[a-z0-9]{8,32}$/.test(r)?r:'';})();
+if(RCODE){T.locked=true;T.pending=true;}
+// ---- 分享連結（舊格式，繼續支援）：?lv=2&d=height,age&t=pick,tf&n=10 ----
+(function fromLink(){const q=new URLSearchParams(location.search);if(RCODE||!q.has('lv'))return;
   const lv=+q.get('lv');if(![1,2,3].includes(lv))return;
   T.lv=lv;const avD=availD(),avT=availT();
   T.offD=q.has('d')?avD.filter(k=>!q.get('d').split(',').includes(k)):[];
@@ -111,11 +114,14 @@ const bi=(z,es)=>esc(zh(z))+(cfg.help==='none'?'':`<small>${esc(es)}</small>`);
 const chip=(on,label,click)=>`<button class="chip ${on?'on':''}" onclick="${click}">${on?'✓ ':''}${label}</button>`;
 
 // ---- 選單：老師設定面板 ／ 學生打開分享連結時的簡化畫面 ----
-window.teacherHook=function(levelsHtml){return T.locked?lockedHtml():levelsHtml+panelHtml();};
+window.teacherHook=function(levelsHtml){
+  const note=T.note?`<div class="panel" style="font-size:.92rem">⚠ ${T.note}</div>`:'';
+  return T.locked?lockedHtml():note+levelsHtml+panelHtml();};
 
 function lockedHtml(){
+  if(T.pending)return `<div class="panel"><h3>👩‍🏫 ${bi('老師指定的練習','Práctica del profesor')}</h3><div class="note">${esc(zh('載入中…'))}${cfg.help==='none'?'':' / Cargando…'}</div></div>`;
   const dn=onD().map(k=>zh(DIMS[k].name[0])).join('、'),tn=onT().map(k=>zh(TN[k][0])).join('、');
-  return `<div class="panel"><h3>👩‍🏫 ${bi('老師指定的練習','Práctica del profesor')}</h3>
+  return `<div class="panel"><h3>👩‍🏫 ${bi('老師指定的練習','Práctica del profesor')}</h3>${T.name?`<div style="font-weight:700;margin:2px 0 4px">📐 ${esc(T.name)}</div>`:''}
     <div style="font-size:.95rem;line-height:1.7">${esc(zh('第 '+T.lv+' 關'))} · ${T.n} ${esc(zh('題'))}<br>${esc(dn)}<br>${esc(tn)}</div></div>
   <button class="big" onclick="tc.start()">▶ ${bi('開始練習','Empezar')}</button>
   <button class="big sec" onclick="tc.exit()">${bi('一般模式（自己選關卡）','Modo normal (elegir nivel)')}</button>`;}
@@ -220,6 +226,17 @@ window.tc={
   linkParams(){const r=rangeOf(),o=[];o.push('lv='+T.lv);if(r.dims.length)o.push('d='+r.dims.join(','));if(r.types.length)o.push('t='+r.types.join(','));o.push('n='+T.n);
     const sum=`${zh('第 '+T.lv+' 關')} · ${T.n} ${zh('題')} · ${onD().map(k=>zh(DIMS[k].name[0])).join('、')} · ${onT().map(k=>zh(TN[k][0])).join('、')}`;
     return {ok:canMake(),qs:o.join('&'),sum};},
-  exit(){T.locked=false;RANGE=null;try{history.replaceState(null,'',location.href.split('#')[0].split('?')[0]);}catch(e){}renderMenu();},
+  // 中心的範圍代碼讀到了：o = {name, lv, d, t, n}（d／t 空陣列 = 全部）
+  applyCode(o){T.pending=false;
+    const lv=+(o&&o.lv);if(![1,2,3].includes(lv))return tc.codeFail('bad');
+    T.lv=lv;const avD=availD(),avT=availT(),d=Array.isArray(o.d)?o.d:[],t=Array.isArray(o.t)?o.t:[];
+    T.offD=d.length?avD.filter(k=>!d.includes(k)):[];T.offT=t.length?avT.filter(k=>!t.includes(k)):[];
+    T.n=Math.max(3,Math.min(30,+o.n||10));if(!valid()){T.offD=[];T.offT=[];}
+    T.name=String(o.name||'').slice(0,40);T.locked=true;T.note='';},
+  codeFail(why){T.pending=false;T.locked=false;T.name='';
+    T.note=why==='missing'?bi('找不到老師的練習範圍（可能已經刪除），先用一般模式。','No se encontró el rango del profesor (quizá se borró). Usa el modo normal.')
+      :bi('老師的練習範圍載入失敗，先用一般模式。','No se pudo cargar el rango del profesor. Usa el modo normal.');},
+  rcode:RCODE,
+  exit(){T.locked=false;T.name='';RANGE=null;try{history.replaceState(null,'',location.href.split('#')[0].split('?')[0]);}catch(e){}renderMenu();},
 };
 })();

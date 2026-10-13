@@ -346,7 +346,15 @@ window.cr={
   _state:C,
 };
 
+// ---- 老師管理中心的範圍代碼 ?r=（shared_bbk 任何人可讀，不用登入）----
+async function loadRange(){
+  try{await init();const s=await C.db.collection('shared_bbk').doc(tc.rcode).get();
+    if(!s.exists)tc.codeFail('missing');else tc.applyCode(s.data());}
+  catch(e){console.warn('range load failed',e);tc.codeFail('error');}
+  rerender();}
+
 // ---- 啟動 ----
+if(tc.rcode)loadRange();
 if(CLASS_ID)loadClass();
 else if(lsGet(LS_T)==='1'){C.open=false;init().then(()=>{if(isReal(C.user))loadAccount();}).catch(e=>console.warn(e));}
 })();

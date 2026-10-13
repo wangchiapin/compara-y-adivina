@@ -14,11 +14,13 @@ const server = http.createServer((req, res) => {
 });
 const CID = 'class0000aaaa', CID2 = 'class0000bbbb';
 const TEACH = { uid: 'u1', email: 'teacher@example.com', displayName: 'T', isAnonymous: false };
+const RS = 'rng000011112';
 function seed({ pro = true, expired = false } = {}){
   const s = { 'subscription-48d3c': {
     classes: { [CID]: { owner: 'u1', slot: 0, name: '週三班', showBoard: false, updatedAt: 1 } },
     teacher_classes: { u1: { slots: { '0': CID }, updatedAt: 1 } },
-    site_plans: {}, class_plays: {} } };
+    site_plans: {}, class_plays: {},
+    shared_bbk: { [RS]: { owner: 'u1', name: '身高和年齡', th: 'people', lv: 2, d: ['height', 'age'], t: ['pick', 'decode'], n: 5, updatedAt: 1 } } } };
   if(pro) s['subscription-48d3c'].site_plans.u1 = { plan: 'year', expiresAt: Date.now() + (expired ? -1 : 1) * 30 * 86400000 };
   return s;
 }
@@ -215,6 +217,35 @@ server.listen(0, 'localhost', async () => {
     await page.waitForFunction(() => cr._state.acct === 'ok');
     ok(await page.evaluate(() => !cr.sheetLocked()), '練習紙自動解鎖');
     await page.evaluate(() => tc.open()); ok(!(await page.textContent('#app')).includes('🔒 🖨'), '按鈕沒有鎖頭');
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+
+  console.log('\n[I] 老師管理中心的範圍代碼 ?r=');
+  { const { page, errors, ctx } = await open(browser, '/index.html?r=' + RS);
+    await page.waitForSelector('.panel h3:has-text("老師指定的練習")');
+    await page.waitForFunction(() => !document.body.innerText.includes('載入中'));
+    const t = await page.textContent('#app');
+    ok(t.includes('身高和年齡') && t.includes('第 2 關') && t.includes('5 題'), '顯示範圍名稱、關卡、題數', t.slice(0, 300));
+    ok(await page.$('.lvl') === null, '不顯示一般關卡（鎖定老師範圍）');
+    await shot(page, 'i1_code');
+    await page.click('button.big:has-text("開始練習")');
+    const r = await page.evaluate(() => ({ lv: S.lv, n: S.qs.length, d: RANGE.dims, t: RANGE.types }));
+    ok(r.lv === 2 && r.n === 5 && r.d.join() === 'height,age' && r.t.join() === 'decode,pick', '照範圍出題', r);
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+  { const { page, errors, ctx } = await open(browser, '/index.html?r=' + RS + '&class=' + CID);
+    await page.waitForSelector('.clsb h3:has-text("週三班")'); await page.waitForSelector('.panel h3:has-text("老師指定的練習")');
+    await page.waitForFunction(() => !document.body.innerText.includes('載入中'));
+    await page.fill('#nickIn', 'Ana'); await page.click('.clsb .opt.on');
+    await page.click('button.big:has-text("開始練習")'); await playRound(page); await page.waitForSelector('#clsUp.ok');
+    const p = Object.values((await db(page)).class_plays).pop();
+    ok(p.lv === 2 && p.rg === 'd=height,age&t=decode,pick&n=5' && p.max === 50, '班級＋範圍代碼：成績回傳帶範圍', p.rg);
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+  { const { page, errors, ctx } = await open(browser, '/index.html?r=zzzz99998888');
+    await page.waitForSelector('.lvl');
+    ok((await page.textContent('#app')).includes('找不到老師的練習範圍'), '代碼不存在：提示並退回一般模式');
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+  { const { page, errors, ctx } = await open(browser, '/index.html?lv=1&d=height&t=tf&n=5');
+    await page.waitForSelector('.panel h3:has-text("老師指定的練習")');
+    ok(await page.evaluate(() => !window.__apps), '舊格式連結照常可用（不用連網）');
     ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
 
   await browser.close(); server.close();
