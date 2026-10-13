@@ -71,9 +71,17 @@ ruby rt{font-size:.5em;color:var(--mut);font-weight:400}
 <body>
 <div id="app"></div>
 <script>
+// 主題包：預設 people，可用 ?theme=<名稱> 切換（對應 themes/<名稱>.js）；同步載入，引擎執行時一定已就緒
+document.write('<script src="themes/'+(new URLSearchParams(location.search).get('theme')||'people').replace(/[^\w-]/g,'')+'.js"><\/script>');
+</script>
+<script>
 // ===== 人物資料（依 comparatives-50-people-v2；w/h/face 為圖片尺寸與臉部裁切比例）=====
-const PEOPLE=[{"id":"P01","name":"Noah","sex":"M","age":53,"h":184,"build":2,"muscle":3,"hair":1,"tex":3,"skin":3,"eyes":3,"nose":3,"w":301,"ih":760,"face":0.21},{"id":"P02","name":"Diana","sex":"F","age":22,"h":156,"build":1,"muscle":1,"hair":2,"tex":1,"skin":3,"eyes":1,"nose":2,"w":209,"ih":760,"face":0.21},{"id":"P03","name":"Helen","sex":"F","age":46,"h":158,"build":3,"muscle":2,"hair":3,"tex":1,"skin":3,"eyes":1,"nose":3,"w":295,"ih":760,"face":0.21},{"id":"P04","name":"Jack","sex":"M","age":11,"h":144,"build":2,"muscle":1,"hair":1,"tex":3,"skin":1,"eyes":1,"nose":1,"w":222,"ih":760,"face":0.26},{"id":"P05","name":"Paul","sex":"M","age":84,"h":172,"build":2,"muscle":1,"hair":1,"tex":3,"skin":3,"eyes":1,"nose":2,"w":253,"ih":760,"face":0.21},{"id":"P06","name":"Max","sex":"M","age":30,"h":169,"build":1,"muscle":1,"hair":1,"tex":3,"skin":2,"eyes":1,"nose":1,"w":216,"ih":760,"face":0.21},{"id":"P07","name":"Ian","sex":"M","age":43,"h":178,"build":1,"muscle":1,"hair":1,"tex":0,"skin":3,"eyes":3,"nose":2,"w":234,"ih":760,"face":0.21},{"id":"P08","name":"Mia","sex":"F","age":27,"h":159,"build":3,"muscle":1,"hair":1,"tex":3,"skin":3,"eyes":1,"nose":2,"w":270,"ih":760,"face":0.21},{"id":"P09","name":"Mark","sex":"M","age":33,"h":185,"build":1,"muscle":1,"hair":2,"tex":1,"skin":1,"eyes":1,"nose":1,"w":219,"ih":760,"face":0.21},{"id":"P10","name":"Leo","sex":"M","age":18,"h":182,"build":3,"muscle":3,"hair":1,"tex":3,"skin":1,"eyes":1,"nose":2,"w":328,"ih":760,"face":0.21},{"id":"P11","name":"Oliver","sex":"M","age":9,"h":132,"build":2,"muscle":1,"hair":1,"tex":1,"skin":1,"eyes":1,"nose":2,"w":234,"ih":760,"face":0.26},{"id":"P12","name":"Nora","sex":"F","age":26,"h":167,"build":3,"muscle":1,"hair":3,"tex":3,"skin":1,"eyes":1,"nose":2,"w":292,"ih":760,"face":0.21},{"id":"P13","name":"Eric","sex":"M","age":77,"h":157,"build":1,"muscle":1,"hair":1,"tex":3,"skin":2,"eyes":1,"nose":2,"w":233,"ih":760,"face":0.21},{"id":"P14","name":"Adam","sex":"M","age":20,"h":190,"build":2,"muscle":1,"hair":1,"tex":3,"skin":2,"eyes":1,"nose":3,"w":218,"ih":760,"face":0.21},{"id":"P15","name":"Sarah","sex":"F","age":6,"h":113,"build":2,"muscle":1,"hair":3,"tex":3,"skin":1,"eyes":1,"nose":2,"w":235,"ih":760,"face":0.29},{"id":"P16","name":"Emily","sex":"F","age":55,"h":169,"build":2,"muscle":1,"hair":2,"tex":3,"skin":3,"eyes":1,"nose":2,"w":235,"ih":760,"face":0.21},{"id":"P17","name":"Chloe","sex":"F","age":17,"h":162,"build":2,"muscle":1,"hair":2,"tex":1,"skin":3,"eyes":1,"nose":3,"w":221,"ih":760,"face":0.23},{"id":"P18","name":"Tom","sex":"M","age":35,"h":174,"build":2,"muscle":1,"hair":1,"tex":1,"skin":2,"eyes":1,"nose":2,"w":231,"ih":760,"face":0.21},{"id":"P19","name":"Amy","sex":"F","age":61,"h":157,"build":1,"muscle":1,"hair":1,"tex":3,"skin":2,"eyes":1,"nose":2,"w":232,"ih":760,"face":0.21},{"id":"P20","name":"Peter","sex":"M","age":39,"h":163,"build":2,"muscle":2,"hair":1,"tex":3,"skin":2,"eyes":1,"nose":2,"w":272,"ih":760,"face":0.21},{"id":"P21","name":"David","sex":"M","age":14,"h":161,"build":2,"muscle":1,"hair":1,"tex":1,"skin":1,"eyes":3,"nose":2,"w":219,"ih":760,"face":0.23},{"id":"P22","name":"Emma","sex":"F","age":47,"h":160,"build":3,"muscle":1,"hair":3,"tex":3,"skin":1,"eyes":1,"nose":3,"w":286,"ih":760,"face":0.21},{"id":"P23","name":"Eva","sex":"F","age":65,"h":143,"build":2,"muscle":1,"hair":1,"tex":1,"skin":1,"eyes":1,"nose":2,"w":244,"ih":760,"face":0.21},{"id":"P24","name":"Maya","sex":"F","age":67,"h":166,"build":2,"muscle":1,"hair":3,"tex":3,"skin":3,"eyes":1,"nose":3,"w":231,"ih":760,"face":0.21},{"id":"P25","name":"Olivia","sex":"F","age":8,"h":122,"build":2,"muscle":1,"hair":3,"tex":1,"skin":1,"eyes":1,"nose":1,"w":222,"ih":760,"face":0.29},{"id":"P26","name":"Alice","sex":"F","age":41,"h":159,"build":2,"muscle":2,"hair":3,"tex":3,"skin":1,"eyes":1,"nose":2,"w":228,"ih":760,"face":0.21},{"id":"P27","name":"Alex","sex":"M","age":68,"h":166,"build":1,"muscle":1,"hair":2,"tex":1,"skin":3,"eyes":1,"nose":2,"w":232,"ih":760,"face":0.21},{"id":"P28","name":"Anna","sex":"F","age":36,"h":166,"build":1,"muscle":1,"hair":2,"tex":3,"skin":2,"eyes":1,"nose":1,"w":207,"ih":760,"face":0.21},{"id":"P29","name":"Julia","sex":"F","age":42,"h":156,"build":2,"muscle":1,"hair":3,"tex":1,"skin":2,"eyes":1,"nose":1,"w":231,"ih":760,"face":0.21},{"id":"P30","name":"Lily","sex":"F","age":13,"h":149,"build":2,"muscle":1,"hair":2,"tex":3,"skin":2,"eyes":1,"nose":2,"w":216,"ih":760,"face":0.23},{"id":"P31","name":"Ruby","sex":"F","age":25,"h":167,"build":2,"muscle":1,"hair":3,"tex":1,"skin":1,"eyes":1,"nose":2,"w":247,"ih":760,"face":0.21},{"id":"P32","name":"Nick","sex":"M","age":34,"h":172,"build":3,"muscle":1,"hair":2,"tex":1,"skin":1,"eyes":1,"nose":2,"w":314,"ih":760,"face":0.21},{"id":"P33","name":"Henry","sex":"M","age":31,"h":171,"build":1,"muscle":1,"hair":2,"tex":3,"skin":1,"eyes":1,"nose":3,"w":230,"ih":760,"face":0.21},{"id":"P34","name":"Grace","sex":"F","age":60,"h":159,"build":2,"muscle":1,"hair":3,"tex":3,"skin":3,"eyes":1,"nose":2,"w":236,"ih":760,"face":0.21},{"id":"P35","name":"Lucy","sex":"F","age":38,"h":160,"build":3,"muscle":1,"hair":1,"tex":1,"skin":3,"eyes":1,"nose":3,"w":283,"ih":760,"face":0.21},{"id":"P36","name":"Carl","sex":"M","age":37,"h":170,"build":2,"muscle":2,"hair":1,"tex":0,"skin":1,"eyes":1,"nose":3,"w":290,"ih":760,"face":0.21},{"id":"P37","name":"Liam","sex":"M","age":49,"h":182,"build":3,"muscle":2,"hair":1,"tex":3,"skin":1,"eyes":1,"nose":3,"w":291,"ih":760,"face":0.21},{"id":"P38","name":"Dan","sex":"M","age":52,"h":173,"build":3,"muscle":2,"hair":1,"tex":3,"skin":3,"eyes":1,"nose":2,"w":298,"ih":760,"face":0.21},{"id":"P39","name":"Rose","sex":"F","age":29,"h":166,"build":2,"muscle":1,"hair":1,"tex":3,"skin":1,"eyes":1,"nose":2,"w":230,"ih":760,"face":0.21},{"id":"P40","name":"Kate","sex":"F","age":79,"h":142,"build":3,"muscle":1,"hair":3,"tex":1,"skin":2,"eyes":1,"nose":2,"w":271,"ih":760,"face":0.21},{"id":"P41","name":"Kevin","sex":"M","age":56,"h":163,"build":2,"muscle":1,"hair":1,"tex":0,"skin":2,"eyes":1,"nose":2,"w":233,"ih":760,"face":0.21},{"id":"P42","name":"Luke","sex":"M","age":73,"h":164,"build":3,"muscle":1,"hair":1,"tex":3,"skin":1,"eyes":1,"nose":2,"w":266,"ih":760,"face":0.21},{"id":"P43","name":"Hannah","sex":"F","age":57,"h":156,"build":3,"muscle":1,"hair":1,"tex":1,"skin":1,"eyes":1,"nose":2,"w":273,"ih":760,"face":0.21},{"id":"P44","name":"Ryan","sex":"M","age":69,"h":177,"build":2,"muscle":1,"hair":1,"tex":3,"skin":3,"eyes":3,"nose":2,"w":244,"ih":760,"face":0.21},{"id":"P45","name":"Sam","sex":"M","age":16,"h":170,"build":3,"muscle":1,"hair":2,"tex":1,"skin":3,"eyes":3,"nose":1,"w":281,"ih":760,"face":0.23},{"id":"P46","name":"Hugo","sex":"M","age":48,"h":175,"build":2,"muscle":2,"hair":1,"tex":0,"skin":3,"eyes":1,"nose":2,"w":264,"ih":760,"face":0.21},{"id":"P47","name":"Sophia","sex":"F","age":32,"h":165,"build":1,"muscle":1,"hair":2,"tex":3,"skin":3,"eyes":1,"nose":1,"w":219,"ih":760,"face":0.21},{"id":"P48","name":"Zoe","sex":"F","age":7,"h":121,"build":1,"muscle":1,"hair":1,"tex":1,"skin":2,"eyes":1,"nose":1,"w":240,"ih":760,"face":0.29},{"id":"P49","name":"Jake","sex":"M","age":45,"h":175,"build":2,"muscle":2,"hair":1,"tex":3,"skin":3,"eyes":1,"nose":2,"w":254,"ih":760,"face":0.21},{"id":"P50","name":"Ava","sex":"F","age":21,"h":166,"build":3,"muscle":1,"hair":3,"tex":3,"skin":1,"eyes":1,"nose":2,"w":280,"ih":760,"face":0.21}];
+// ===== 主題包（themes/<名稱>.js 提供）：項目資料、特徵定義、分組與語法規則 =====
+if(!window.THEME_PACK){document.getElementById('app').innerHTML='<p style="padding:20px;text-align:center">找不到主題包 / Theme pack not found</p>';throw new Error('no theme pack');}
+const THEME=window.THEME_PACK;
+const ITEMS=THEME.items;
 const T2S={"個":"个","內":"内","兩":"两","厲":"厉","問":"问","單":"单","嗎":"吗","圖":"图","壯":"壮","對":"对","徵":"征","態":"态","戰":"战","戲":"戏","捲":"卷","擇":"择","數":"数","時":"时","標":"标","樣":"样","機":"机","歲":"岁","沒":"没","為":"为","無":"无","狀":"状","現":"现","異":"异","確":"确","碼":"码","簡":"简","結":"结","繼":"继","續":"续","膚":"肤","臉":"脸","與":"与","設":"设","詞":"词","試":"试","語":"语","誰":"谁","譯":"译","資":"资","較":"较","輔":"辅","這":"这","連":"连","進":"进","遊":"游","選":"选","還":"还","錯":"错","鎖":"锁","長":"长","門":"门","開":"开","關":"关","階":"阶","離":"离","難":"难","頭":"头","題":"题","顯":"显","體":"体","髮":"发","麼":"么","點":"点"};
+Object.assign(T2S,THEME.t2s||{});
 // ===== 設定 =====
 let cfg={simp:false,help:'es',py:false};
 try{Object.assign(cfg,JSON.parse(localStorage.getItem('bbk_cfg')||'{}'));}catch(e){}
@@ -81,6 +89,7 @@ function saveCfg(){try{localStorage.setItem('bbk_cfg',JSON.stringify(cfg));}catc
 const app=document.getElementById('app');
 const zh=s=>cfg.simp?[...s].map(c=>T2S[c]||c).join(''):s;
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const LV_CNT={1:'2',2:'2–3',3:'2–4'};   // 各關一題會出現幾個項目
 const PASS={1:80,2:75,3:70};   // 各關及格分數（10 題，每題最多 10 分）。第一關很多題只有 2 個選項、容易猜中，所以門檻較高
 const U={
  title:['比比看','Compara y Adivina','Compara y Adivina'],
@@ -89,9 +98,9 @@ const U={
  py:['拼音','Pinyin','Pinyin'],off:['關','No','Off'],on:['開','Sí','On'],
  choose:['選擇難度','Elige el nivel','Choose a level'],
  l1:['入門','Básico','Basic'],l2:['進階','Intermedio','Intermediate'],l3:['挑戰','Desafío','Challenge'],
- d1:['比、比較、一樣、差不多、不一樣｜2 個人','比, 比較, 一樣, 差不多, 不一樣 · 2 personas','比, 比較, 一樣, 差不多, 不一樣 · 2 people'],
- d2:['加上 沒有…那麼、一點、很多、誰比…／…比誰｜2–3 個人','+ 沒有…那麼, 一點, 很多, 誰比… / …比誰 · 2–3 personas','+ 沒有…那麼, 一點, 很多, 誰比… / …比誰 · 2–3 people'],
- d3:['加上 更、還、最、具體差距｜2–4 個人','+ 更, 還, 最, diferencias exactas · 2–4 personas','+ 更, 還, 最, exact differences · 2–4 people'],
+ d1:['比、比較、一樣、差不多、不一樣','比, 比較, 一樣, 差不多, 不一樣','比, 比較, 一樣, 差不多, 不一樣'],
+ d2:['加上 沒有…那麼、一點、很多、誰比…／…比誰','+ 沒有…那麼, 一點, 很多, 誰比… / …比誰','+ 沒有…那麼, 一點, 很多, 誰比… / …比誰'],
+ d3:['加上 更、還、最、具體差距','+ 更, 還, 最, diferencias exactas','+ 更, 還, 最, exact differences'],
  q:['題','Pregunta','Question'],pts:['分','pts','pts'],quit:['離開','Salir','Quit'],
  quitQ:['要離開這一回合嗎？','¿Salir de esta ronda?','Leave this round?'],
  right:['答對了！','¡Correcto!','Correct!'],wrong:['不對，再試一次','No, inténtalo otra vez','Not quite, try again'],
@@ -119,31 +128,8 @@ const NUMPY={一:'yī',二:'èr',三:'sān',四:'sì',五:'wǔ',六:'liù',七:'
 function cnNum(n){const d='零一二三四五六七八九';let s;
   if(n<10)s=d[n];else if(n<20)s='十'+(n%10?d[n%10]:'');else s=d[Math.floor(n/10)]+'十'+(n%10?d[n%10]:'');
   return tk(s,[...s].map(c=>NUMPY[c]).join(''));}
-// ===== 比較特徵 =====
-// v: 取值；num: 數字型；thr: 至少差多少才出「比」；near: 差多少以內算「差不多」
-const DIMS={
- height:{v:p=>p.h,num:1,thr:8,near:3,crop:'full',lv:1,
-   pos:{z:'高',p:'gāo',es:['alto','alta'],en:['tall','taller','tallest']},neg:{z:'矮',p:'ǎi',es:['bajo','baja'],en:['short','shorter','shortest']},
-   unit:tk('公分'),esU:'cm',enU:'cm',esSame:'la misma estatura',enSame:'are not the same height',same:1,diff:1},
- age:{v:p=>p.age,num:1,thr:3,near:2,crop:'face',lv:1,tag:'age',noMas:1,
-   pos:{z:'大',p:'dà',es:['mayor','mayor'],en:['old','older','oldest']},neg:{z:'小',p:'xiǎo',es:['menor','menor'],en:['young','younger','youngest']},
-   unit:tk('歲'),esU:'años',enU:'years',esSame:'la misma edad',enSame:'are not the same age',same:1,diff:1},
- build:{v:p=>p.build,thr:1,crop:'half',lv:1,eq:1,
-   pos:{z:'胖',p:'pàng',es:['gordo','gorda'],en:['heavy','heavier','heaviest']},neg:{z:'瘦',p:'shòu',es:['delgado','delgada'],en:['thin','thinner','thinnest']}},
- hair:{v:p=>p.hair,thr:1,crop:'face',lv:1,eq:1,poss:{z:'頭髮',p:'tóufa',es:'el pelo',en:'hair',be:'is'},
-   pos:{z:'長',p:'cháng',es:'largo',en:['long','longer','longest']},neg:{z:'短',p:'duǎn',es:'corto',en:['short','shorter','shortest']},
-   esSame:'el pelo del mismo largo',enSame:'do not have the same hair length',same:1},
- eyes:{v:p=>p.eyes,thr:2,crop:'face',lv:1,poss:{z:'眼睛',p:'yǎnjing',es:'los ojos',en:'eyes',be:'are'},
-   pos:{z:'大',p:'dà',es:'grandes',en:['big','bigger','biggest']},neg:{z:'小',p:'xiǎo',es:'pequeños',en:['small','smaller','smallest']}},
- nose:{v:p=>p.nose,thr:2,crop:'face',lv:1,poss:{z:'鼻子',p:'bízi',es:'la nariz',en:'nose',be:'is'},
-   pos:{z:'大',p:'dà',es:'grande',en:['big','bigger','biggest']},neg:{z:'小',p:'xiǎo',es:'pequeña',en:['small','smaller','smallest']}},
- muscle:{v:p=>p.muscle,thr:1,crop:'half',lv:2,eq:1,
-   pos:{z:'壯',p:'zhuàng',es:['fuerte','fuerte'],en:['strong','stronger','strongest']},neg:null},
- tex:{v:p=>p.tex,thr:1,crop:'face',lv:2,eq:1,poss:{z:'頭髮',p:'tóufa',es:'el pelo',en:'hair',be:'is'},
-   pos:{z:'捲',p:'juǎn',es:'rizado',en:['curly','curlier','curliest']},neg:{z:'直',p:'zhí',es:'lacio',en:['straight','straighter','straightest']}},
- skin:{v:p=>4-p.skin,thr:2,crop:'face',lv:2,poss:{z:'皮膚',p:'pífū',es:'la piel',en:'skin',be:'is'},
-   pos:{z:'白',p:'bái',es:'clara',en:['light','lighter','lightest']},neg:{z:'黑',p:'hēi',es:'oscura',en:['dark','darker','darkest']}},
-};
+// ===== 比較特徵（由主題包定義）=====
+const DIMS=THEME.dims;
 for(const k in DIMS)DIMS[k].key=k;
 const R=n=>Math.floor(Math.random()*n);
 const pick=a=>{if(a.length&&a[0]&&a[0].key&&a[0].v){let t=0;for(const d of a)t+=dimW(d);let r=Math.random()*t;for(const d of a){r-=dimW(d);if(r<=0)return d;}return a[a.length-1];}return a[R(a.length)];};
@@ -161,7 +147,7 @@ const tkA=(d,pol)=>tk(adj(d,pol).z,adj(d,pol).p);
 // 主語（含「的頭髮」）
 const subj=(d,a)=>d.poss?[NM(a),tk('的'),tk(d.poss.z,d.poss.p)]:[NM(a)];
 // ===== 句子：中文 tokens + 西／英翻譯 =====
-function esA(d,pol,p){const e=adj(d,pol).es;return Array.isArray(e)?e[p&&p.sex==='F'?1:0]:e;}
+function esA(d,pol,p){const e=adj(d,pol).es;return Array.isArray(e)?e[p?THEME.gnd(p):0]:e;}
 function esMas(d,pol,p,pre){const a=esA(d,pol,p);return (pre||'')+(d.noMas?a:'más '+a);}
 function enC(d,pol){return adj(d,pol).en[1];}
 // st: {f, d, a, b, pol, deg, n}
@@ -218,13 +204,12 @@ function ask(kind,d,o){const ps=d.poss;let z,es,en;const pol=o.pol;
 // ===== 出題 =====
 const LV_DIMS=lv=>Object.values(DIMS).filter(d=>d.lv<=lv);
 // 各特徵出現機率（眼睛、鼻子在圖上差異較小，比較少出）
-const WT={height:2.5,age:2,build:2,hair:2.5,eyes:1.5,nose:1.5,muscle:1.5,tex:2,skin:1.5};
-let USED={};const dimW=d=>WT[d.key]*Math.pow(.4,USED[d.key]||0);   // 同一回合已出過的特徵，權重每次乘 0.4
-function people(n,cond,tries=400){for(let i=0;i<tries;i++){const s=shuffle(PEOPLE).slice(0,n);if(cond(...s))return s;}return null;}
+let USED={};const dimW=d=>d.w*Math.pow(.4,USED[d.key]||0);   // 同一回合已出過的特徵，權重每次乘 0.4
+function people(n,cond,tries=400){for(let i=0;i<tries;i++){const s=shuffle(ITEMS).slice(0,n);if(cond(...s))return s;}return null;}
 const clear=(d,a,b)=>{const c=cmp(d,a,b);return c===1||c===-1?c:null;};
 function polOK(d,pol){return pol>0||!!d.neg;}
 function rPol(d){return d.neg&&Math.random()<.5?-1:1;}
-function mkQ(type,d,ppl,o){return Object.assign({type,d,ppl,crop:d.crop,tag:d.tag||null},o);}
+function mkQ(type,d,its,o){return Object.assign({type,d,its,crop:d.crop},o);}
 // ===== 輔助：字面真假、依人物資料找出題條件 =====
 // 字面真假：不看「差不多」門檻，只看實際數值；用來確保同一題不會有兩個選項同時為真
 function litTrue(st){const {f,d,a,b,pol}=st;const x=d.v(a)-d.v(b),s=Math.sign(x);
@@ -238,7 +223,7 @@ function litTrue(st){const {f,d,a,b,pol}=st;const x=d.v(a)-d.v(b),s=Math.sign(x)
   return false;}
 const REL={};
 function rel(d,t){const k=d.key+t.id;if(REL[k])return REL[k];const up=[],dn=[];
-  for(const p of PEOPLE){if(p===t)continue;const c=clear(d,p,t);if(c===1)up.push(p);else if(c===-1)dn.push(p);}
+  for(const p of ITEMS){if(p===t)continue;const c=clear(d,p,t);if(c===1)up.push(p);else if(c===-1)dn.push(p);}
   return REL[k]={up,dn};}
 // 回傳 [同方向, 反方向]：同方向 = 在 t 的 pol 那一邊（pol=1 是比 t 高／大／長…）的人
 const sideOf=(d,t,pol)=>{const r=rel(d,t);return pol>0?[r.up,r.dn]:[r.dn,r.up];};
@@ -250,18 +235,18 @@ function chooseDP(lv,ok){const o=[];
   let t=0;for(const x of o)t+=dimW(x.d);let r=Math.random()*t,c=o[o.length-1];
   for(const x of o){r-=dimW(x.d);if(r<=0){c=x;break;}}
   return {d:c.d,pol:c.pols[R(c.pols.length)]};}
-const triT=(d,pol,n,kind)=>PEOPLE.filter(t=>{const [s,o]=sideOf(d,t,pol);return kind==='who'?s.length>=1&&o.length>=n-2:o.length>=1&&s.length>=n-2;});
-const mostW=(d,pol,n)=>PEOPLE.filter(w=>sideOf(d,w,pol)[1].length>=n-1);
+const triT=(d,pol,n,kind)=>ITEMS.filter(t=>{const [s,o]=sideOf(d,t,pol);return kind==='who'?s.length>=1&&o.length>=n-2:o.length>=1&&s.length>=n-2;});
+const mostW=(d,pol,n)=>ITEMS.filter(w=>sideOf(d,w,pol)[1].length>=n-1);
 const CH={};
 function chains(d){if(CH[d.key])return CH[d.key];const out=[];
-  for(const x of PEOPLE)for(const y of PEOPLE){if(x===y||x.sex!==y.sex||clear(d,x,y)!==1)continue;
-    for(const z of PEOPLE){if(z===x||z===y||z.sex!==x.sex||clear(d,y,z)!==1)continue;out.push([x,y,z]);}}
+  for(const x of ITEMS)for(const y of ITEMS){if(x===y||THEME.grp(x)!==THEME.grp(y)||clear(d,x,y)!==1)continue;
+    for(const z of ITEMS){if(z===x||z===y||THEME.grp(z)!==THEME.grp(x)||clear(d,y,z)!==1)continue;out.push([x,y,z]);}}
   return CH[d.key]=out;}
 const GEN={
  // 解碼：兩人不顯示名字
  decode(lv){const d=pick(LV_DIMS(lv).filter(d=>d.neg||true));
    const forms=lv>=2?(d.num?['BI','BI','MEI','DEG']:['BI','BI','MEI']):['BI'];const f=pick(forms);
-   for(let i=0;i<60;i++){const s=people(2,(a,b)=>a.sex===b.sex&&clear(d,a,b)!==null);if(!s)return null;const [a,b]=s;let pol=rPol(d);
+   for(let i=0;i<60;i++){const s=people(2,(a,b)=>THEME.grp(a)===THEME.grp(b)&&clear(d,a,b)!==null);if(!s)return null;const [a,b]=s;let pol=rPol(d);
      let st={f,d,a,b,pol};
      if(f==='MEI'){st.pol=pol;if(truth(st)!==true){st={f,d,a:b,b:a,pol};}}
      else if(f==='DEG'){const g=degree(d,a,b);if(!g)continue;st.deg=g;st.alt=Math.random()<.4;if(truth(st)!==true)st={...st,pol:-pol};if(!polOK(d,st.pol))continue;}
@@ -272,7 +257,7 @@ const GEN={
    return null;},
  // 對錯
  tf(lv){const d=pick(LV_DIMS(lv));
-   for(let i=0;i<80;i++){const [a,b]=shuffle(PEOPLE).slice(0,2);const c=cmp(d,a,b);if(c===null)continue;
+   for(let i=0;i<80;i++){const [a,b]=shuffle(ITEMS).slice(0,2);const c=cmp(d,a,b);if(c===null)continue;
      const cands=[];
      for(const pol of [1,-1]){if(!polOK(d,pol))continue;cands.push({f:'BI',d,a,b,pol},{f:'BI',d,a:b,b:a,pol});if(d.eq)cands.push({f:'SAME',d,a,b,pol});}
      if(d.num)cands.push({f:'ABOUT',d,a,b});if(d.same)cands.push({f:'DIFFER',d,a,b});
@@ -282,7 +267,7 @@ const GEN={
    return null;},
  // 看圖選句子
  pick(lv){const d=pick(LV_DIMS(lv).filter(d=>lv<3||d.num||Math.random()<.5));const nd=lv>=2?3:2;   // 干擾項：L1 兩個（共 3 選項）、L2 以上三個（共 4 選項）
-   for(let i=0;i<120;i++){const [a,b]=shuffle(PEOPLE).slice(0,2);if(cmp(d,a,b)===null)continue;
+   for(let i=0;i<120;i++){const [a,b]=shuffle(ITEMS).slice(0,2);if(cmp(d,a,b)===null)continue;
      const c=[];
      for(const pol of [1,-1]){if(!polOK(d,pol))continue;
        for(const [x,y] of [[a,b],[b,a]]){c.push({f:'BI',d,a:x,b:y,pol});
@@ -315,7 +300,7 @@ const GEN={
    return mkQ('biwho',d,shuffle([t,y,...sample(s,n-2)]),{q:ask('BIWHO',d,{t,pol}),ans:y.id,expl:[sent({f:'BI',d,a:t,b:y,pol})]});},
  // 填空
  fill(lv){const d=pick(LV_DIMS(lv));
-   for(let i=0;i<80;i++){const [a,b]=shuffle(PEOPLE).slice(0,2);const c=cmp(d,a,b);if(c===null)continue;const kinds=[];
+   for(let i=0;i<80;i++){const [a,b]=shuffle(ITEMS).slice(0,2);const c=cmp(d,a,b);if(c===null)continue;const kinds=[];
      if(c!==0){kinds.push('bi','mei');if(d.num)kinds.push('deg');}if(c===0&&d.eq&&(d.v(a)===1||d.v(a)===3))kinds.push('same');if(!kinds.length)continue;
      const k=pick(kinds);let st,z,words,ans;
      if(k==='bi'){const pol=polOK(d,c)?c:null;if(!pol)continue;st={f:'BI',d,a,b,pol};z=[...subj(d,a),BL,NM(b),tkA(d,pol)];words=['比','跟','沒有'];ans='比';}
@@ -337,12 +322,12 @@ const GEN={
    if(!ch){n=3;ch=chooseDP(lv,(d,pol)=>mostW(d,pol,n).length>0);}if(!ch)return null;
    const {d,pol}=ch,ws=mostW(d,pol,n),w=ws[R(ws.length)],ps=d.poss;
    const ex={z:[...subj(d,w),tk('最'),tkA(d,pol)],
-     es:ps?`${w.name} tiene ${ps.es} ${esMas(d,pol,w)}`:`${w.name} es ${d.noMas?(w.sex==='F'?'la ':'el ')+esA(d,pol,w):(w.sex==='F'?'la ':'el ')+esMas(d,pol,w)}`,
+     es:ps?`${w.name} tiene ${ps.es} ${esMas(d,pol,w)}`:`${w.name} es ${d.noMas?THEME.art(w)+esA(d,pol,w):THEME.art(w)+esMas(d,pol,w)}`,
      en:ps?`${w.name}'s ${ps.en} ${ps.be} the ${adj(d,pol).en[2]}`:`${w.name} is the ${adj(d,pol).en[2]}`};
    return mkQ('most',d,shuffle([w,...sample(sideOf(d,w,pol)[1],n-1)]),{q:ask('MOST',d,{pol}),ans:w.id,expl:[ex]});},
 };
 const POOL={1:['decode','tf','pick','more'],2:['decode','pick','whobi','biwho','fill'],3:['chain','most','whobi','biwho','pick']};
-const qKey=q=>q.type+q.d.key+q.ppl.map(p=>p.id).sort().join();
+const qKey=q=>q.type+q.d.key+q.its.map(p=>p.id).sort().join();
 function makeRound(lv){USED={};const types=shuffle(POOL[lv]).slice(0,3);const counts=[4,3,3];const list=[];
   types.forEach((t,i)=>{for(let k=0;k<counts[i];k++)list.push(t);});
   const qs=[],seen=new Set();   // seen：同一回合不出完全相同的題目
@@ -358,12 +343,13 @@ function rt(tokens,blankHtml){return tokens.map(x=>{
   return `<ruby>${esc(zh(x.t))}<rt>${esc(x.p)}</rt></ruby>`;}).join('');}
 function trOf(o){if(cfg.help==='none'||!o)return '';return cfg.help==='es'?o.es:o.en;}
 function cardHtml(p,i,q){const name=q.hide&&!S.done?'':esc(p.name);let tag='';
-  if(q.tag==='age')tag=`<div class="tag">${p.age} ${esc(zh('歲'))}</div>`;
-  if(q.tagCm)tag=`<div class="tag">${p.h} cm</div>`;
-  if(q.crop==='full'){const maxH=Math.max(...q.ppl.map(x=>x.h));const H=Math.round(250*p.h/maxH);const w=Math.round(p.w*H/p.ih);
-    return `<div class="card full" data-i="${i}" onclick="pickCard(${i})"><div class="fig" style="height:250px"><img src="img/${p.id}.webp" alt="" style="height:${H}px;width:${w}px"></div><div class="lab">${name}</div>${tag}</div>`;}
+  const dd=q.d,tg=(f)=>{const [n,u]=f(p);return `<div class="tag">${n} ${esc(zh(u))}</div>`;};
+  if(dd.tagA)tag=tg(dd.tagA);
+  if(q.tagCm&&dd.tagB)tag=tg(dd.tagB);
+  if(q.crop==='full'){const maxH=Math.max(...q.its.map(x=>dd.v(x)));const H=Math.round(250*dd.v(p)/maxH);const w=Math.round(p.w*H/p.ih);
+    return `<div class="card full" data-i="${i}" onclick="pickCard(${i})"><div class="fig" style="height:250px"><img src="${THEME.dir}${p.id}.webp" alt="" style="height:${H}px;width:${w}px"></div><div class="lab">${name}</div>${tag}</div>`;}
   const fr=q.crop==='face'?p.face*1.15:0.52;const ar=q.crop==='face'?1:0.78;
-  return `<div class="card" data-i="${i}" onclick="pickCard(${i})"><div class="crop" style="aspect-ratio:${ar};width:100%"><img src="img/${p.id}.webp" alt="" style="height:${(100/fr).toFixed(1)}%"></div><div class="lab">${name}</div>${tag}</div>`;}
+  return `<div class="card" data-i="${i}" onclick="pickCard(${i})"><div class="crop" style="aspect-ratio:${ar};width:100%"><img src="${THEME.dir}${p.id}.webp" alt="" style="height:${(100/fr).toFixed(1)}%"></div><div class="lab">${name}</div>${tag}</div>`;}
 // ===== 遊戲狀態 =====
 let S=null;
 function renderMenu(){S=null;
@@ -375,7 +361,7 @@ function renderMenu(){S=null;
   <div class="panel"><h3>${L('py')}</h3><div class="opts">
     <button class="opt ${!cfg.py?'on':''}" onclick="setC('py',false)">${L('off')}</button><button class="opt ${cfg.py?'on':''}" onclick="setC('py',true)">${L('on')}</button></div></div>
   <h3 style="margin:16px 0 4px">${L('choose')}</h3>
-  ${[1,2,3].map(n=>`<button class="lvl" onclick="startRound(${n})"><b>${n}</b>${esc(u('l'+n))}${fo('l'+n)}<div class="d">${esc(zh(U['d'+n][0]))}${cfg.help!=='none'?'<br>'+esc(U['d'+n][cfg.help==='es'?1:2]):''}</div></button>`).join('')}`;}
+  ${[1,2,3].map(n=>`<button class="lvl" onclick="startRound(${n})"><b>${n}</b>${esc(u('l'+n))}${fo('l'+n)}<div class="d">${esc(zh(U['d'+n][0]+'｜'+LV_CNT[n]+' '+THEME.noun[0]))}${cfg.help!=='none'?'<br>'+esc(U['d'+n][cfg.help==='es'?1:2]+' · '+LV_CNT[n]+' '+THEME.noun[cfg.help==='es'?1:2]):''}</div></button>`).join('')}`;}
 function setC(k,v){cfg[k]=v;saveCfg();if(S)renderQ();else renderMenu();}
 function startRound(lv){S={lv,qs:makeRound(lv),i:0,score:0,tries:0,done:false,wrong:[],dict:false};renderQ();window.scrollTo(0,0);}
 function quit(){if(confirm(u('quitQ')))renderMenu();}
@@ -384,7 +370,7 @@ function renderQ(){const q=S.qs[S.i];const n=S.qs.length;
   if(q.sents)body+=q.sents.map(s=>rt(s.z)+esc(zh('。'))).join('<br>');
   if(q.blankZ){const bh=S.done?`<span class="blank">${esc(zh(q.fillAns))}</span>`:null;body+=rt(q.blankZ,bh)+esc(zh('。'));}
   const qline=`<span class="ask">${rt(q.q.z)}</span>`;
-  const cards=`<div class="cards ${q.ppl.length>3&&q.crop!=='full'?'wrap':''}">${q.ppl.map((p,i)=>cardHtml(p,i,q)).join('')}</div>`;
+  const cards=`<div class="cards ${q.its.length>3&&q.crop!=='full'?'wrap':''}">${q.its.map((p,i)=>cardHtml(p,i,q)).join('')}</div>`;
   let btns='';
   if(q.btns)btns=`<div class="btns ${q.row||q.tf?'row':''}">${q.btns.map((b,i)=>`<button class="ob" data-b="${i}" onclick="pickBtn(${i})">${rt(b.z)}${q.tf&&cfg.help!=='none'?`<small>${esc(U[i?'tf_f':'tf_t'][cfg.help==='es'?1:2])}</small>`:''}</button>`).join('')}</div>`;
   const dd=q.d,dl=[dd.pos,dd.neg].filter(Boolean).map(a=>`<div><b style="font-size:1.2rem">${esc(zh(a.z))}</b> ${esc(a.p)}${cfg.help!=='none'?' — '+esc(cfg.help==='es'?(Array.isArray(a.es)?a.es.join(' / '):a.es):a.en[0]):''}</div>`).join('');
@@ -399,7 +385,7 @@ function renderQ(){const q=S.qs[S.i];const n=S.qs.length;
   markState();}
 function markState(){const q=S.qs[S.i];
   S.wrong.forEach(k=>{const el=k[0]==='c'?document.querySelector(`.card[data-i="${k.slice(1)}"]`):document.querySelector(`.ob[data-b="${k.slice(1)}"]`);if(el)el.classList.add('wrong');});
-  if(S.done){const ci=q.btns?q.btns.findIndex(b=>b.ok):q.ppl.findIndex(p=>p.id===q.ans);
+  if(S.done){const ci=q.btns?q.btns.findIndex(b=>b.ok):q.its.findIndex(p=>p.id===q.ans);
     const el=q.btns?document.querySelector(`.ob[data-b="${ci}"]`):document.querySelector(`.card[data-i="${ci}"]`);if(el)el.classList.add('right');}}
 function fbHtml(){const q=S.qs[S.i];const ok=S.gain>0;let lines=[];
   const add=(s)=>lines.push(`<div>${rt(s.z)}${esc(zh('。'))}</div>${trOf(s)?`<div class="tr">${esc(trOf(s))}.</div>`:''}`);
@@ -413,12 +399,12 @@ function fbHtml(){const q=S.qs[S.i];const ok=S.gain>0;let lines=[];
   return `<div class="fb ${ok?'ok':'no'}"><b>${ok?esc(u('right'))+' +'+S.gain:esc(u('ans'))}</b>${qt?`<div class="tr">${esc(qt)}</div>`:''}${lines.join('')}</div>
   <button class="big" onclick="nextQ()">${L(last?'finish':'next')}</button>`;}
 function judge(ok,key){const q=S.qs[S.i];if(S.done)return;
-  const nopt=q.btns?q.btns.length:q.ppl.length;
+  const nopt=q.btns?q.btns.length:q.its.length;
   if(ok){S.gain=S.tries===0?10:5;S.score+=S.gain;S.done=true;renderQ();return;}
   S.wrong.push(key);S.tries++;
   if(S.tries>=2||nopt<=2){S.gain=0;S.done=true;renderQ();return;}
   renderQ();const fb=document.getElementById('fb');fb.innerHTML=`<div class="fb no"><b>${esc(u('wrong'))}</b>${fo('wrong')}</div>`;}
-function pickCard(i){const q=S.qs[S.i];if(q.btns||S.done||S.wrong.includes('c'+i))return;judge(q.ppl[i].id===q.ans,'c'+i);}
+function pickCard(i){const q=S.qs[S.i];if(q.btns||S.done||S.wrong.includes('c'+i))return;judge(q.its[i].id===q.ans,'c'+i);}
 function pickBtn(i){const q=S.qs[S.i];if(S.done||S.wrong.includes('b'+i))return;judge(q.btns[i].ok,'b'+i);}
 function nextQ(){S.i++;S.tries=0;S.done=false;S.wrong=[];S.gain=0;S.dict=false;
   if(S.i>=S.qs.length)return renderResult();renderQ();window.scrollTo(0,0);}
