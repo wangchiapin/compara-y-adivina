@@ -90,7 +90,9 @@ const app=document.getElementById('app');
 const zh=s=>cfg.simp?[...s].map(c=>T2S[c]||c).join(''):s;
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const LV_CNT={1:'2',2:'2–3',3:'2–4'};   // 各關一題會出現幾個項目
+let RANGE=null;   // 老師自選範圍 {lv,dims:[特徵],types:[題型],n:題數}；空陣列 = 全部；null = 一般模式（teacher.js 設定）
 const PASS={1:80,2:75,3:70};   // 各關及格分數（10 題，每題最多 10 分）。第一關很多題只有 2 個選項、容易猜中，所以門檻較高
+const passMark=(lv,n)=>Math.round(PASS[lv]*n/10);   // 題數不是 10 題時，及格線依比例換算
 const U={
  title:['比比看','Compara y Adivina','Compara y Adivina'],
  script:['中文字形','Escritura china','Chinese script'],trad:['繁體','',''],simp:['簡體','',''],
@@ -113,6 +115,8 @@ const U={
  tryAgain:['{n} 分以上就破關，再試一次吧！','Con {n} puntos o más superas el nivel. ¡Inténtalo otra vez!','Score {n} or more to clear the level. Try again!'],
  nextLv:['下一關','Siguiente nivel','Next level'],again:['再玩一次','Jugar otra vez','Play again'],menu:['主選單','Menú principal','Main menu'],
  lvName:['第 {n} 關','Nivel {n}','Level {n}'],
+ passed:['達標了，做得好！','¡Meta lograda, bien hecho!','Goal reached, well done!'],
+ noQ:['這個範圍湊不出題目，請多選一些特徵或題型。','Con este rango no se pueden generar preguntas. Elige más rasgos o tipos.','No questions can be made from this range. Select more features or types.'],
  tf_t:['對','Verdadero','True'],tf_f:['錯','Falso','False'],
 };
 function u(k,i){const v=U[k];return i===undefined?zh(v[0]):v[i];}
@@ -202,7 +206,7 @@ function ask(kind,d,o){const ps=d.poss;let z,es,en;const pol=o.pol;
   else if(kind==='FILL'){z=[tk('選出'),tk('正確'),tk('的'),tk('詞'),P_('。')];es='Elige la palabra correcta.';en='Choose the correct word.';}
   return {z,es,en};}
 // ===== 出題 =====
-const LV_DIMS=lv=>Object.values(DIMS).filter(d=>d.lv<=lv);
+const LV_DIMS=lv=>Object.values(DIMS).filter(d=>d.lv<=lv&&(!RANGE||!RANGE.dims.length||RANGE.dims.includes(d.key)));
 // 各特徵出現機率（眼睛、鼻子在圖上差異較小，比較少出）
 let USED={};const dimW=d=>d.w*Math.pow(.4,USED[d.key]||0);   // 同一回合已出過的特徵，權重每次乘 0.4
 function people(n,cond,tries=400){for(let i=0;i<tries;i++){const s=shuffle(ITEMS).slice(0,n);if(cond(...s))return s;}return null;}
@@ -266,7 +270,7 @@ const GEN={
      return mkQ('tf',d,[a,b],{sents:[sent(st)],q:ask('TF',d,{}),btns:[{z:[tk('對')],ok:want},{z:[tk('錯')],ok:!want}],tf:1});}
    return null;},
  // 看圖選句子
- pick(lv){const d=pick(LV_DIMS(lv).filter(d=>lv<3||d.num||Math.random()<.5));const nd=lv>=2?3:2;   // 干擾項：L1 兩個（共 3 選項）、L2 以上三個（共 4 選項）
+ pick(lv){let cd=LV_DIMS(lv).filter(d=>lv<3||d.num||Math.random()<.5);if(!cd.length)cd=LV_DIMS(lv);const d=pick(cd);const nd=lv>=2?3:2;   // 干擾項：L1 兩個（共 3 選項）、L2 以上三個（共 4 選項）
    for(let i=0;i<120;i++){const [a,b]=shuffle(ITEMS).slice(0,2);if(cmp(d,a,b)===null)continue;
      const c=[];
      for(const pol of [1,-1]){if(!polOK(d,pol))continue;
@@ -328,11 +332,14 @@ const GEN={
 };
 const POOL={1:['decode','tf','pick','more'],2:['decode','pick','whobi','biwho','fill'],3:['chain','most','whobi','biwho','pick']};
 const qKey=q=>q.type+q.d.key+q.its.map(p=>p.id).sort().join();
-function makeRound(lv){USED={};const types=shuffle(POOL[lv]).slice(0,3);const counts=[4,3,3];const list=[];
-  types.forEach((t,i)=>{for(let k=0;k<counts[i];k++)list.push(t);});
+const poolOf=lv=>POOL[lv].filter(t=>!RANGE||!RANGE.types.length||RANGE.types.includes(t));   // 老師有勾題型時只出勾的
+function makeRound(lv){USED={};const pool=poolOf(lv);if(!pool.length||!LV_DIMS(lv).length)return [];
+  const list=[];
+  if(RANGE){const ts=shuffle(pool);for(let i=0;i<RANGE.n;i++)list.push(ts[i%ts.length]);}   // 老師自選：題型平均分配
+  else{const types=shuffle(POOL[lv]).slice(0,3);const counts=[4,3,3];types.forEach((t,i)=>{for(let k=0;k<counts[i];k++)list.push(t);});}
   const qs=[],seen=new Set();   // seen：同一回合不出完全相同的題目
   for(const t of shuffle(list)){let q=null;
-    for(const tt of [t,...shuffle(POOL[lv].filter(x=>x!==t))]){for(let i=0;i<(tt===t?20:6)&&!q;i++){const c=GEN[tt](lv);if(c&&!seen.has(qKey(c)))q=c;}if(q)break;}
+    for(const tt of [t,...shuffle(pool.filter(x=>x!==t))]){for(let i=0;i<(tt===t?20:6)&&!q;i++){const c=GEN[tt](lv);if(c&&!seen.has(qKey(c)))q=c;}if(q)break;}
     if(q){seen.add(qKey(q));USED[q.d.key]=(USED[q.d.key]||0)+1;qs.push(q);}}   // 已出過的特徵之後權重變低，讓眼睛、鼻子等也有機會出現
   return qs;}
 // ===== 顯示 =====
@@ -361,9 +368,11 @@ function renderMenu(){S=null;
   <div class="panel"><h3>${L('py')}</h3><div class="opts">
     <button class="opt ${!cfg.py?'on':''}" onclick="setC('py',false)">${L('off')}</button><button class="opt ${cfg.py?'on':''}" onclick="setC('py',true)">${L('on')}</button></div></div>
   <h3 style="margin:16px 0 4px">${L('choose')}</h3>
-  ${[1,2,3].map(n=>`<button class="lvl" onclick="startRound(${n})"><b>${n}</b>${esc(u('l'+n))}${fo('l'+n)}<div class="d">${esc(zh(U['d'+n][0]+'｜'+LV_CNT[n]+' '+THEME.noun[0]))}${cfg.help!=='none'?'<br>'+esc(U['d'+n][cfg.help==='es'?1:2]+' · '+LV_CNT[n]+' '+THEME.noun[cfg.help==='es'?1:2]):''}</div></button>`).join('')}`;}
+  ${(h=>window.teacherHook?teacherHook(h):h)([1,2,3].map(n=>`<button class="lvl" onclick="startRound(${n},null)"><b>${n}</b>${esc(u('l'+n))}${fo('l'+n)}<div class="d">${esc(zh(U['d'+n][0]+'｜'+LV_CNT[n]+' '+THEME.noun[0]))}${cfg.help!=='none'?'<br>'+esc(U['d'+n][cfg.help==='es'?1:2]+' · '+LV_CNT[n]+' '+THEME.noun[cfg.help==='es'?1:2]):''}</div></button>`).join(''))}`;}
 function setC(k,v){cfg[k]=v;saveCfg();if(S)renderQ();else renderMenu();}
-function startRound(lv){S={lv,qs:makeRound(lv),i:0,score:0,tries:0,done:false,wrong:[],dict:false};renderQ();window.scrollTo(0,0);}
+function startRound(lv,rg){if(rg!==undefined)RANGE=rg;   // 一般關卡傳 null；老師自選傳範圍；「再玩一次」不傳，沿用目前的
+  const qs=makeRound(lv);if(!qs.length){alert(u('noQ'));return;}
+  S={lv,qs,i:0,score:0,tries:0,done:false,wrong:[],dict:false};renderQ();window.scrollTo(0,0);}
 function quit(){if(confirm(u('quitQ')))renderMenu();}
 function renderQ(){const q=S.qs[S.i];const n=S.qs.length;
   let body='';
@@ -408,17 +417,19 @@ function pickCard(i){const q=S.qs[S.i];if(q.btns||S.done||S.wrong.includes('c'+i
 function pickBtn(i){const q=S.qs[S.i];if(S.done||S.wrong.includes('b'+i))return;judge(q.btns[i].ok,'b'+i);}
 function nextQ(){S.i++;S.tries=0;S.done=false;S.wrong=[];S.gain=0;S.dict=false;
   if(S.i>=S.qs.length)return renderResult();renderQ();window.scrollTo(0,0);}
-function tryMsg(lv){const n=PASS[lv],v=U.tryAgain;return esc(zh(v[0].replace('{n}',n)))+(cfg.help==='none'?'':`<small>${esc(v[cfg.help==='es'?1:2].replace('{n}',n))}</small>`);}
-function renderResult(){const sc=S.score,lv=S.lv,pass=sc>=PASS[lv];
+function tryMsg(lv,cnt){const n=passMark(lv,cnt||10),v=U.tryAgain;return esc(zh(v[0].replace('{n}',n)))+(cfg.help==='none'?'':`<small>${esc(v[cfg.help==='es'?1:2].replace('{n}',n))}</small>`);}
+function renderResult(){const sc=S.score,lv=S.lv,pass=sc>=passMark(lv,S.qs.length);
   let msg,btn='';
-  if(pass&&lv<3){msg=L('clear');btn=`<button class="big" onclick="startRound(${lv+1})">${L('nextLv')}</button>`;}
+  if(RANGE)msg=pass?L('passed'):tryMsg(lv,S.qs.length);   // 老師自選範圍：沒有「下一關」
+  else if(pass&&lv<3){msg=L('clear');btn=`<button class="big" onclick="startRound(${lv+1})">${L('nextLv')}</button>`;}
   else if(pass)msg=L('allClear');else msg=tryMsg(lv);
   app.innerHTML=`<h1>${esc(u('title'))}</h1><div class="sub">${esc(zh(U.lvName[0].replace('{n}',lv)))} · ${L('res')}</div>
   <div class="score">${sc}<span style="font-size:1.2rem;color:#999"> / ${S.qs.length*10}</span></div>
   <p style="text-align:center;font-size:1.1rem">${msg}</p>
   ${btn}<button class="big ${btn?'sec':''}" onclick="startRound(${lv})">${L('again')}</button>
   <button class="big sec" onclick="renderMenu()">${L('menu')}</button>`;}
-renderMenu();
 </script>
+<script src="teacher.js"></script>
+<script>renderMenu();</script>
 </body>
 </html>
