@@ -106,6 +106,7 @@ body.wsmode .card:active{transform:none}
 document.head.appendChild(st);
 
 // ---- 小工具 ----
+const sheetLocked=()=>!!(window.cr&&cr.sheetLocked());   // 練習紙：訂閱才能用（classroom.js）
 const bi=(z,es)=>esc(zh(z))+(cfg.help==='none'?'':`<small>${esc(es)}</small>`);
 const chip=(on,label,click)=>`<button class="chip ${on?'on':''}" onclick="${click}">${on?'✓ ':''}${label}</button>`;
 
@@ -132,7 +133,7 @@ function panelHtml(){
     const ok=canMake();
     h+=`<div class="tsum">${ok?`${T.n} ${esc(zh('題'))} · ${onD().length} ${esc(zh('個特徵'))} · ${onT().length} ${esc(zh('種題型'))}`:esc(zh(valid()?'這個範圍湊不出題目，請多選一些特徵或題型':'請至少各選一個特徵和題型'))}</div>`;
     h+=`<button class="big ${ok?'':'dis'}" onclick="tc.start()">▶ ${bi('用這個範圍玩','Jugar con este rango')}</button>
-      <button class="big sec ${ok?'':'dis'}" onclick="tc.sheet()">🖨 ${bi('做練習紙（列印／PDF）','Hoja de práctica (imprimir / PDF)')}</button>
+      <button class="big sec ${ok?'':'dis'}" onclick="tc.sheet()">${sheetLocked()?'🔒 ':''}🖨 ${bi('做練習紙（列印／PDF）','Hoja de práctica (imprimir / PDF)')}${sheetLocked()?`<small>${esc(zh('訂閱功能'))}${cfg.help==='none'?'':' · Suscripción'}</small>`:''}</button>
       <button class="big sec ${ok?'':'dis'}" onclick="tc.copy()">🔗 ${bi('複製分享連結給學生','Copiar enlace para alumnos')}</button>`;
     if(T.msg)h+=`<div class="tmsg">${esc(T.msg)}</div>`;
   }
@@ -209,11 +210,16 @@ window.tc={
   copy(){if(!canMake())return;const url=link();
     const fb=()=>{prompt('複製這個連結 / Copia este enlace',url);};
     if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(url).then(()=>{T.msg='✓ 已複製連結，可以貼給學生 / Enlace copiado';renderMenu();},fb);else fb();},
-  sheet(){if(!canMake())return;const rg=rangeOf(),saved=RANGE;RANGE=rg;let qs;try{qs=makeRound(T.lv);}finally{RANGE=saved;}
+  sheet(){if(!canMake())return;if(sheetLocked()){cr.needPro();return;}const rg=rangeOf(),saved=RANGE;RANGE=rg;let qs;try{qs=makeRound(T.lv);}finally{RANGE=saved;}
     if(!qs.length){alert(u('noQ'));return;}
     SHEET={qs,rg};renderSheet();},
   cfg(k,v){cfg[k]=v;saveCfg();renderSheet();},
   closeSheet(){document.body.classList.remove('wsmode');SHEET=null;renderMenu();window.scrollTo(0,0);},
+  TN,
+  // 給班級連結用：目前老師設定的範圍（不含 theme）
+  linkParams(){const r=rangeOf(),o=[];o.push('lv='+T.lv);if(r.dims.length)o.push('d='+r.dims.join(','));if(r.types.length)o.push('t='+r.types.join(','));o.push('n='+T.n);
+    const sum=`${zh('第 '+T.lv+' 關')} · ${T.n} ${zh('題')} · ${onD().map(k=>zh(DIMS[k].name[0])).join('、')} · ${onT().map(k=>zh(TN[k][0])).join('、')}`;
+    return {ok:canMake(),qs:o.join('&'),sum};},
   exit(){T.locked=false;RANGE=null;try{history.replaceState(null,'',location.href.split('#')[0].split('?')[0]);}catch(e){}renderMenu();},
 };
 })();

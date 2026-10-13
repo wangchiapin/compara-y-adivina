@@ -257,7 +257,7 @@ const GEN={
      else{if(truth(st)!==true)st.pol=-pol;if(!polOK(d,st.pol)){st={f,d,a:b,b:a,pol:1};}}
      if(!polOK(d,st.pol)||truth(st)!==true)continue;
      const who=Math.random()<.5?st.a:st.b;
-     return mkQ('decode',d,shuffle([a,b]),{hide:1,sents:[sent(st)],q:ask('WHO',d,{a:who}),ans:who.id,tagCm:f==='DEG'&&d.key==='height'});}
+     return mkQ('decode',d,shuffle([a,b]),{hide:1,sents:[sent(st)],q:ask('WHO',d,{a:who}),ans:who.id,tagCm:f==='DEG'&&d.key==='height',f:st.f,pol:st.pol});}
    return null;},
  // 對錯
  tf(lv){const d=pick(LV_DIMS(lv));
@@ -267,7 +267,7 @@ const GEN={
      if(d.num)cands.push({f:'ABOUT',d,a,b});if(d.same)cands.push({f:'DIFFER',d,a,b});
      const want=Math.random()<.5;const ok=cands.filter(s=>truth(s)===want&&litTrue(s)===want);if(!ok.length)continue;
      const st=pick(ok);
-     return mkQ('tf',d,[a,b],{sents:[sent(st)],q:ask('TF',d,{}),btns:[{z:[tk('對')],ok:want},{z:[tk('錯')],ok:!want}],tf:1});}
+     return mkQ('tf',d,[a,b],{sents:[sent(st)],q:ask('TF',d,{}),btns:[{z:[tk('對')],ok:want},{z:[tk('錯')],ok:!want}],tf:1,f:st.f,pol:st.pol||0,tv:want});}
    return null;},
  // 看圖選句子
  pick(lv){let cd=LV_DIMS(lv).filter(d=>lv<3||d.num||Math.random()<.5);if(!cd.length)cd=LV_DIMS(lv);const d=pick(cd);const nd=lv>=2?3:2;   // 干擾項：L1 兩個（共 3 選項）、L2 以上三個（共 4 選項）
@@ -287,21 +287,21 @@ const GEN={
      for(const s of shuffle(F)){const k=sent(s).z.map(x=>x.t).join('');if(!zs.has(k)){zs.add(k);fs.push(s);}if(fs.length===nd)break;}
      if(fs.length<2)continue;
      const btns=shuffle([{st:t,ok:true},...fs.map(s=>({st:s,ok:false}))]).map(o=>({z:sent(o.st).z,ok:o.ok,tr:sent(o.st)}));
-     return mkQ('pick',d,[a,b],{q:ask('PICK',d,{}),btns,tagCm:d.key==='height'&&(lv>=2||t.f==='DIFF')});}
+     return mkQ('pick',d,[a,b],{q:ask('PICK',d,{}),btns,tagCm:d.key==='height'&&(lv>=2||t.f==='DIFF'),f:t.f,pol:t.pol||0});}
    return null;},
  // 誰比較…（兩人）
  more(lv){const d=pick(LV_DIMS(lv));
    const s=people(2,(a,b)=>clear(d,a,b)!==null);if(!s)return null;const [a,b]=s;const pol=rPol(d);
    const win=clear(d,a,b)===pol?a:b;
-   return mkQ('more',d,[a,b],{q:ask('MORE',d,{a,b,pol}),ans:win.id,expl:[sent({f:'BI',d,a:win,b:win===a?b:a,pol})]});},
+   return mkQ('more',d,[a,b],{q:ask('MORE',d,{a,b,pol}),ans:win.id,expl:[sent({f:'BI',d,a:win,b:win===a?b:a,pol})],f:'MORE',pol});},
  // 誰比 T …（L2 三人、L3 四人）
  whobi(lv){const n=lv>=3?4:3;const ch=chooseDP(lv,(d,pol)=>triT(d,pol,n,'who').length>0);if(!ch)return null;const {d,pol}=ch;
    const ts=triT(d,pol,n,'who'),t=ts[R(ts.length)],[s,o]=sideOf(d,t,pol),x=s[R(s.length)];
-   return mkQ('whobi',d,shuffle([t,x,...sample(o,n-2)]),{q:ask('WHOBI',d,{t,pol}),ans:x.id,expl:[sent({f:'BI',d,a:x,b:t,pol})]});},
+   return mkQ('whobi',d,shuffle([t,x,...sample(o,n-2)]),{q:ask('WHOBI',d,{t,pol}),ans:x.id,expl:[sent({f:'BI',d,a:x,b:t,pol})],f:'WHOBI',pol});},
  // T 比誰…（L2 三人、L3 四人）
  biwho(lv){const n=lv>=3?4:3;const ch=chooseDP(lv,(d,pol)=>triT(d,pol,n,'bi').length>0);if(!ch)return null;const {d,pol}=ch;
    const ts=triT(d,pol,n,'bi'),t=ts[R(ts.length)],[s,o]=sideOf(d,t,pol),y=o[R(o.length)];
-   return mkQ('biwho',d,shuffle([t,y,...sample(s,n-2)]),{q:ask('BIWHO',d,{t,pol}),ans:y.id,expl:[sent({f:'BI',d,a:t,b:y,pol})]});},
+   return mkQ('biwho',d,shuffle([t,y,...sample(s,n-2)]),{q:ask('BIWHO',d,{t,pol}),ans:y.id,expl:[sent({f:'BI',d,a:t,b:y,pol})],f:'BIWHO',pol});},
  // 填空
  fill(lv){const d=pick(LV_DIMS(lv));
    for(let i=0;i<80;i++){const [a,b]=shuffle(ITEMS).slice(0,2);const c=cmp(d,a,b);if(c===null)continue;const kinds=[];
@@ -312,7 +312,7 @@ const GEN={
      else if(k==='same'){const pol=d.v(a)===3?1:-1;if(!polOK(d,pol))continue;st={f:'SAME',d,a,b,pol};z=[...subj(d,a),BL,NM(b),tk('一樣'),tkA(d,pol)];words=['比','跟','沒有'];ans='跟';}
      else{const pol=polOK(d,c)?c:null;if(!pol)continue;const g=degree(d,a,b);if(!g)continue;st={f:'DEG',d,a,b,pol,deg:g};z=[...subj(d,a),tk('比'),NM(b),tkA(d,pol),BL];words=['一點','很多','一樣'];ans=g===1?'一點':'很多';}
      if(truth(st)!==true)continue;
-     return mkQ('fill',d,[a,b],{blankZ:z,fillAns:ans,q:ask('FILL',d,{}),btns:words.map(w=>({z:[tk(w)],ok:w===ans,w})),full:sent(st),row:1,tagCm:k==='deg'&&d.key==='height'});}
+     return mkQ('fill',d,[a,b],{blankZ:z,fillAns:ans,q:ask('FILL',d,{}),btns:words.map(w=>({z:[tk(w)],ok:w===ans,w})),full:sent(st),row:1,tagCm:k==='deg'&&d.key==='height',f:st.f,pol:st.pol});}
    return null;},
  // 連鎖解碼（三人，更／還）
  chain(lv){const ch=chooseDP(lv,d=>chains(d).length>0);if(!ch)return null;const {d,pol}=ch;
@@ -320,7 +320,7 @@ const GEN={
    let s1,s2;if(pol<0){s1={f:'BI',d,a:y,b:x,pol:-1};s2={f:'GENG',d,a:z,b:y,pol:-1,alt:Math.random()<.5};}
    else{s1={f:'BI',d,a:y,b:z,pol:1};s2={f:'GENG',d,a:x,b:y,pol:1,alt:Math.random()<.5};}
    const who=[x,y,z][R(3)];
-   return mkQ('chain',d,shuffle([x,y,z]),{hide:1,sents:[sent(s1),sent(s2)],q:ask('WHO',d,{a:who}),ans:who.id});},
+   return mkQ('chain',d,shuffle([x,y,z]),{hide:1,sents:[sent(s1),sent(s2)],q:ask('WHO',d,{a:who}),ans:who.id,f:'GENG',pol});},
  // 誰最…（3–4 人）
  most(lv){let n=Math.random()<.5?3:4;let ch=chooseDP(lv,(d,pol)=>mostW(d,pol,n).length>0);
    if(!ch){n=3;ch=chooseDP(lv,(d,pol)=>mostW(d,pol,n).length>0);}if(!ch)return null;
@@ -328,7 +328,7 @@ const GEN={
    const ex={z:[...subj(d,w),tk('最'),tkA(d,pol)],
      es:ps?`${w.name} tiene ${ps.es} ${esMas(d,pol,w)}`:`${w.name} es ${d.noMas?THEME.art(w)+esA(d,pol,w):THEME.art(w)+esMas(d,pol,w)}`,
      en:ps?`${w.name}'s ${ps.en} ${ps.be} the ${adj(d,pol).en[2]}`:`${w.name} is the ${adj(d,pol).en[2]}`};
-   return mkQ('most',d,shuffle([w,...sample(sideOf(d,w,pol)[1],n-1)]),{q:ask('MOST',d,{pol}),ans:w.id,expl:[ex]});},
+   return mkQ('most',d,shuffle([w,...sample(sideOf(d,w,pol)[1],n-1)]),{q:ask('MOST',d,{pol}),ans:w.id,expl:[ex],f:'MOST',pol});},
 };
 const POOL={1:['decode','tf','pick','more'],2:['decode','pick','whobi','biwho','fill'],3:['chain','most','whobi','biwho','pick']};
 const qKey=q=>q.type+q.d.key+q.its.map(p=>p.id).sort().join();
@@ -430,6 +430,7 @@ function renderResult(){const sc=S.score,lv=S.lv,pass=sc>=passMark(lv,S.qs.lengt
   <button class="big sec" onclick="renderMenu()">${L('menu')}</button>`;}
 </script>
 <script src="teacher.js"></script>
+<script src="classroom.js"></script>
 <script>renderMenu();</script>
 </body>
 </html>
