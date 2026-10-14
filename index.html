@@ -8,31 +8,43 @@
 :root{--acc:#ff7a59;--acc2:#ffe8e0;--ink:#222;--mut:#777;--ok:#2e9d5b;--bad:#e0464b;--bg:#fff;--panel:#f6f6f7}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif}
-#app{max-width:520px;margin:0 auto;padding:14px 16px 40px}
+#app{position:relative;max-width:520px;margin:0 auto;padding:14px 16px 40px}
 h1{text-align:center;margin:10px 0 0;font-size:2rem;letter-spacing:.1em}
 .sub{text-align:center;color:var(--mut);margin-bottom:14px}
-small,.fo{display:block;font-size:.72em;color:var(--mut);font-weight:400}
+small{display:block;font-size:.72em;color:var(--mut);font-weight:400;line-height:1.2}
 .panel{background:var(--panel);border-radius:14px;padding:12px 14px;margin:10px 0}
 .panel h3{margin:0 0 8px;font-size:1rem}
+.note{color:var(--mut);font-size:.85rem;text-align:center}
+.ver{text-align:center;color:#bbb;font-size:.75rem;margin-top:18px}
+/* 統一按鈕（三款遊戲同一規格）：膠囊形；選項按鈕高 46px、主要按鈕滿寬（最寬 300px）高 54px */
 .opts{display:flex;gap:8px;flex-wrap:wrap}
-.opt{flex:1;min-width:80px;border:2px solid #ddd;background:#fff;border-radius:12px;padding:9px 6px;font-size:1rem;cursor:pointer;text-align:center;color:var(--ink)}
+.opts.two .opt{flex:1 1 40%}
+.opt{flex:1 1 0;min-width:0;min-height:46px;border:2px solid #ddd;background:#fff;border-radius:999px;padding:5px 10px;font-size:1rem;cursor:pointer;text-align:center;color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2;font-family:inherit}
 .opt.on{border-color:var(--acc);background:var(--acc2);font-weight:700}
-.lvl{display:block;width:100%;text-align:left;border:2px solid #eee;background:#fff;border-radius:14px;padding:12px 14px;margin:8px 0;cursor:pointer;font-size:1.05rem;color:var(--ink)}
-.lvl b{color:var(--acc);margin-right:6px}
-.lvl .d{font-size:.85rem;color:var(--mut);margin-top:4px}
-.big{display:block;width:100%;border:0;border-radius:14px;padding:13px;font-size:1.15rem;background:var(--acc);color:#fff;cursor:pointer;margin:10px 0;font-weight:700}
+.big{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:300px;min-height:54px;margin:10px auto;border:0;border-radius:999px;padding:6px 18px;font-size:1.15rem;background:var(--acc);color:#fff;cursor:pointer;font-weight:700;line-height:1.2;text-decoration:none;font-family:inherit}
 .big.sec{background:#eee;color:var(--ink)}
 .big small{color:inherit;opacity:.8}
+.lvl{display:block;width:100%;min-height:54px;text-align:center;border:2px solid #eee;background:#fff;border-radius:999px;padding:9px 26px;margin:8px 0;cursor:pointer;font-size:1.05rem;color:var(--ink);line-height:1.3;font-family:inherit}
+.lvl b{color:var(--acc);margin-right:6px}
+.lvl small{display:inline;margin-left:6px}
+.lvl .d{font-size:.8rem;color:var(--mut);margin-top:2px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.95rem}
-.top .x{border:0;background:#eee;border-radius:10px;padding:6px 10px;cursor:pointer;font-size:.95rem}
+.top .grow{flex:1}
+.pillx{border:1.5px solid #ddd;background:#fff;border-radius:999px;min-width:42px;height:42px;padding:0 12px;cursor:pointer;font-size:1rem;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);font-family:inherit}
+.gear{position:absolute;top:10px;right:12px;width:42px;height:42px;border-radius:999px;border:1.5px solid #ddd;background:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:2}
+.top .gear{position:static;flex:0 0 42px}
 .bar{height:6px;background:#eee;border-radius:3px;margin:8px 0 4px;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--acc);transition:width .3s}
 .q{font-size:1.35rem;line-height:1.9;margin:12px 0 6px;text-align:center}
-.q .nm{color:#2a5bd7;font-weight:700;margin:0 .15em}
-.q .blank{display:inline-block;min-width:2.6em;border-bottom:3px solid var(--acc);margin:0 .2em;color:var(--acc);font-weight:700}
+.nm{color:#2a5bd7;font-weight:700;margin:0 .15em}
+.blank{display:inline-block;min-width:2.6em;border-bottom:3px solid var(--acc);margin:0 .2em;color:var(--acc);font-weight:700}
 .q .ask{display:block;font-weight:700;margin-top:4px}
-ruby rt{font-size:.5em;color:var(--mut);font-weight:400}
-.dict{border:0;background:var(--acc2);border-radius:10px;padding:4px 10px;cursor:pointer;font-size:.9rem}
+/* 拼音／注音：放在每個詞的上面 */
+.w{display:inline-flex;flex-direction:column;align-items:center;vertical-align:bottom;margin:0 .1em}
+.w .ph{font-size:.5em;line-height:1.25;color:var(--mut);font-weight:400;white-space:nowrap}
+.w .ph.zy{font-size:.56em}
+.w .hz{line-height:1.45}
+.dict{border:0;background:var(--acc2);border-radius:999px;min-height:36px;padding:4px 14px;cursor:pointer;font-size:.9rem;font-family:inherit}
 .dictBox{background:#fffaf2;border:1px solid #f3dcc0;border-radius:12px;padding:8px 12px;margin:6px 0;font-size:.95rem}
 .dictBox div{margin:3px 0}
 .cards{display:flex;gap:10px;justify-content:center;align-items:flex-end;margin:12px 0}
@@ -42,7 +54,6 @@ ruby rt{font-size:.5em;color:var(--mut);font-weight:400}
 .card:active{transform:scale(.97)}
 .card .crop{position:relative;overflow:hidden;border-radius:10px;background:#f3f6fa;margin:0 auto}
 .card .crop img{position:absolute;top:0;left:50%;transform:translateX(-50%);display:block;width:auto;max-width:none}
-.fb .nm,.ob .nm{color:#2a5bd7;font-weight:700;margin:0 .15em}
 .card.full .fig{display:flex;justify-content:center;align-items:flex-end;border-bottom:3px solid #ccc}
 .card.full .fig img{display:block}
 .card .lab{margin-top:4px;font-weight:700}
@@ -52,58 +63,94 @@ ruby rt{font-size:.5em;color:var(--mut);font-weight:400}
 .card.wrong{border-color:var(--bad);animation:shake .35s;opacity:.55}
 .card.full.right .fig{filter:drop-shadow(0 0 6px #2e9d5b)}
 .card.full.wrong{opacity:.4}
-.ground{height:3px;background:#ccc;border-radius:2px;margin:-12px 0 12px}
 .btns{display:flex;flex-direction:column;gap:8px;margin:12px 0}
 .btns.row{flex-direction:row}
-.ob{border:2px solid #e3e3e3;background:#fff;border-radius:12px;padding:10px;font-size:1.15rem;cursor:pointer;line-height:1.8;color:var(--ink)}
+.ob{min-height:46px;border:2px solid #e3e3e3;background:#fff;border-radius:999px;padding:6px 22px;font-size:1.15rem;cursor:pointer;line-height:1.7;color:var(--ink);font-family:inherit}
 .btns.row .ob{flex:1}
 .ob.right{border-color:var(--ok);background:#eaf7ef;animation:pop .35s}
 .ob.wrong{border-color:var(--bad);background:#fdecec;animation:shake .35s}
 .fb{border-radius:12px;padding:10px 12px;margin:8px 0;font-size:1rem}
 .fb.ok{background:#eaf7ef}.fb.no{background:#fdecec}
 .fb .tr{color:#555;font-size:.92rem;margin-top:4px}
+.fb small{display:inline;margin-left:6px}
 .score{text-align:center;font-size:3rem;font-weight:800;color:var(--acc);margin:16px 0 0}
+.comment{text-align:center;font-size:1.3rem;font-weight:800;color:var(--ok);margin:10px 0 4px}
+.passmsg{text-align:center;font-size:1rem;margin:4px 0 8px}
 @keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-.note{color:var(--mut);font-size:.85rem;text-align:center}
+/* ⚙️ 設定視窗 */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.ov.hide{display:none}
+.setcard{background:#fff;border-radius:20px;padding:14px 12px;width:100%;max-width:420px;max-height:92vh;overflow:auto;box-shadow:0 6px 30px rgba(0,0,0,.15)}
+.setcard h2{margin:0 0 10px;text-align:center;font-size:1.3rem}
+.setcard h2 small{display:block}
 </style>
 </head>
 <body>
 <div id="app"></div>
+<div id="setov" class="ov hide"></div>
 <script>
 // 主題包：預設 people，可用 ?theme=<名稱> 切換（對應 themes/<名稱>.js）；同步載入，引擎執行時一定已就緒
 document.write('<script src="themes/'+(new URLSearchParams(location.search).get('theme')||'people').replace(/[^\w-]/g,'')+'.js"><\/script>');
 </script>
+<script src="engine.js?v=5-4"></script>
 <script>
-// ===== 人物資料（依 comparatives-50-people-v2；w/h/face 為圖片尺寸與臉部裁切比例）=====
-// ===== 主題包（themes/<名稱>.js 提供）：項目資料、特徵定義、分組與語法規則 =====
 if(!window.THEME_PACK){document.getElementById('app').innerHTML='<p style="padding:20px;text-align:center">找不到主題包 / Theme pack not found</p>';throw new Error('no theme pack');}
 const THEME=window.THEME_PACK;
-const ITEMS=THEME.items;
-const T2S={"個":"个","內":"内","兩":"两","厲":"厉","問":"问","單":"单","嗎":"吗","圖":"图","壯":"壮","對":"对","徵":"征","態":"态","戰":"战","戲":"戏","捲":"卷","擇":"择","數":"数","時":"时","標":"标","樣":"样","機":"机","歲":"岁","沒":"没","為":"为","無":"无","狀":"状","現":"现","異":"异","確":"确","碼":"码","簡":"简","結":"结","繼":"继","續":"续","膚":"肤","臉":"脸","與":"与","設":"设","詞":"词","試":"试","語":"语","誰":"谁","譯":"译","資":"资","較":"较","輔":"辅","這":"这","連":"连","進":"进","遊":"游","選":"选","還":"还","錯":"错","鎖":"锁","長":"长","門":"门","開":"开","關":"关","階":"阶","離":"离","難":"难","頭":"头","題":"题","顯":"显","體":"体","髮":"发","麼":"么","點":"点"};
-Object.assign(T2S,THEME.t2s||{});
-// ===== 設定 =====
-let cfg={simp:false,help:'es',py:false};
-try{Object.assign(cfg,JSON.parse(localStorage.getItem('bbk_cfg')||'{}'));}catch(e){}
-function saveCfg(){try{localStorage.setItem('bbk_cfg',JSON.stringify(cfg));}catch(e){}}
+const E=BBK_ENGINE(THEME);          // 出題引擎（engine.js，跟老師管理中心的學習單共用）
+const {DIMS,POOL,TN,LV_CNT,passMark,esc}=E;
 const app=document.getElementById('app');
-const zh=s=>cfg.simp?[...s].map(c=>T2S[c]||c).join(''):s;
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const LV_CNT={1:'2',2:'2–3',3:'2–4'};   // 各關一題會出現幾個項目
-let RANGE=null;   // 老師自選範圍 {lv,dims:[特徵],types:[題型],n:題數}；空陣列 = 全部；null = 一般模式（teacher.js 設定）
-const PASS={1:80,2:75,3:70};   // 各關及格分數（10 題，每題最多 10 分）。第一關很多題只有 2 個選項、容易猜中，所以門檻較高
-const passMark=(lv,n)=>Math.round(PASS[lv]*n/10);   // 題數不是 10 題時，及格線依比例換算
+const VERSION='v5-4';
+const CENTER_URL='https://wangchiapin.github.io/profesor/#/settings';
+
+// ===== 三款遊戲共用的基本設定（⚙️）：localStorage 'hanziGames.settings'，格式見 corre/README.md =====
+//   { v:1, script:'trad'|'simp', lang:'es'|'en'|'zh', phon:'pinyin'|'zhuyin'|'both'|'off', rate:'slow'|'normal'|'fast' }
+//   比比看沒有語音，所以 ⚙️ 不放語速；寫回時保留別款遊戲的 rate。
+const SETTINGS_KEY='hanziGames.settings';
+const SET_OPTS={script:['trad','simp'],lang:['es','en','zh'],phon:['pinyin','zhuyin','both','off'],rate:['slow','normal','fast']};
+function readSettings(){
+  const out={v:1,script:'trad',lang:'es',phon:'pinyin',rate:'normal'};
+  let saved=null;
+  try{saved=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'null');}catch(e){}
+  if(saved&&typeof saved==='object'){
+    Object.keys(SET_OPTS).forEach(k=>{if(SET_OPTS[k].includes(saved[k]))out[k]=saved[k];});
+  }else{
+    // 第一次：從比比看舊的設定搬過來（bbk_cfg：simp、help：es/en/none、py：true/false）
+    let old=null;try{old=JSON.parse(localStorage.getItem('bbk_cfg')||'null');}catch(e){}
+    if(old&&typeof old==='object'){
+      if(old.simp===true)out.script='simp';
+      if(old.help==='en')out.lang='en';else if(old.help==='none')out.lang='zh';
+      if(old.py===false)out.phon='off';
+    }
+    writeSettings(out);
+  }
+  return out;
+}
+function writeSettings(o){
+  try{
+    let cur={};try{cur=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}')||{};}catch(e){}
+    const add={v:1,script:o.script,lang:o.lang,phon:o.phon};
+    if(!SET_OPTS.rate.includes(cur.rate))add.rate=o.rate||'normal';   // rate 是跑吧、色數的；有就保留
+    localStorage.setItem(SETTINGS_KEY,JSON.stringify(Object.assign(cur,add)));
+  }catch(e){}
+}
+const SET=readSettings();
+const simp=()=>SET.script==='simp';
+const RO=()=>({simp:simp(),phon:SET.phon});          // 顯示句子用的設定
+const zh=s=>E.zh(s,simp());
+
+// ===== 介面文字：[中, 西, 英]；畫面上中文在上、西文或英文小字在下；「只有中文」就只有中文 =====
 const U={
  title:['比比看','Compara y Adivina','Compara y Adivina'],
- script:['中文字形','Escritura china','Chinese script'],trad:['繁體','',''],simp:['簡體','',''],
- help:['輔助語言','Idioma de apoyo','Helper language'],none:['無','',''],
- py:['拼音','Pinyin','Pinyin'],off:['關','No','Off'],on:['開','Sí','On'],
+ settings:['設定','Ajustes','Settings'],script:['字形','Escritura','Script'],langLbl:['語言','Idioma','Language'],
+ phon:['拼音／注音','Pinyin / Zhuyin','Pinyin / Zhuyin'],pinyin:['拼音','Pinyin','Pinyin'],zhuyin:['注音','Zhuyin','Zhuyin'],
+ both:['兩個都顯示','Los dos','Both'],phOff:['關','No','Off'],done:['完成','Listo','Done'],
  choose:['選擇難度','Elige el nivel','Choose a level'],
  l1:['入門','Básico','Basic'],l2:['進階','Intermedio','Intermediate'],l3:['挑戰','Desafío','Challenge'],
  d1:['比、比較、一樣、差不多、不一樣','比, 比較, 一樣, 差不多, 不一樣','比, 比較, 一樣, 差不多, 不一樣'],
  d2:['加上 沒有…那麼、一點、很多、誰比…／…比誰','+ 沒有…那麼, 一點, 很多, 誰比… / …比誰','+ 沒有…那麼, 一點, 很多, 誰比… / …比誰'],
  d3:['加上 更、還、最、具體差距','+ 更, 還, 最, diferencias exactas','+ 更, 還, 最, exact differences'],
- q:['題','Pregunta','Question'],pts:['分','pts','pts'],quit:['離開','Salir','Quit'],
+ pts:['分','pts','pts'],quit:['離開','Salir','Quit'],
  quitQ:['要離開這一回合嗎？','¿Salir de esta ronda?','Leave this round?'],
  right:['答對了！','¡Correcto!','Correct!'],wrong:['不對，再試一次','No, inténtalo otra vez','Not quite, try again'],
  ans:['正確答案','Respuesta correcta','Correct answer'],next:['下一題','Siguiente','Next'],
@@ -116,321 +163,177 @@ const U={
  nextLv:['下一關','Siguiente nivel','Next level'],again:['再玩一次','Jugar otra vez','Play again'],menu:['主選單','Menú principal','Main menu'],
  lvName:['第 {n} 關','Nivel {n}','Level {n}'],
  passed:['達標了，做得好！','¡Meta lograda, bien hecho!','Goal reached, well done!'],
- noQ:['這個範圍湊不出題目，請多選一些特徵或題型。','Con este rango no se pueden generar preguntas. Elige más rasgos o tipos.','No questions can be made from this range. Select more features or types.'],
+ noQ:['這個範圍湊不出題目，請多選一些特徵或題型。','Con este rango no se pueden generar preguntas.','No questions can be made from this range.'],
  tf_t:['對','Verdadero','True'],tf_f:['錯','Falso','False'],
+ cm0:['別灰心，再試一次會更好！','¡No te rindas! La próxima vez saldrá mejor.','Don\'t give up! Next time will be better.'],
+ cm1:['有進步的空間，加油！','Vas por buen camino, ¡sigue así!','You\'re on your way, keep going!'],
+ cm2:['不錯喔，越來越會比了！','¡Bien! Cada vez comparas mejor.','Nice! You\'re getting better at comparing.'],
+ cm3:['很棒！差一點就全對了！','¡Muy bien! ¡Casi perfecto!','Great! Almost perfect!'],
+ cm4:['全對！太厲害了！','¡Todo correcto! ¡Increíble!','All correct! Amazing!'],
+ teacher:['老師管理中心','Centro para profesores','Teacher center'],
+ tPractice:['老師指定的練習','Práctica del profesor','Teacher\'s practice'],loading:['載入中…','Cargando…','Loading…'],
+ startP:['開始練習','Empezar','Start'],normal:['一般模式（自己選關卡）','Modo normal (elegir nivel)','Normal mode (choose a level)'],
+ qn:['題','preguntas','questions'],
+ codeMissing:['找不到老師的練習範圍（可能已經刪除），先用一般模式。','No se encontró el rango del profesor (quizá se borró). Usa el modo normal.','The teacher\'s range was not found (maybe deleted). Using normal mode.'],
+ codeErr:['老師的練習範圍載入失敗，先用一般模式。','No se pudo cargar el rango del profesor. Usa el modo normal.','Could not load the teacher\'s range. Using normal mode.'],
 };
-function u(k,i){const v=U[k];return i===undefined?zh(v[0]):v[i];}
-function fo(k){if(cfg.help==='none')return '';const v=U[k][cfg.help==='es'?1:2];return v?`<small>${esc(v)}</small>`:'';}
-function L(k){return `${esc(u(k))}${fo(k)}`;}
-// ===== 詞語與拼音 =====
-const W={比:'bǐ',跟:'gēn',沒有:'méiyǒu',那麼:'nàme',一樣:'yíyàng',差不多:'chàbuduō',不:'bù',誰:'shéi',是:'shì',比較:'bǐjiào',最:'zuì',更:'gèng',還:'hái',一點:'yìdiǎn',很多:'hěn duō',多了:'duō le',的:'de',公分:'gōngfēn',歲:'suì',對:'duì',錯:'cuò',哪:'nǎ',一句:'yí jù',選出:'xuǎnchū',正確:'zhèngquè',詞:'cí',還是:'háishì'};
-const tk=(t,p)=>({t,p:p===undefined?(W[t]||''):p});
-const NM=p=>({t:p.name,nm:1});
-const P_=t=>({t,p:'',punc:1});
-const BL={blank:1};
-const NUMPY={一:'yī',二:'èr',三:'sān',四:'sì',五:'wǔ',六:'liù',七:'qī',八:'bā',九:'jiǔ',十:'shí'};
-function cnNum(n){const d='零一二三四五六七八九';let s;
-  if(n<10)s=d[n];else if(n<20)s='十'+(n%10?d[n%10]:'');else s=d[Math.floor(n/10)]+'十'+(n%10?d[n%10]:'');
-  return tk(s,[...s].map(c=>NUMPY[c]).join(''));}
-// ===== 比較特徵（由主題包定義）=====
-const DIMS=THEME.dims;
-for(const k in DIMS)DIMS[k].key=k;
-const R=n=>Math.floor(Math.random()*n);
-const pick=a=>{if(a.length&&a[0]&&a[0].key&&a[0].v){let t=0;for(const d of a)t+=dimW(d);let r=Math.random()*t;for(const d of a){r-=dimW(d);if(r<=0)return d;}return a[a.length-1];}return a[R(a.length)];};
-const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=R(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
-function cmp(d,a,b){if(a[d.key]===0||b[d.key]===0)return null;   // 0 = 校正時標為不出題
-  const x=d.v(a)-d.v(b),ax=Math.abs(x);
-  if(d.num){if(ax<=d.near)return 0;if(ax>=d.thr)return Math.sign(x);return null;}
-  if(x===0)return 0;if(ax>=d.thr)return Math.sign(x);return null;}
-function degree(d,a,b){const ax=Math.abs(d.v(a)-d.v(b));
-  if(d.key==='height')return ax>=8&&ax<=12?1:ax>=20?2:0;
-  if(d.key==='age')return ax>=3&&ax<=5?1:ax>=15?2:0;
-  return ax===1?1:ax===2?2:0;}
-const adj=(d,pol)=>pol>0?d.pos:d.neg;
-const tkA=(d,pol)=>tk(adj(d,pol).z,adj(d,pol).p);
-// 主語（含「的頭髮」）
-const subj=(d,a)=>d.poss?[NM(a),tk('的'),tk(d.poss.z,d.poss.p)]:[NM(a)];
-// ===== 句子：中文 tokens + 西／英翻譯 =====
-function esA(d,pol,p){const e=adj(d,pol).es;return Array.isArray(e)?e[p?THEME.gnd(p):0]:e;}
-function esMas(d,pol,p,pre){const a=esA(d,pol,p);return (pre||'')+(d.noMas?a:'más '+a);}
-function enC(d,pol){return adj(d,pol).en[1];}
-// st: {f, d, a, b, pol, deg, n}
-function sent(st){const {f,d,a,b,pol}=st;let z,es,en;const ps=d.poss;
-  const esS=(core)=>ps?`${a.name} tiene ${ps.es} ${core} que ${b.name}`:`${a.name} es ${core} que ${b.name}`;
-  const enS=(core)=>ps?`${a.name}'s ${ps.en} ${ps.be} ${core} than ${b.name}'s`:`${a.name} is ${core} than ${b.name}`;
-  if(f==='BI'){z=[...subj(d,a),tk('比'),NM(b),tkA(d,pol)];es=esS(esMas(d,pol,a));en=enS(enC(d,pol));}
-  else if(f==='DEG'){const w=st.deg===1?'一點':(st.alt?'多了':'很多');z=[...subj(d,a),tk('比'),NM(b),tkA(d,pol),tk(w)];
-    es=esS(esMas(d,pol,a,st.deg===1?'un poco ':'mucho '));en=enS((st.deg===1?'a bit ':'much ')+enC(d,pol));}
-  else if(f==='DIFF'){z=[NM(a),tk('比'),NM(b),tkA(d,pol),cnNum(st.n),d.unit];
-    es=`${a.name} es ${st.n} ${d.esU} ${esMas(d,pol,a)} que ${b.name}`;en=`${a.name} is ${st.n} ${d.enU} ${enC(d,pol)} than ${b.name}`;}
-  else if(f==='GENG'){const w=st.alt?'還':'更';z=[...subj(d,a),tk('比'),NM(b),tk(w),tkA(d,pol)];es=esS(esMas(d,pol,a,'aún '));en=enS('even '+enC(d,pol));}
-  else if(f==='MEI'){z=[...subj(d,a),tk('沒有'),NM(b),tk('那麼'),tkA(d,pol)];
-    es=ps?`${a.name} no tiene ${ps.es} tan ${esA(d,pol,a)} como ${b.name}`:`${a.name} no es tan ${esA(d,pol,a)} como ${b.name}`;
-    en=ps?`${a.name}'s ${ps.en} ${ps.be} not as ${adj(d,pol).en[0]} as ${b.name}'s`:`${a.name} is not as ${adj(d,pol).en[0]} as ${b.name}`;}
-  else if(f==='SAME'){z=[...subj(d,a),tk('跟'),NM(b),tk('一樣'),tkA(d,pol)];
-    es=ps?`${a.name} tiene ${ps.es} tan ${esA(d,pol,a)} como ${b.name}`:`${a.name} es tan ${esA(d,pol,a)} como ${b.name}`;
-    en=ps?`${a.name}'s ${ps.en} ${ps.be} as ${adj(d,pol).en[0]} as ${b.name}'s`:`${a.name} is as ${adj(d,pol).en[0]} as ${b.name}`;}
-  else if(f==='ABOUT'){z=[NM(a),tk('跟'),NM(b),tk('差不多'),tkA(d,1)];
-    es=d.key==='age'?`${a.name} y ${b.name} tienen casi la misma edad`:`${a.name} es casi tan ${esA(d,1,a)} como ${b.name}`;
-    en=d.key==='age'?`${a.name} is about the same age as ${b.name}`:`${a.name} is about as ${adj(d,1).en[0]} as ${b.name}`;}
-  else if(f==='DIFFER'){z=ps?[NM(a),tk('跟'),NM(b),tk('的'),tk(ps.z,ps.p),tk('不'),tk('一樣'),tkA(d,1)]:[NM(a),tk('跟'),NM(b),tk('不'),tk('一樣'),tkA(d,1)];
-    es=`${a.name} y ${b.name} no tienen ${d.esSame}`;en=`${a.name} and ${b.name} ${d.enSame}`;}
-  return {z,es,en};
-}
-function truth(st){const {f,d,a,b,pol}=st;const c=cmp(d,a,b);
-  if(f==='BI'||f==='GENG')return c===null?null:c===pol;
-  if(f==='DEG'){if(c===null)return null;if(c!==pol)return false;const g=degree(d,a,b);return g===0?null:g===st.deg;}
-  if(f==='DIFF')return (d.v(a)-d.v(b))*pol===st.n;
-  if(f==='MEI')return c===null||c===0?null:c===-pol;
-  if(f==='SAME'){if(c===null)return null;if(c!==0)return false;const lv=d.v(a);const want=pol>0?3:1;return lv===want?true:null;}
-  if(f==='ABOUT')return c===null?null:c===0;
-  if(f==='DIFFER')return c===null?null:c!==0;
-  return null;}
-// 問句
-function ask(kind,d,o){const ps=d.poss;let z,es,en;const pol=o.pol;
-  if(kind==='WHO'){z=[tk('誰'),tk('是'),NM(o.a),P_('？')];es=`¿Quién es ${o.a.name}?`;en=`Who is ${o.a.name}?`;}
-  else if(kind==='MORE'){z=[NM(o.a),tk('跟'),NM(o.b),P_('，'),tk('誰'),...(ps?[tk('的'),tk(ps.z,ps.p)]:[]),tk('比較'),tkA(d,pol),P_('？')];
-    es=ps?`${o.a.name} y ${o.b.name}, ¿quién tiene ${ps.es} ${esMas(d,pol,null)}?`:`${o.a.name} y ${o.b.name}, ¿quién es ${esMas(d,pol,null)}?`;
-    en=ps?`${o.a.name} or ${o.b.name}: whose ${ps.en} ${ps.be} ${enC(d,pol)}?`:`${o.a.name} or ${o.b.name}: who is ${enC(d,pol)}?`;}
-  else if(kind==='WHOBI'){z=[tk('誰'),...(ps?[tk('的'),tk(ps.z,ps.p)]:[]),tk('比'),NM(o.t),tkA(d,pol),P_('？')];
-    es=ps?`¿Quién tiene ${ps.es} ${esMas(d,pol,null)} que ${o.t.name}?`:`¿Quién es ${esMas(d,pol,null)} que ${o.t.name}?`;
-    en=ps?`Whose ${ps.en} ${ps.be} ${enC(d,pol)} than ${o.t.name}'s?`:`Who is ${enC(d,pol)} than ${o.t.name}?`;}
-  else if(kind==='BIWHO'){z=[...subj(d,o.t),tk('比'),tk('誰'),tkA(d,pol),P_('？')];
-    es=ps?`${o.t.name} tiene ${ps.es} ${esMas(d,pol,o.t)} que… ¿quién?`:`${o.t.name} es ${esMas(d,pol,o.t)} que… ¿quién?`;
-    en=ps?`${o.t.name}'s ${ps.en} ${ps.be} ${enC(d,pol)} than whose?`:`${o.t.name} is ${enC(d,pol)} than whom?`;}
-  else if(kind==='MOST'){z=[tk('誰'),...(ps?[tk('的'),tk(ps.z,ps.p)]:[]),tk('最'),tkA(d,pol),P_('？')];
-    es=ps?`¿Quién tiene ${ps.es} ${esMas(d,pol,null)}?`:`¿Quién es ${d.noMas?'el '+esA(d,pol,null):'el '+esMas(d,pol,null)}?`;
-    en=ps?`Whose ${ps.en} ${ps.be} the ${adj(d,pol).en[2]}?`:`Who is the ${adj(d,pol).en[2]}?`;}
-  else if(kind==='TF'){z=[tk('對'),tk('還是'),tk('錯'),P_('？')];es='¿Verdadero o falso?';en='True or false?';}
-  else if(kind==='PICK'){z=[tk('哪'),tk('一句'),tk('是'),tk('對'),tk('的'),P_('？')];es='¿Qué frase es correcta?';en='Which sentence is correct?';}
-  else if(kind==='FILL'){z=[tk('選出'),tk('正確'),tk('的'),tk('詞'),P_('。')];es='Elige la palabra correcta.';en='Choose the correct word.';}
-  return {z,es,en};}
-// ===== 出題 =====
-const LV_DIMS=lv=>Object.values(DIMS).filter(d=>d.lv<=lv&&(!RANGE||!RANGE.dims.length||RANGE.dims.includes(d.key)));
-// 各特徵出現機率（眼睛、鼻子在圖上差異較小，比較少出）
-let USED={};const dimW=d=>d.w*Math.pow(.4,USED[d.key]||0);   // 同一回合已出過的特徵，權重每次乘 0.4
-function people(n,cond,tries=400){for(let i=0;i<tries;i++){const s=shuffle(ITEMS).slice(0,n);if(cond(...s))return s;}return null;}
-const clear=(d,a,b)=>{const c=cmp(d,a,b);return c===1||c===-1?c:null;};
-function polOK(d,pol){return pol>0||!!d.neg;}
-function rPol(d){return d.neg&&Math.random()<.5?-1:1;}
-function mkQ(type,d,its,o){return Object.assign({type,d,its,crop:d.crop},o);}
-// ===== 輔助：字面真假、依人物資料找出題條件 =====
-// 字面真假：不看「差不多」門檻，只看實際數值；用來確保同一題不會有兩個選項同時為真
-function litTrue(st){const {f,d,a,b,pol}=st;const x=d.v(a)-d.v(b),s=Math.sign(x);
-  if(f==='BI'||f==='GENG')return s===pol;
-  if(f==='MEI')return s===-pol;
-  if(f==='SAME')return x===0;
-  if(f==='ABOUT')return Math.abs(x)<=d.near;
-  if(f==='DIFFER')return x!==0;
-  if(f==='DEG'){if(s!==pol)return false;const g=degree(d,a,b);return g===0||g===st.deg;}
-  if(f==='DIFF')return x*pol===st.n;
-  return false;}
-const REL={};
-function rel(d,t){const k=d.key+t.id;if(REL[k])return REL[k];const up=[],dn=[];
-  for(const p of ITEMS){if(p===t)continue;const c=clear(d,p,t);if(c===1)up.push(p);else if(c===-1)dn.push(p);}
-  return REL[k]={up,dn};}
-// 回傳 [同方向, 反方向]：同方向 = 在 t 的 pol 那一邊（pol=1 是比 t 高／大／長…）的人
-const sideOf=(d,t,pol)=>{const r=rel(d,t);return pol>0?[r.up,r.dn]:[r.dn,r.up];};
-const sample=(a,n)=>shuffle(a).slice(0,n);
-// 依權重挑一個「人物資料真的湊得出題目」的特徵與方向（不會再抽到湊不出來的特徵而白白重試）
-function chooseDP(lv,ok){const o=[];
-  for(const d of LV_DIMS(lv)){const pols=[1,-1].filter(p=>polOK(d,p)&&ok(d,p));if(pols.length)o.push({d,pols});}
-  if(!o.length)return null;
-  let t=0;for(const x of o)t+=dimW(x.d);let r=Math.random()*t,c=o[o.length-1];
-  for(const x of o){r-=dimW(x.d);if(r<=0){c=x;break;}}
-  return {d:c.d,pol:c.pols[R(c.pols.length)]};}
-const triT=(d,pol,n,kind)=>ITEMS.filter(t=>{const [s,o]=sideOf(d,t,pol);return kind==='who'?s.length>=1&&o.length>=n-2:o.length>=1&&s.length>=n-2;});
-const mostW=(d,pol,n)=>ITEMS.filter(w=>sideOf(d,w,pol)[1].length>=n-1);
-const CH={};
-function chains(d){if(CH[d.key])return CH[d.key];const out=[];
-  for(const x of ITEMS)for(const y of ITEMS){if(x===y||THEME.grp(x)!==THEME.grp(y)||clear(d,x,y)!==1)continue;
-    for(const z of ITEMS){if(z===x||z===y||THEME.grp(z)!==THEME.grp(x)||clear(d,y,z)!==1)continue;out.push([x,y,z]);}}
-  return CH[d.key]=out;}
-const GEN={
- // 解碼：兩人不顯示名字
- decode(lv){const d=pick(LV_DIMS(lv).filter(d=>d.neg||true));
-   const forms=lv>=2?(d.num?['BI','BI','MEI','DEG']:['BI','BI','MEI']):['BI'];const f=pick(forms);
-   for(let i=0;i<60;i++){const s=people(2,(a,b)=>THEME.grp(a)===THEME.grp(b)&&clear(d,a,b)!==null);if(!s)return null;const [a,b]=s;let pol=rPol(d);
-     let st={f,d,a,b,pol};
-     if(f==='MEI'){st.pol=pol;if(truth(st)!==true){st={f,d,a:b,b:a,pol};}}
-     else if(f==='DEG'){const g=degree(d,a,b);if(!g)continue;st.deg=g;st.alt=Math.random()<.4;if(truth(st)!==true)st={...st,pol:-pol};if(!polOK(d,st.pol))continue;}
-     else{if(truth(st)!==true)st.pol=-pol;if(!polOK(d,st.pol)){st={f,d,a:b,b:a,pol:1};}}
-     if(!polOK(d,st.pol)||truth(st)!==true)continue;
-     const who=Math.random()<.5?st.a:st.b;
-     return mkQ('decode',d,shuffle([a,b]),{hide:1,sents:[sent(st)],q:ask('WHO',d,{a:who}),ans:who.id,tagCm:f==='DEG'&&d.key==='height',f:st.f,pol:st.pol});}
-   return null;},
- // 對錯
- tf(lv){const d=pick(LV_DIMS(lv));
-   for(let i=0;i<80;i++){const [a,b]=shuffle(ITEMS).slice(0,2);const c=cmp(d,a,b);if(c===null)continue;
-     const cands=[];
-     for(const pol of [1,-1]){if(!polOK(d,pol))continue;cands.push({f:'BI',d,a,b,pol},{f:'BI',d,a:b,b:a,pol});if(d.eq)cands.push({f:'SAME',d,a,b,pol});}
-     if(d.num)cands.push({f:'ABOUT',d,a,b});if(d.same)cands.push({f:'DIFFER',d,a,b});
-     const want=Math.random()<.5;const ok=cands.filter(s=>truth(s)===want&&litTrue(s)===want);if(!ok.length)continue;
-     const st=pick(ok);
-     return mkQ('tf',d,[a,b],{sents:[sent(st)],q:ask('TF',d,{}),btns:[{z:[tk('對')],ok:want},{z:[tk('錯')],ok:!want}],tf:1,f:st.f,pol:st.pol||0,tv:want});}
-   return null;},
- // 看圖選句子
- pick(lv){let cd=LV_DIMS(lv).filter(d=>lv<3||d.num||Math.random()<.5);if(!cd.length)cd=LV_DIMS(lv);const d=pick(cd);const nd=lv>=2?3:2;   // 干擾項：L1 兩個（共 3 選項）、L2 以上三個（共 4 選項）
-   for(let i=0;i<120;i++){const [a,b]=shuffle(ITEMS).slice(0,2);if(cmp(d,a,b)===null)continue;
-     const c=[];
-     for(const pol of [1,-1]){if(!polOK(d,pol))continue;
-       for(const [x,y] of [[a,b],[b,a]]){c.push({f:'BI',d,a:x,b:y,pol});
-         if(lv>=2){c.push({f:'MEI',d,a:x,b:y,pol});if(d.num)c.push({f:'DEG',d,a:x,b:y,pol,deg:1},{f:'DEG',d,a:x,b:y,pol,deg:2});}
-         if(lv>=3&&d.num){const n0=Math.abs(d.v(a)-d.v(b));for(const n of [n0,n0+5,Math.max(3,n0-5)])if(n>=3&&n<100)c.push({f:'DIFF',d,a:x,b:y,pol,n});}}
-       if(d.eq)c.push({f:'SAME',d,a,b,pol});}
-     if(d.num)c.push({f:'ABOUT',d,a,b});if(d.same&&lv<3)c.push({f:'DIFFER',d,a,b});
-     // 正確選項必須「遊戲判斷」與「字面」都為真；干擾項則兩者都為假，這樣一題只會有一個為真的選項
-     let T=c.filter(s=>truth(s)===true&&litTrue(s)),F=c.filter(s=>truth(s)===false&&!litTrue(s));
-     if(lv>=3&&d.num){const t2=T.filter(s=>s.f==='DIFF');if(t2.length)T=t2;}
-     if(!T.length||F.length<2)continue;
-     const t=pick(T);const zs=new Set([sent(t).z.map(x=>x.t).join('')]);const fs=[];
-     for(const s of shuffle(F)){const k=sent(s).z.map(x=>x.t).join('');if(!zs.has(k)){zs.add(k);fs.push(s);}if(fs.length===nd)break;}
-     if(fs.length<2)continue;
-     const btns=shuffle([{st:t,ok:true},...fs.map(s=>({st:s,ok:false}))]).map(o=>({z:sent(o.st).z,ok:o.ok,tr:sent(o.st)}));
-     return mkQ('pick',d,[a,b],{q:ask('PICK',d,{}),btns,tagCm:d.key==='height'&&(lv>=2||t.f==='DIFF'),f:t.f,pol:t.pol||0});}
-   return null;},
- // 誰比較…（兩人）
- more(lv){const d=pick(LV_DIMS(lv));
-   const s=people(2,(a,b)=>clear(d,a,b)!==null);if(!s)return null;const [a,b]=s;const pol=rPol(d);
-   const win=clear(d,a,b)===pol?a:b;
-   return mkQ('more',d,[a,b],{q:ask('MORE',d,{a,b,pol}),ans:win.id,expl:[sent({f:'BI',d,a:win,b:win===a?b:a,pol})],f:'MORE',pol});},
- // 誰比 T …（L2 三人、L3 四人）
- whobi(lv){const n=lv>=3?4:3;const ch=chooseDP(lv,(d,pol)=>triT(d,pol,n,'who').length>0);if(!ch)return null;const {d,pol}=ch;
-   const ts=triT(d,pol,n,'who'),t=ts[R(ts.length)],[s,o]=sideOf(d,t,pol),x=s[R(s.length)];
-   return mkQ('whobi',d,shuffle([t,x,...sample(o,n-2)]),{q:ask('WHOBI',d,{t,pol}),ans:x.id,expl:[sent({f:'BI',d,a:x,b:t,pol})],f:'WHOBI',pol});},
- // T 比誰…（L2 三人、L3 四人）
- biwho(lv){const n=lv>=3?4:3;const ch=chooseDP(lv,(d,pol)=>triT(d,pol,n,'bi').length>0);if(!ch)return null;const {d,pol}=ch;
-   const ts=triT(d,pol,n,'bi'),t=ts[R(ts.length)],[s,o]=sideOf(d,t,pol),y=o[R(o.length)];
-   return mkQ('biwho',d,shuffle([t,y,...sample(s,n-2)]),{q:ask('BIWHO',d,{t,pol}),ans:y.id,expl:[sent({f:'BI',d,a:t,b:y,pol})],f:'BIWHO',pol});},
- // 填空
- fill(lv){const d=pick(LV_DIMS(lv));
-   for(let i=0;i<80;i++){const [a,b]=shuffle(ITEMS).slice(0,2);const c=cmp(d,a,b);if(c===null)continue;const kinds=[];
-     if(c!==0){kinds.push('bi','mei');if(d.num)kinds.push('deg');}if(c===0&&d.eq&&(d.v(a)===1||d.v(a)===3))kinds.push('same');if(!kinds.length)continue;
-     const k=pick(kinds);let st,z,words,ans;
-     if(k==='bi'){const pol=polOK(d,c)?c:null;if(!pol)continue;st={f:'BI',d,a,b,pol};z=[...subj(d,a),BL,NM(b),tkA(d,pol)];words=['比','跟','沒有'];ans='比';}
-     else if(k==='mei'){const pol=-c;if(!polOK(d,pol))continue;st={f:'MEI',d,a,b,pol};z=[...subj(d,a),BL,NM(b),tk('那麼'),tkA(d,pol)];words=['比','跟','沒有'];ans='沒有';}
-     else if(k==='same'){const pol=d.v(a)===3?1:-1;if(!polOK(d,pol))continue;st={f:'SAME',d,a,b,pol};z=[...subj(d,a),BL,NM(b),tk('一樣'),tkA(d,pol)];words=['比','跟','沒有'];ans='跟';}
-     else{const pol=polOK(d,c)?c:null;if(!pol)continue;const g=degree(d,a,b);if(!g)continue;st={f:'DEG',d,a,b,pol,deg:g};z=[...subj(d,a),tk('比'),NM(b),tkA(d,pol),BL];words=['一點','很多','一樣'];ans=g===1?'一點':'很多';}
-     if(truth(st)!==true)continue;
-     return mkQ('fill',d,[a,b],{blankZ:z,fillAns:ans,q:ask('FILL',d,{}),btns:words.map(w=>({z:[tk(w)],ok:w===ans,w})),full:sent(st),row:1,tagCm:k==='deg'&&d.key==='height',f:st.f,pol:st.pol});}
-   return null;},
- // 連鎖解碼（三人，更／還）
- chain(lv){const ch=chooseDP(lv,d=>chains(d).length>0);if(!ch)return null;const {d,pol}=ch;
-   const cs=chains(d),[x,y,z]=cs[R(cs.length)];
-   let s1,s2;if(pol<0){s1={f:'BI',d,a:y,b:x,pol:-1};s2={f:'GENG',d,a:z,b:y,pol:-1,alt:Math.random()<.5};}
-   else{s1={f:'BI',d,a:y,b:z,pol:1};s2={f:'GENG',d,a:x,b:y,pol:1,alt:Math.random()<.5};}
-   const who=[x,y,z][R(3)];
-   return mkQ('chain',d,shuffle([x,y,z]),{hide:1,sents:[sent(s1),sent(s2)],q:ask('WHO',d,{a:who}),ans:who.id,f:'GENG',pol});},
- // 誰最…（3–4 人）
- most(lv){let n=Math.random()<.5?3:4;let ch=chooseDP(lv,(d,pol)=>mostW(d,pol,n).length>0);
-   if(!ch){n=3;ch=chooseDP(lv,(d,pol)=>mostW(d,pol,n).length>0);}if(!ch)return null;
-   const {d,pol}=ch,ws=mostW(d,pol,n),w=ws[R(ws.length)],ps=d.poss;
-   const ex={z:[...subj(d,w),tk('最'),tkA(d,pol)],
-     es:ps?`${w.name} tiene ${ps.es} ${esMas(d,pol,w)}`:`${w.name} es ${d.noMas?THEME.art(w)+esA(d,pol,w):THEME.art(w)+esMas(d,pol,w)}`,
-     en:ps?`${w.name}'s ${ps.en} ${ps.be} the ${adj(d,pol).en[2]}`:`${w.name} is the ${adj(d,pol).en[2]}`};
-   return mkQ('most',d,shuffle([w,...sample(sideOf(d,w,pol)[1],n-1)]),{q:ask('MOST',d,{pol}),ans:w.id,expl:[ex],f:'MOST',pol});},
-};
-const POOL={1:['decode','tf','pick','more'],2:['decode','pick','whobi','biwho','fill'],3:['chain','most','whobi','biwho','pick']};
-const qKey=q=>q.type+q.d.key+q.its.map(p=>p.id).sort().join();
-const poolOf=lv=>POOL[lv].filter(t=>!RANGE||!RANGE.types.length||RANGE.types.includes(t));   // 老師有勾題型時只出勾的
-function makeRound(lv){USED={};const pool=poolOf(lv);if(!pool.length||!LV_DIMS(lv).length)return [];
-  const list=[];
-  if(RANGE){const ts=shuffle(pool);for(let i=0;i<RANGE.n;i++)list.push(ts[i%ts.length]);}   // 老師自選：題型平均分配
-  else{const types=shuffle(POOL[lv]).slice(0,3);const counts=[4,3,3];types.forEach((t,i)=>{for(let k=0;k<counts[i];k++)list.push(t);});}
-  const qs=[],seen=new Set();   // seen：同一回合不出完全相同的題目
-  for(const t of shuffle(list)){let q=null;
-    for(const tt of [t,...shuffle(pool.filter(x=>x!==t))]){for(let i=0;i<(tt===t?20:6)&&!q;i++){const c=GEN[tt](lv);if(c&&!seen.has(qKey(c)))q=c;}if(q)break;}
-    if(q){seen.add(qKey(q));USED[q.d.key]=(USED[q.d.key]||0)+1;qs.push(q);}}   // 已出過的特徵之後權重變低，讓眼睛、鼻子等也有機會出現
-  return qs;}
-// ===== 顯示 =====
-function rt(tokens,blankHtml){return tokens.map(x=>{
-  if(x.blank)return blankHtml||'<span class="blank">　</span>';
-  if(x.nm)return `<span class="nm">${esc(x.t)}</span>`;
-  if(x.punc||!cfg.py||!x.p)return esc(zh(x.t));
-  return `<ruby>${esc(zh(x.t))}<rt>${esc(x.p)}</rt></ruby>`;}).join('');}
-function trOf(o){if(cfg.help==='none'||!o)return '';return cfg.help==='es'?o.es:o.en;}
-function cardHtml(p,i,q){const name=q.hide&&!S.done?'':esc(p.name);let tag='';
-  const dd=q.d,tg=(f)=>{const [n,u]=f(p);return `<div class="tag">${n} ${esc(zh(u))}</div>`;};
-  if(dd.tagA)tag=tg(dd.tagA);
-  if(q.tagCm&&dd.tagB)tag=tg(dd.tagB);
-  if(q.crop==='full'){const maxH=Math.max(...q.its.map(x=>dd.v(x)));const H=Math.round(250*dd.v(p)/maxH);const w=Math.round(p.w*H/p.ih);
-    return `<div class="card full" data-i="${i}" onclick="pickCard(${i})"><div class="fig" style="height:250px"><img src="${THEME.dir}${p.id}.webp" alt="" style="height:${H}px;width:${w}px"></div><div class="lab">${name}</div>${tag}</div>`;}
-  const fr=q.crop==='face'?p.face*1.15:0.52;const ar=q.crop==='face'?1:0.78;
-  return `<div class="card" data-i="${i}" onclick="pickCard(${i})"><div class="crop" style="aspect-ratio:${ar};width:100%"><img src="${THEME.dir}${p.id}.webp" alt="" style="height:${(100/fr).toFixed(1)}%"></div><div class="lab">${name}</div>${tag}</div>`;}
-// ===== 遊戲狀態 =====
-let S=null;
-function renderMenu(){S=null;
-  app.innerHTML=`<h1>${esc(u('title'))}</h1><div class="sub">Compara y Adivina</div>
-  <div class="panel"><h3>${L('script')}</h3><div class="opts">
-    <button class="opt ${!cfg.simp?'on':''}" onclick="setC('simp',false)">繁體</button><button class="opt ${cfg.simp?'on':''}" onclick="setC('simp',true)">简体</button></div></div>
-  <div class="panel"><h3>${L('help')}</h3><div class="opts">
-    <button class="opt ${cfg.help==='es'?'on':''}" onclick="setC('help','es')">Español</button><button class="opt ${cfg.help==='en'?'on':''}" onclick="setC('help','en')">English</button><button class="opt ${cfg.help==='none'?'on':''}" onclick="setC('help','none')">${esc(u('none'))}</button></div></div>
-  <div class="panel"><h3>${L('py')}</h3><div class="opts">
-    <button class="opt ${!cfg.py?'on':''}" onclick="setC('py',false)">${L('off')}</button><button class="opt ${cfg.py?'on':''}" onclick="setC('py',true)">${L('on')}</button></div></div>
-  <h3 style="margin:16px 0 4px">${L('choose')}</h3>
-  ${(h=>window.teacherHook?teacherHook(h):h)([1,2,3].map(n=>`<button class="lvl" onclick="startRound(${n},null)"><b>${n}</b>${esc(u('l'+n))}${fo('l'+n)}<div class="d">${esc(zh(U['d'+n][0]+'｜'+LV_CNT[n]+' '+THEME.noun[0]))}${cfg.help!=='none'?'<br>'+esc(U['d'+n][cfg.help==='es'?1:2]+' · '+LV_CNT[n]+' '+THEME.noun[cfg.help==='es'?1:2]):''}</div></button>`).join(''))}`;}
-function setC(k,v){cfg[k]=v;saveCfg();if(S)renderQ();else renderMenu();}
-function startRound(lv,rg){if(rg!==undefined)RANGE=rg;   // 一般關卡傳 null；老師自選傳範圍；「再玩一次」不傳，沿用目前的
-  const qs=makeRound(lv);if(!qs.length){alert(u('noQ'));return;}
-  S={lv,qs,i:0,score:0,tries:0,done:false,wrong:[],dict:false};renderQ();window.scrollTo(0,0);}
-function quit(){if(confirm(u('quitQ')))renderMenu();}
+const LI=()=>SET.lang==='en'?2:1;
+function u(k){return zh(U[k][0]);}                                        // 只有中文
+function fx(k){if(SET.lang==='zh')return '';return U[k][LI()]||'';}       // 外語（只有中文 = 空）
+function L(k){const f=fx(k);return esc(u(k))+(f?`<small>${esc(f)}</small>`:'');}   // 中文＋外語小字（兩行）
+function Lv(k,v){const a=U[k];const f=SET.lang==='zh'?'':a[LI()].replace('{n}',v);return esc(zh(a[0].replace('{n}',v)))+(f?`<small>${esc(f)}</small>`:'');}
+
+// ===== 老師指定的範圍（鎖定）=====
+//   ?r=<範圍碼>：classroom.js 去中心專案 shared_bbk 讀，讀到後呼叫 lockApply；
+//   舊格式 ?lv=2&d=height,age&t=pick,tf&n=10：直接在這裡讀，不用連網。
+const LK={pending:false,locked:false,name:'',lv:1,dims:[],types:[],n:10,note:''};
+const qp=new URLSearchParams(location.search);
+const RCODE=(()=>{const r=(qp.get('r')||'').trim().toLowerCase();return /^[a-z0-9]{8,32}$/.test(r)?r:'';})();
+const availD=lv=>Object.values(DIMS).filter(d=>d.lv<=lv).map(d=>d.key);
+function lockSet(lv,d,t,n){
+  LK.lv=lv;
+  const dd=availD(lv).filter(k=>(d||[]).includes(k)),tt=POOL[lv].filter(k=>(t||[]).includes(k));   // 照遊戲裡的順序
+  LK.dims=dd.length===availD(lv).length?[]:dd;LK.types=tt.length===POOL[lv].length?[]:tt;
+  LK.n=Math.max(3,Math.min(30,+n||10));
+  if(!E.makeRound(lv,lockRange()).length){LK.dims=[];LK.types=[];}   // 範圍湊不出題目就退回「全部」
+  LK.locked=true;}
+const lockRange=()=>({lv:LK.lv,dims:LK.dims,types:LK.types,n:LK.n});
+if(RCODE){LK.pending=true;LK.locked=true;}
+else if(qp.has('lv')&&[1,2,3].includes(+qp.get('lv'))){const lv=+qp.get('lv');
+  lockSet(lv,qp.has('d')?qp.get('d').split(','):availD(lv),qp.has('t')?qp.get('t').split(','):POOL[lv],qp.get('n'));}
+function lockApply(o){LK.pending=false;const lv=+(o&&o.lv);if(![1,2,3].includes(lv))return lockFail('bad');
+  const d=Array.isArray(o.d)&&o.d.length?o.d:availD(lv),t=Array.isArray(o.t)&&o.t.length?o.t:POOL[lv];
+  lockSet(lv,d,t,o.n);LK.name=String(o.name||'').slice(0,40);LK.note='';}
+function lockFail(why){LK.pending=false;LK.locked=false;LK.name='';LK.note=why==='missing'?'codeMissing':'codeErr';}
+function lockExit(){LK.locked=false;LK.name='';LK.note='';try{history.replaceState(null,'',location.href.split('#')[0].split('?')[0]+(CR()&&CR().classMode()?'?class='+CR().classId():''));}catch(e){}renderMenu();}
+
+// ===== 遊戲 =====
+const CR=()=>window.CLASSROOM||null;     // classroom.js：班級連結（暱稱、成績回傳）、老師範圍碼
+let S=null,screen='menu';
+let RANGE=null;   // 這一回合的範圍（null = 一般模式）
+function gearBtn(){return `<button class="gear" onclick="openSet()" title="${esc(u('settings'))}" aria-label="${esc(u('settings'))}">⚙️</button>`;}
+function renderMenu(){S=null;screen='menu';
+  document.title=zh('比比看')+' Compara y Adivina';
+  const cm=CR()&&CR().classMode();
+  let h=`${gearBtn()}<h1>${esc(u('title'))}</h1><div class="sub">Compara y Adivina</div>`;
+  if(cm)h+=CR().bannerHtml();
+  if(LK.pending)h+=`<div class="panel"><h3>👩‍🏫 ${L('tPractice')}</h3><div class="note">${L('loading')}</div></div>`;
+  else if(LK.locked){
+    const dn=(LK.dims.length?LK.dims:availD(LK.lv)).map(k=>zh(DIMS[k].name[0])).join('、');
+    const tn=(LK.types.length?LK.types:POOL[LK.lv]).map(k=>zh(TN[k][0])).join('、');
+    h+=`<div class="panel"><h3>👩‍🏫 ${L('tPractice')}</h3>${LK.name?`<div style="font-weight:700;margin:2px 0 4px">📐 ${esc(LK.name)}</div>`:''}
+      <div style="font-size:.95rem;line-height:1.7">${esc(zh('第 '+LK.lv+' 關'))} · ${LK.n} ${esc(u('qn'))}<br>${esc(dn)}<br>${esc(tn)}</div></div>
+      <button class="big" onclick="startRound(${LK.lv},lockRange())">▶ ${L('startP')}</button>
+      <button class="big sec" onclick="lockExit()">${L('normal')}</button>`;
+  }else{
+    if(LK.note)h+=`<div class="panel" style="font-size:.92rem">⚠ ${L(LK.note)}</div>`;
+    const nn=SET.lang==='zh'?'':THEME.noun[LI()];
+    h+=`<h3 style="margin:16px 0 4px;text-align:center">${L('choose')}</h3>`+[1,2,3].map(n=>`<button class="lvl" onclick="startRound(${n},null)"><b>${n}</b>${esc(u('l'+n))}${fx('l'+n)?`<small>${esc(fx('l'+n))}</small>`:''}<div class="d">${esc(zh(U['d'+n][0]+'｜'+LV_CNT[n]+' '+THEME.noun[0]))}${nn?'<br>'+esc(U['d'+n][LI()]+' · '+LV_CNT[n]+' '+nn):''}</div></button>`).join('');
+  }
+  if(!cm&&!LK.locked)h+=`<a class="big sec" href="${CENTER_URL}">👩‍🏫 ${L('teacher')}</a>`;
+  app.innerHTML=h+`<p class="ver">${VERSION}</p>`;}
+function startRound(lv,rg){
+  if(CR()&&!CR().canStart())return;          // 班級連結：要先輸入暱稱
+  if(rg!==undefined)RANGE=rg;   // 一般關卡傳 null；老師範圍傳範圍；「再玩一次」「下一關」不傳，沿用目前的
+  const qs=E.makeRound(lv,RANGE);if(!qs.length){alert(u('noQ'));return;}
+  S={lv,qs,i:0,score:0,tries:0,done:false,wrong:[],dict:false,log:[],rg:RANGE};screen='game';renderQ();window.scrollTo(0,0);}
+function quit(){const f=fx('quitQ');if(confirm(u('quitQ')+(f?'\n'+f:'')))renderMenu();}
+const sentHtml=s=>E.rtS(s.z,RO());
+function cardHtml(p,i,q){const name=q.hide&&!S.done?'':esc(p.name);
+  return `<div class="card ${q.crop==='full'?'full':''}" data-i="${i}" onclick="pickCard(${i})">${E.cropHtml(p,q,{height:250})}<div class="lab">${name}</div>${E.tagHtml(p,q,simp())}</div>`;}
+function dictPh(p){const m=SET.phon==='off'?'pinyin':SET.phon;
+  return m==='pinyin'?esc(p):m==='zhuyin'?esc(E.zy(p)):esc(p)+' · '+esc(E.zy(p));}
 function renderQ(){const q=S.qs[S.i];const n=S.qs.length;
   let body='';
-  if(q.sents)body+=q.sents.map(s=>rt(s.z)+esc(zh('。'))).join('<br>');
-  if(q.blankZ){const bh=S.done?`<span class="blank">${esc(zh(q.fillAns))}</span>`:null;body+=rt(q.blankZ,bh)+esc(zh('。'));}
-  const qline=`<span class="ask">${rt(q.q.z)}</span>`;
+  if(q.sents)body+=q.sents.map(sentHtml).join('<br>');
+  if(q.blankZ){const bh=S.done?`<span class="blank">${esc(zh(q.fillAns))}</span>`:null;body+=E.rtS(q.blankZ,RO(),bh);}
+  const qline=`<span class="ask">${E.rt(q.q.z,RO())}</span>`;
   const cards=`<div class="cards ${q.its.length>3&&q.crop!=='full'?'wrap':''}">${q.its.map((p,i)=>cardHtml(p,i,q)).join('')}</div>`;
   let btns='';
-  if(q.btns)btns=`<div class="btns ${q.row||q.tf?'row':''}">${q.btns.map((b,i)=>`<button class="ob" data-b="${i}" onclick="pickBtn(${i})">${rt(b.z)}${q.tf&&cfg.help!=='none'?`<small>${esc(U[i?'tf_f':'tf_t'][cfg.help==='es'?1:2])}</small>`:''}</button>`).join('')}</div>`;
-  const dd=q.d,dl=[dd.pos,dd.neg].filter(Boolean).map(a=>`<div><b style="font-size:1.2rem">${esc(zh(a.z))}</b> ${esc(a.p)}${cfg.help!=='none'?' — '+esc(cfg.help==='es'?(Array.isArray(a.es)?a.es.join(' / '):a.es):a.en[0]):''}</div>`).join('');
-  const poss=dd.poss?`<div><b>${esc(zh(dd.poss.z))}</b> ${esc(dd.poss.p)}${cfg.help!=='none'?' — '+esc(cfg.help==='es'?dd.poss.es:dd.poss.en):''}</div>`:'';
-  app.innerHTML=`<div class="top"><span>${esc(zh(U.lvName[0].replace('{n}',S.lv)))} · ${S.i+1} / ${n}</span><span><b>${S.score}</b> ${esc(u('pts'))}</span><button class="x" onclick="quit()">✕</button></div>
+  if(q.btns)btns=`<div class="btns ${q.row||q.tf?'row':''}">${q.btns.map((b,i)=>`<button class="ob" data-b="${i}" onclick="pickBtn(${i})">${E.rt(b.z,RO())}${q.tf&&fx(i?'tf_f':'tf_t')?`<small>${esc(fx(i?'tf_f':'tf_t'))}</small>`:''}</button>`).join('')}</div>`;
+  const dd=q.d,tr=a=>SET.lang==='zh'?'':' — '+esc(SET.lang==='es'?(Array.isArray(a.es)?a.es.join(' / '):a.es):(Array.isArray(a.en)?a.en[0]:a.en));
+  const dl=[dd.pos,dd.neg].filter(Boolean).map(a=>`<div><b style="font-size:1.2rem">${esc(zh(a.z))}</b> ${dictPh(a.p)}${tr(a)}</div>`).join('');
+  const poss=dd.poss?`<div><b>${esc(zh(dd.poss.z))}</b> ${dictPh(dd.poss.p)}${tr(dd.poss)}</div>`:'';
+  app.innerHTML=`<div class="top"><span class="grow">${esc(zh(U.lvName[0].replace('{n}',S.lv)))} · ${S.i+1} / ${n}</span><span><b>${S.score}</b> ${esc(u('pts'))}</span><button class="pillx" onclick="quit()" title="${esc(u('quit'))}">✕</button>${gearBtn()}</div>
   <div class="bar"><i style="width:${(S.i/n*100).toFixed(0)}%"></i></div>
-  <div style="text-align:right"><button class="dict" onclick="S.dict=!S.dict;renderQ()">📖 ${esc(u('dict'))}</button></div>
+  <div style="text-align:right"><button class="dict" onclick="S.dict=!S.dict;renderQ()">📖 ${esc(u('dict'))}${fx('dict')?' · '+esc(fx('dict')):''}</button></div>
   ${S.dict?`<div class="dictBox">${poss}${dl}</div>`:''}
   <div class="q">${body}${qline}</div>
-  ${q.btns&&!q.tf&&!q.row?'':''}
-  ${cards}${btns}<div id="fb">${S.done?fbHtml():''}</div>`;
+  ${cards}${btns}<div id="fb">${S.done?fbHtml():(S.tries?`<div class="fb no"><b>${L('wrong')}</b></div>`:'')}</div>`;
   markState();}
 function markState(){const q=S.qs[S.i];
   S.wrong.forEach(k=>{const el=k[0]==='c'?document.querySelector(`.card[data-i="${k.slice(1)}"]`):document.querySelector(`.ob[data-b="${k.slice(1)}"]`);if(el)el.classList.add('wrong');});
   if(S.done){const ci=q.btns?q.btns.findIndex(b=>b.ok):q.its.findIndex(p=>p.id===q.ans);
     const el=q.btns?document.querySelector(`.ob[data-b="${ci}"]`):document.querySelector(`.card[data-i="${ci}"]`);if(el)el.classList.add('right');}}
 function fbHtml(){const q=S.qs[S.i];const ok=S.gain>0;let lines=[];
-  const add=(s)=>lines.push(`<div>${rt(s.z)}${esc(zh('。'))}</div>${trOf(s)?`<div class="tr">${esc(trOf(s))}.</div>`:''}`);
+  const add=s=>{const t=E.tr(s,SET.lang);lines.push(`<div>${sentHtml(s)}</div>${t?`<div class="tr">${esc(t)}.</div>`:''}`);};
   if(q.sents)q.sents.forEach(add);
   if(q.full)add(q.full);
   if(q.expl)q.expl.forEach(add);
-  if(q.btns&&q.type==='pick'){const t=q.btns.find(b=>b.ok);add(t.tr);}
-  if(q.tf&&q.sents){}
-  const qt=trOf(q.q);
+  if(q.btns&&q.type==='pick')add(q.btns.find(b=>b.ok).tr);
+  const qt=E.tr(q.q,SET.lang);
   const last=S.i===S.qs.length-1;
-  return `<div class="fb ${ok?'ok':'no'}"><b>${ok?esc(u('right'))+' +'+S.gain:esc(u('ans'))}</b>${qt?`<div class="tr">${esc(qt)}</div>`:''}${lines.join('')}</div>
+  return `<div class="fb ${ok?'ok':'no'}"><b>${ok?esc(u('right'))+' +'+S.gain:esc(u('ans'))}</b>${ok?(fx('right')?`<small>${esc(fx('right'))}</small>`:''):(fx('ans')?`<small>${esc(fx('ans'))}</small>`:'')}${qt?`<div class="tr">${esc(qt)}</div>`:''}${lines.join('')}</div>
   <button class="big" onclick="nextQ()">${L(last?'finish':'next')}</button>`;}
+// 每題作答紀錄（班級連結時會回傳給老師）
+function recordAnswer(){const q=S.qs[S.i];if(S.log[S.i])return;
+  const r={t:q.type,d:q.d.key,f:q.f||'',p:q.pol||0,ok:S.gain>0,f1:S.gain===10,ids:q.its.map(p=>p.id)};
+  if(q.type==='tf')r.tv=!!q.tv;
+  S.log[S.i]=r;}
 function judge(ok,key){const q=S.qs[S.i];if(S.done)return;
   const nopt=q.btns?q.btns.length:q.its.length;
-  if(ok){S.gain=S.tries===0?10:5;S.score+=S.gain;S.done=true;renderQ();return;}
+  if(ok){S.gain=S.tries===0?10:5;S.score+=S.gain;S.done=true;recordAnswer();renderQ();return;}
   S.wrong.push(key);S.tries++;
-  if(S.tries>=2||nopt<=2){S.gain=0;S.done=true;renderQ();return;}
-  renderQ();const fb=document.getElementById('fb');fb.innerHTML=`<div class="fb no"><b>${esc(u('wrong'))}</b>${fo('wrong')}</div>`;}
+  if(S.tries>=2||nopt<=2){S.gain=0;S.done=true;recordAnswer();renderQ();return;}
+  renderQ();}
 function pickCard(i){const q=S.qs[S.i];if(q.btns||S.done||S.wrong.includes('c'+i))return;judge(q.its[i].id===q.ans,'c'+i);}
 function pickBtn(i){const q=S.qs[S.i];if(S.done||S.wrong.includes('b'+i))return;judge(q.btns[i].ok,'b'+i);}
 function nextQ(){S.i++;S.tries=0;S.done=false;S.wrong=[];S.gain=0;S.dict=false;
   if(S.i>=S.qs.length)return renderResult();renderQ();window.scrollTo(0,0);}
-function tryMsg(lv,cnt){const n=passMark(lv,cnt||10),v=U.tryAgain;return esc(zh(v[0].replace('{n}',n)))+(cfg.help==='none'?'':`<small>${esc(v[cfg.help==='es'?1:2].replace('{n}',n))}</small>`);}
-function renderResult(){const sc=S.score,lv=S.lv,pass=sc>=passMark(lv,S.qs.length);
+// 五級評語（依得分比例）
+function commentKey(sc,max){const p=max?sc/max:0;return p>=1?'cm4':p>=.8?'cm3':p>=.6?'cm2':p>=.4?'cm1':'cm0';}
+// 結果畫面：分數 → 評語 → 過關提示 → ✅ 成績已回傳（班級連結）→ 下一關／再玩一次 → 主選單
+function renderResult(redraw){screen='result';const sc=S.score,lv=S.lv,max=S.qs.length*10,pass=sc>=passMark(lv,S.qs.length);
   let msg,btn='';
-  if(RANGE)msg=pass?L('passed'):tryMsg(lv,S.qs.length);   // 老師自選範圍：沒有「下一關」
+  if(S.rg)msg=pass?L('passed'):Lv('tryAgain',passMark(lv,S.qs.length));   // 老師的範圍：沒有「下一關」
   else if(pass&&lv<3){msg=L('clear');btn=`<button class="big" onclick="startRound(${lv+1})">${L('nextLv')}</button>`;}
-  else if(pass)msg=L('allClear');else msg=tryMsg(lv);
-  app.innerHTML=`<h1>${esc(u('title'))}</h1><div class="sub">${esc(zh(U.lvName[0].replace('{n}',lv)))} · ${L('res')}</div>
-  <div class="score">${sc}<span style="font-size:1.2rem;color:#999"> / ${S.qs.length*10}</span></div>
-  <p style="text-align:center;font-size:1.1rem">${msg}</p>
+  else if(pass)msg=L('allClear');else msg=Lv('tryAgain',passMark(lv,10));
+  app.innerHTML=`${gearBtn()}<h1>${esc(u('title'))}</h1><div class="sub">${esc(zh(U.lvName[0].replace('{n}',lv)))} · ${esc(u('res'))}</div>
+  <div class="score">${sc}<span style="font-size:1.2rem;color:#999"> / ${max}</span></div>
+  <div class="comment">${L(commentKey(sc,max))}</div>
+  <div class="passmsg">${msg}</div>
+  <div id="clsUp">${CR()?CR().upHtml():''}</div>
   ${btn}<button class="big ${btn?'sec':''}" onclick="startRound(${lv})">${L('again')}</button>
-  <button class="big sec" onclick="renderMenu()">${L('menu')}</button>`;}
+  <button class="big sec" onclick="renderMenu()">${L('menu')}</button>`;
+  if(CR()&&!redraw)CR().onResult();}
+
+// ===== ⚙️ 設定視窗（字形／語言／拼音注音；比比看沒有語音，不放語速）=====
+function opt(label,on,click){return `<button class="opt ${on?'on':''}" onclick="${click}">${label}</button>`;}
+function openSet(){drawSet();document.getElementById('setov').classList.remove('hide');}
+function closeSet(){document.getElementById('setov').classList.add('hide');}
+function setS(k,v){SET[k]=v;writeSettings(SET);drawSet();rerender();}
+function rerender(){if(screen==='game'&&S)renderQ();else if(screen==='result'&&S)renderResult(true);else renderMenu();}
+function drawSet(){
+  const o=document.getElementById('setov');
+  const sm=fx('settings');
+  o.innerHTML=`<div class="setcard" onclick="event.stopPropagation()">
+    <h2>⚙️ ${esc(u('settings'))}${sm?`<small>${esc(sm)}</small>`:''}</h2>
+    <div class="panel"><h3>${L('script')}</h3><div class="opts">
+      ${opt('繁體',SET.script==='trad',"setS('script','trad')")}${opt('简体',SET.script==='simp',"setS('script','simp')")}</div></div>
+    <div class="panel"><h3>${L('langLbl')}</h3><div class="opts">
+      ${opt('中文＋<small>Español</small>',SET.lang==='es',"setS('lang','es')")}${opt('中文＋<small>English</small>',SET.lang==='en',"setS('lang','en')")}${opt('只有中文',SET.lang==='zh',"setS('lang','zh')")}</div></div>
+    <div class="panel"><h3>${L('phon')}</h3><div class="opts two">
+      ${[['pinyin','pinyin'],['zhuyin','zhuyin'],['both','both'],['off','phOff']].map(([v,k])=>opt(L(k),SET.phon===v,`setS('phon','${v}')`)).join('')}</div></div>
+    <button class="big" onclick="closeSet()">${L('done')}</button></div>`;
+}
+document.getElementById('setov').addEventListener('click',closeSet);   // 點視窗外面也會關
+// 別的分頁（跑吧、色數）改了共用設定 → 這裡跟著更新（遊戲進行中先不理）
+window.addEventListener('storage',e=>{
+  if(e.key!==SETTINGS_KEY||screen==='game')return;
+  Object.assign(SET,readSettings());rerender();
+});
 </script>
-<script src="teacher.js"></script>
-<script src="classroom.js"></script>
+<script src="classroom.js?v=5-4"></script>
 <script>renderMenu();</script>
 </body>
 </html>

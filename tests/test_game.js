@@ -1,0 +1,322 @@
+// 比比看 遊戲測試（Playwright + 模擬 Firebase）。用法：node tests/test_game.js [輸出截圖資料夾]
+// 內容：共用設定（⚙️、舊設定搬家）、雙行介面、拼音／注音、膠囊按鈕、結果畫面、老師入口、
+//       出題引擎（engine.js）、學習單（worksheet.js）、班級連結回傳、老師範圍碼 ?r=、舊格式連結。
+let chromium; try{ ({ chromium } = require('playwright')); }catch(e){ ({ chromium } = require('/opt/npm-tools/node_modules/playwright')); }
+const fs = require('fs'), path = require('path'), http = require('http');
+const ROOT = path.join(__dirname, '..');
+const MOCK = fs.readFileSync(path.join(__dirname, 'firebase-mock.js'), 'utf8');
+const SHOT = process.argv[2] || null;
+if(SHOT) fs.mkdirSync(SHOT, { recursive: true });
+let pass = 0, fail = 0;
+function ok(c, name, extra){ if(c){ pass++; console.log('  ✓', name); } else { fail++; console.log('  ✗', name, extra !== undefined ? '→ ' + JSON.stringify(extra) : ''); } }
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.webp': 'image/webp' };
+const server = http.createServer((req, res) => {
+  let f = path.normalize(path.join(ROOT, decodeURIComponent(req.url.split('?')[0])));
+  if(!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()){ res.writeHead(404); return res.end(); }
+  res.writeHead(200, { 'Content-Type': MIME[path.extname(f)] || 'application/octet-stream' }); fs.createReadStream(f).pipe(res);
+});
+const CID = 'class0000aaaa';
+const RS = 'rng000011112';
+const SK = 'hanziGames.settings';
+function seed({ expired = false } = {}){
+  return { 'subscription-48d3c': {
+    classes: { [CID]: { owner: 'u1', slot: 0, name: '週三班', showBoard: false, updatedAt: 1 } },
+    teacher_classes: { u1: { slots: { '0': CID }, updatedAt: 1 } },
+    site_plans: { u1: { plan: 'year', expiresAt: Date.now() + (expired ? -1 : 1) * 30 * 86400000 } }, class_plays: {},
+    shared_bbk: { [RS]: { owner: 'u1', name: '身高和年齡', th: 'people', lv: 2, d: ['height', 'age'], t: ['pick', 'decode'], n: 5, updatedAt: 1 } } } };
+}
+async function open(browser, url, { seedOpt, ls = {} } = {}){
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+  const page = await ctx.newPage(); const errors = [];
+  page.on('pageerror', e => errors.push(String(e)));
+  page.on('dialog', d => d.accept());
+  await page.route('**/*', r => r.request().url().startsWith('http://localhost') ? r.continue() : r.abort());
+  await page.addInitScript(`window.__SEED=${JSON.stringify(seed(seedOpt))};window.__USER=null;` +
+    Object.entries(ls).map(([k, v]) => `localStorage.setItem(${JSON.stringify(k)},${JSON.stringify(v)});`).join(''));
+  await page.addInitScript(MOCK);
+  await page.goto(BASE + url);
+  return { page, errors, ctx };
+}
+// 玩完一整回合：奇數題先點錯一次；all = true 全部第一次就答對
+async function playRound(page, all = false){
+  const n = await page.evaluate(() => S.qs.length);
+  for(let i = 0; i < n; i++){
+    await page.evaluate(([i, all]) => { const q = S.qs[S.i];
+      const ci = q.btns ? q.btns.findIndex(b => b.ok) : q.its.findIndex(p => p.id === q.ans);
+      const wi = (q.btns ? q.btns : q.its).findIndex((_, j) => j !== ci);
+      if(!all && i % 2 === 1) q.btns ? pickBtn(wi) : pickCard(wi);
+      if(!S.done) q.btns ? pickBtn(ci) : pickCard(ci); }, [i, all]);
+    await page.evaluate(() => nextQ());
+  }
+  return n;
+}
+const db = page => page.evaluate(() => window.__DB['subscription-48d3c']);
+const LSget = (page, k) => page.evaluate(k => JSON.parse(localStorage.getItem(k) || 'null'), k);
+const shot = async (page, name, full = true) => { if(SHOT) await page.screenshot({ path: path.join(SHOT, name + '.png'), fullPage: full }); };
+let BASE;
+server.listen(0, 'localhost', async () => {
+  BASE = 'http://localhost:' + server.address().port;
+  const browser = await chromium.launch();
+
+  console.log('\n[A] 主選單：一般模式');
+  { const { page, errors, ctx } = await open(browser, '/index.html');
+    await page.waitForSelector('.lvl');
+    ok(await page.evaluate(() => !window.__apps), '一般模式不載入 Firebase');
+    const a = await page.$('a.big[href="https://wangchiapin.github.io/profesor/#/settings"]');
+    ok(!!a && (await a.textContent()).includes('老師管理中心'), '有「👩‍🏫 老師管理中心」按鈕，連到中心的遊戲設定頁');
+    ok(!(await page.textContent('#app')).includes('老師設定') && !(await page.textContent('#app')).includes('班級成績簿'), '遊戲裡沒有舊的老師區');
+    ok((await page.textContent('.ver')) === 'v5-4', '最下面有版本號 v5-4');
+    const g = await page.$eval('.gear', e => { const r = e.getBoundingClientRect(); return { x: r.right, y: r.top }; });
+    ok(g.x > 340 && g.y < 30, '⚙️ 在右上角', g);
+    await shot(page, 'a_menu');
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+
+  console.log('\n[B] 共用設定：第一次、舊設定搬家、保留別款的欄位');
+  { const { page, ctx } = await open(browser, '/index.html');
+    await page.waitForSelector('.lvl');
+    const s = await LSget(page, SK);
+    ok(s && s.v === 1 && s.script === 'trad' && s.lang === 'es' && s.phon === 'pinyin' && s.rate === 'normal', '第一次：寫入預設（繁體、中＋西、拼音）', s);
+    await ctx.close(); }
+  { const { page, ctx } = await open(browser, '/index.html', { ls: { bbk_cfg: JSON.stringify({ simp: true, help: 'none', py: false }) } });
+    await page.waitForSelector('.lvl');
+    const s = await LSget(page, SK);
+    ok(s.script === 'simp' && s.lang === 'zh' && s.phon === 'off', '從比比看舊設定搬過來（簡體、只有中文、拼音關）', s);
+    ok((await page.textContent('h3')).includes('选择难度') && !(await page.textContent('#app')).includes('Elige'), '畫面跟著變成簡體、只有中文');
+    await ctx.close(); }
+  { const { page, ctx } = await open(browser, '/index.html', { ls: { bbk_cfg: JSON.stringify({ simp: false, help: 'en', py: true }) } });
+    await page.waitForSelector('.lvl');
+    const s = await LSget(page, SK);
+    ok(s.lang === 'en' && s.phon === 'pinyin', '舊設定：英文、拼音開', s);
+    await ctx.close(); }
+  { const { page, ctx } = await open(browser, '/index.html', { ls: { [SK]: JSON.stringify({ v: 1, script: 'trad', lang: 'en', phon: 'zhuyin', rate: 'fast', extra: 1 }), bbk_cfg: JSON.stringify({ simp: true }) } });
+    await page.waitForSelector('.lvl');
+    ok((await page.textContent('h3')).includes('Choose a level'), '已有共用設定：用共用設定（不理舊的 bbk_cfg）');
+    await page.evaluate(() => openSet()); await page.click('#setov .opt:has-text("简体")');
+    const s = await LSget(page, SK);
+    ok(s.script === 'simp' && s.rate === 'fast' && s.extra === 1 && s.phon === 'zhuyin', '改字形：只改自己的欄位，保留 rate 和其他欄位', s);
+    await ctx.close(); }
+  { const { page, ctx } = await open(browser, '/index.html', { ls: { [SK]: JSON.stringify({ v: 1, script: 'xx', lang: 'en', phon: 'zzz' }) } });
+    await page.waitForSelector('.lvl');
+    ok(await page.evaluate(() => SET.script === 'trad' && SET.lang === 'en' && SET.phon === 'pinyin'), '單欄不合法：只有那欄用預設');
+    await ctx.close(); }
+  { const { page, ctx } = await open(browser, '/index.html', { ls: { [SK]: '{壞掉' } });
+    await page.waitForSelector('.lvl');
+    ok(await page.evaluate(() => SET.script === 'trad' && SET.lang === 'es' && SET.phon === 'pinyin'), '設定壞掉：用預設');
+    await ctx.close(); }
+
+  console.log('\n[C] ⚙️ 設定視窗');
+  { const { page, errors, ctx } = await open(browser, '/index.html');
+    await page.waitForSelector('.lvl');
+    await page.click('.gear');
+    const t = await page.textContent('#setov');
+    ok(t.includes('字形') && t.includes('語言') && t.includes('拼音／注音'), '有字形、語言、拼音／注音');
+    ok(!t.includes('語速'), '沒有語速（比比看沒有語音）');
+    ok((await page.$$('#setov .opt')).length === 9, '9 個選項（2＋3＋4）');
+    const box = await page.$eval('#setov .setcard', e => { const r = e.getBoundingClientRect(); return { top: r.top, bottom: r.bottom }; });
+    ok(box.top > 0 && box.bottom < 844, '小視窗在畫面中間');
+    await shot(page, 'c1_gear', false);
+    await page.click('#setov .opt:has-text("只有中文")');
+    ok((await page.$$eval('#setov small', e => e.filter(x => x.offsetParent && x.textContent.trim() && !/Español|English/.test(x.textContent)).length)) === 0, '只有中文：設定視窗也沒有外語小字');
+    await page.click('#setov .big');
+    ok(await page.$eval('#setov', e => e.classList.contains('hide')), '按「完成」關閉');
+    ok(!(await page.textContent('#app')).match(/Elige|Básico|Centro/), '主選單沒有西文');
+    // 遊戲中打開 ⚙️
+    await page.evaluate(() => startRound(1, null));
+    const before = await page.evaluate(() => ({ i: S.i, score: S.score, q: S.qs[0].type }));
+    await page.click('.top .gear');
+    await page.click('#setov .opt:has-text("注音")');
+    await page.click('#setov .big');
+    const after = await page.evaluate(() => ({ i: S.i, score: S.score, q: S.qs[0].type }));
+    ok(JSON.stringify(before) === JSON.stringify(after), '遊戲中改設定：題目和分數不變');
+    ok(await page.$('.q .ph.zy') !== null && await page.$('.q .ph:not(.zy)') === null, '改成注音：題目上面顯示注音');
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+
+  console.log('\n[D] 拼音／注音的位置：題目、選項、小字典');
+  { const { page, errors, ctx } = await open(browser, '/index.html');
+    await page.waitForSelector('.lvl');
+    for(const [mode, py, zy] of [['pinyin', 1, 0], ['zhuyin', 0, 1], ['both', 1, 1], ['off', 0, 0]]){
+      await page.evaluate(m => { setS('phon', m); closeSet(); }, mode);
+      // 找一題有選項按鈕（pick／tf）的來檢查
+      const r = await page.evaluate(() => { for(let k = 0; k < 40; k++){ startRound(1, { lv: 1, dims: [], types: ['pick'], n: 3 }); if(S.qs[0].btns) break; }
+        S.dict = true; renderQ();
+        return { qpy: document.querySelectorAll('.q .ph:not(.zy)').length, qzy: document.querySelectorAll('.q .ph.zy').length,
+          bpy: document.querySelectorAll('.ob .ph:not(.zy)').length, bzy: document.querySelectorAll('.ob .ph.zy').length,
+          dict: document.querySelector('.dictBox').innerText }; });
+      ok((r.qpy > 0) === !!py && (r.qzy > 0) === !!zy && (r.bpy > 0) === !!py && (r.bzy > 0) === !!zy, `${mode}：題目與選項的拼音／注音正確`, r);
+      const hasZy = /[ㄅ-ㄩ]/.test(r.dict), hasPy = /[āáǎàēéěèīíǐìōóǒòūúǔù]/.test(r.dict);
+      ok(mode === 'zhuyin' ? hasZy && !hasPy : mode === 'both' ? hasZy && hasPy : hasPy && !hasZy, `${mode}：小字典（關的時候仍顯示拼音）`, r.dict);
+      if(mode === 'both') await shot(page, 'd_both');
+    }
+    // 回饋句子也有
+    await page.evaluate(() => { setS('phon', 'pinyin'); closeSet(); startRound(2, null); const q = S.qs[0]; const ci = q.btns ? q.btns.findIndex(b => b.ok) : q.its.findIndex(p => p.id === q.ans); q.btns ? pickBtn(ci) : pickCard(ci); });
+    ok(await page.$('.fb .ph') !== null, '答完的說明句子也有拼音');
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+
+  console.log('\n[E] 雙行介面與按鈕規格');
+  { const { page, errors, ctx } = await open(browser, '/index.html');
+    await page.waitForSelector('.lvl');
+    await page.evaluate(() => startRound(1, null)); const n = await playRound(page);
+    const big = await page.$$eval('.big', es => es.map(e => { const s = getComputedStyle(e), r = e.getBoundingClientRect(); return { rad: parseFloat(s.borderTopLeftRadius), h: r.height, w: r.width }; }));
+    ok(big.length >= 2 && big.every(b => b.rad >= b.h / 2 - 1 && b.h >= 54 && b.w <= 300.5), '主要按鈕：膠囊形、高 54、最寬 300', big);
+    const L = await page.$$eval('.big', es => es.map(e => e.innerText.split('\n')));
+    ok(L.every(x => x.length === 2), '按鈕兩行：中文＋西文', L);
+    await page.evaluate(() => startRound(1, { lv: 1, dims: [], types: ['tf'], n: 3 }));
+    const ob = await page.$$eval('.ob', es => es.map(e => { const s = getComputedStyle(e), r = e.getBoundingClientRect(); return { rad: parseFloat(s.borderTopLeftRadius), h: r.height }; }));
+    ok(ob.length === 2 && ob.every(b => b.h >= 46 && b.rad >= b.h / 2 - 1), '選項按鈕：膠囊形、至少 46 高', ob);
+    await page.evaluate(() => { setS('lang', 'en'); closeSet(); });
+    ok((await page.textContent('.ob')).includes('True'), '中＋英：選項下面是英文');
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+
+  console.log('\n[F] 結果畫面：分數 → 評語 → 過關提示 → 再玩一次 → 主選單');
+  { const { page, errors, ctx } = await open(browser, '/index.html');
+    await page.waitForSelector('.lvl');
+    await page.evaluate(() => startRound(1, null)); await playRound(page, true);
+    const order = await page.$$eval('#app > *', es => es.map(e => e.className || e.id || e.tagName));
+    const idx = k => order.findIndex(x => String(x).split(' ').includes(k));
+    ok(idx('score') < idx('comment') && idx('comment') < idx('passmsg') && idx('passmsg') < idx('big'), '順序：分數 → 評語 → 過關提示 → 按鈕', order);
+    ok((await page.textContent('.comment')).includes('全對'), '全對：最高一級評語');
+    const btns = await page.$$eval('.big', es => es.map(e => e.innerText.split('\n')[0]));
+    ok(btns.join() === '下一關,再玩一次,主選單', '過關：下一關、再玩一次、主選單', btns);
+    await shot(page, 'f_result_full');
+    const cm = await page.evaluate(() => [0, 30, 40, 55, 60, 79, 80, 99, 100].map(s => commentKey(s, 100)));
+    ok(cm.join() === 'cm0,cm0,cm1,cm1,cm2,cm2,cm3,cm3,cm4', '五級評語分界：0–39／40–59／60–79／80–99／100', cm);
+    await page.click('.big:has-text("下一關")');
+    ok(await page.evaluate(() => S && S.lv === 2), '按「下一關」進第 2 關');
+    await page.evaluate(() => { S.i = S.qs.length - 1; nextQ(); });
+    ok((await page.textContent('.passmsg')).includes('分以上就破關'), '沒過關：提示幾分破關');
+    await page.click('.gear'); await page.click('#setov .opt:has-text("简体")'); await page.click('#setov .big');
+    ok((await page.textContent('.comment')).includes('别灰心'), '結果畫面改設定：評語跟著變簡體');
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+
+  console.log('\n[G] 出題引擎（engine.js）');
+  { const { page, ctx } = await open(browser, '/index.html');
+    await page.waitForSelector('.lvl');
+    const r = await page.evaluate(() => { const fs = {}, bad = [];
+      for(const lv of [1, 2, 3]) for(let i = 0; i < 120; i++) for(const q of E.makeRound(lv)){ fs[q.type + ':' + q.f] = 1; if(!q.f || q.pol === undefined) bad.push(q.type); }
+      return { fs: Object.keys(fs).length, bad }; });
+    ok(r.bad.length === 0 && r.fs > 20, '很多回合：每題都有句型與方向', r);
+    const zy = await page.evaluate(() => ['méiyǒu', 'chàbuduō', 'yíyàng', 'hěn duō', 'tóufa', 'yǎnjing', 'gōngfēn', 'zhèngquè'].map(p => BBK_ENGINE.zy(p)));
+    ok(zy.join('/') === 'ㄇㄟˊ ㄧㄡˇ/ㄔㄚˋ ˙ㄅㄨ ㄉㄨㄛ/ㄧˊ ㄧㄤˋ/ㄏㄣˇ ㄉㄨㄛ/ㄊㄡˊ ˙ㄈㄚ/ㄧㄢˇ ˙ㄐㄧㄥ/ㄍㄨㄥ ㄈㄣ/ㄓㄥˋ ㄑㄩㄝˋ', '拼音 → 注音（連寫的詞也會切開）', zy);
+    const all = await page.evaluate(() => { const ps = new Set(); for(const d of Object.values(E.DIMS)){ [d.pos, d.neg, d.poss, d.unit].forEach(a => a && a.p && ps.add(a.p)); }
+      return [...ps].filter(p => /[a-zāáǎàēéěèīíǐìōóǒòūúǔùü]/i.test(BBK_ENGINE.zy(p))); });
+    ok(all.length === 0, '主題包所有拼音都轉得成注音', all);
+    const rg = await page.evaluate(() => { const q = E.makeRound(2, { lv: 2, dims: ['hair'], types: ['fill', 'pick'], n: 7 }); return { n: q.length, ok: q.every(x => x.d.key === 'hair' && ['fill', 'pick'].includes(x.type)) }; });
+    ok(rg.n === 7 && rg.ok, '照範圍出題（特徵、題型、題數）', rg);
+    await ctx.close(); }
+
+  console.log('\n[H] 學習單（worksheet.js，老師管理中心用）');
+  { const { page, errors, ctx } = await open(browser, '/index.html');
+    await page.waitForSelector('.lvl');
+    await page.addScriptTag({ url: BASE + '/worksheet.js' });
+    const r = await page.evaluate(() => { const rg = { lv: 2, dims: [], types: [], n: 8 }; const qs = E.makeRound(2, rg);
+      const h = BBK_WORKSHEET(E, qs, { range: rg, simp: false, lang: 'es', phon: 'both', answers: true, base: '' });
+      document.body.innerHTML = h;
+      return { n: document.querySelectorAll('.bw-q').length, k: document.querySelectorAll('.bw-k').length, zy: document.querySelectorAll('.bbkws .ph.zy').length,
+        img: document.querySelectorAll('.bbkws img').length, es: document.body.innerText.includes('Nombre') }; });
+    ok(r.n === 8 && r.k === 8 && r.zy > 0 && r.img > 0 && r.es, '8 題＋8 題答案、注音、人物圖、西文小字', r);
+    await page.waitForTimeout(300);
+    await shot(page, 'h_worksheet');
+    const r2 = await page.evaluate(() => { const rg = { lv: 1, dims: [], types: [], n: 5 }; const qs = E.makeRound(1, rg);
+      document.body.innerHTML = BBK_WORKSHEET(E, qs, { range: rg, simp: true, lang: 'zh', phon: 'off', answers: false, base: '' });
+      return { k: document.querySelectorAll('.bw-k').length, ph: document.querySelectorAll('.ph').length, small: document.querySelectorAll('.bbkws small').length, t: document.body.innerText.includes('学习单') }; });
+    ok(r2.k === 0 && r2.ph === 0 && r2.small === 0 && r2.t, '不附答案、拼音關、只有中文、簡體', r2);
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+
+  console.log('\n[I] 學生：班級連結＋暱稱＋回傳');
+  { const { page, errors, ctx } = await open(browser, '/index.html?class=' + CID);
+    await page.waitForSelector('.clsb h3:has-text("週三班")');
+    ok(await page.$('a.big[href*="profesor"]') === null, '班級連結：不顯示老師管理中心按鈕');
+    await page.evaluate(() => startRound(1, null));
+    ok(await page.evaluate(() => S === null), '沒輸入暱稱不能開始');
+    ok((await page.textContent('.nickmsg')).includes('請先輸入暱稱'), '提示先輸入暱稱');
+    await page.fill('#nickIn', '  Ana  María '); await page.click('.clsb .opt.on');
+    ok((await page.textContent('.clsb')).includes('Ana María'), '暱稱整理空白後顯示');
+    await shot(page, 'i1_class_menu');
+    for(const lv of [1, 2, 3]){
+      await page.evaluate(lv => startRound(lv, null), lv); const n = await playRound(page);
+      await page.waitForSelector('#clsUp .clsup.ok');
+      const plays = Object.values((await db(page)).class_plays); const p = plays[plays.length - 1];
+      ok(plays.length === lv && p.lv === lv && p.qs.length === n && p.max === n * 10 && p.rg === '' && p.th === 'people' && p.owner === 'u1' && p.nick === 'Ana María', `第 ${lv} 關：寫入一筆，欄位正確`);
+      ok(p.qs.every((q, i) => (i % 2 === 0 ? q.f1 && q.ok : !q.f1) && q.t && q.d && q.f && typeof q.ok === 'boolean' && Array.isArray(q.ids)), `第 ${lv} 關：每題紀錄正確`);
+      ok(p.score === p.qs.reduce((s, q) => s + (q.f1 ? 10 : q.ok ? 5 : 0), 0), `第 ${lv} 關：分數與每題紀錄一致`);
+    }
+    const t = await page.textContent('#clsUp');
+    ok(t.includes('✅ 成績已回傳給老師') && t.includes('Resultado enviado'), '顯示「✅ 成績已回傳給老師」＋西文');
+    const order = await page.$$eval('#app > *', es => es.map(e => e.className || e.id));
+    ok(order.indexOf('passmsg') < order.indexOf('clsUp') && order.indexOf('clsUp') < order.findIndex(x => /big/.test(x)), '順序：評語 → ✅ → 按鈕', order);
+    await page.click('.gear'); await page.click('#setov .opt:has-text("只有中文")'); await page.click('#setov .big');
+    const t2 = await page.textContent('#clsUp');
+    ok(t2.includes('✅ 成績已回傳給老師') && !t2.includes('Resultado'), '改成只有中文：✅ 訊息保留、沒有西文');
+    ok(Object.keys((await db(page)).class_plays).length === 3, '重畫結果畫面不會重複回傳');
+    await shot(page, 'i2_result_sent');
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+  { const { page, errors, ctx } = await open(browser, '/index.html?class=' + CID, { seedOpt: { expired: true }, ls: { ['bbk_nick_' + CID]: 'Leo' } });
+    await page.waitForSelector('.clsb h3:has-text("週三班")');
+    await page.evaluate(() => startRound(1, null)); await playRound(page);
+    await page.waitForSelector('#clsUp .clsup.no');
+    ok((await page.textContent('#clsUp')).includes('沒有權限'), '老師訂閱到期：顯示沒有權限、可以再試');
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+  { const { page, errors, ctx } = await open(browser, '/index.html?class=nosuchclass1');
+    await page.waitForSelector('.clsb h3:has-text("找不到")');
+    await page.evaluate(() => startRound(1, null)); ok(await page.evaluate(() => S !== null), '班級不存在：仍然可以玩');
+    await playRound(page); ok((await page.textContent('#clsUp')).trim() === '', '不嘗試傳送');
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+
+  console.log('\n[J] 老師範圍：?r= 範圍碼、舊格式連結');
+  { const { page, errors, ctx } = await open(browser, '/index.html?r=' + RS);
+    await page.waitForSelector('.panel h3:has-text("老師指定的練習")');
+    await page.waitForFunction(() => !document.body.innerText.includes('載入中'));
+    const t = await page.textContent('#app');
+    ok(t.includes('身高和年齡') && t.includes('第 2 關') && t.includes('5 題'), '顯示範圍名稱、關卡、題數');
+    ok(await page.$('.lvl') === null, '不顯示一般關卡');
+    await shot(page, 'j1_code');
+    await page.click('button.big:has-text("開始練習")');
+    const r = await page.evaluate(() => ({ lv: S.lv, n: S.qs.length, d: RANGE.dims, t: RANGE.types }));
+    ok(r.lv === 2 && r.n === 5 && r.d.join() === 'height,age' && r.t.join() === 'decode,pick', '照範圍出題', r);
+    await playRound(page);
+    ok(await page.$('.big:has-text("下一關")') === null, '老師範圍：結果沒有「下一關」');
+    await page.click('.big:has-text("再玩一次")');
+    ok(await page.evaluate(() => S.qs.length === 5 && S.qs.every(q => ['height', 'age'].includes(q.d.key))), '再玩一次：沿用範圍');
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+  { const { page, errors, ctx } = await open(browser, '/index.html?r=' + RS + '&class=' + CID);
+    await page.waitForSelector('.clsb h3:has-text("週三班")'); await page.waitForSelector('.panel h3:has-text("老師指定的練習")');
+    await page.waitForFunction(() => !document.body.innerText.includes('載入中'));
+    await page.fill('#nickIn', 'Ana'); await page.click('.clsb .opt.on');
+    await page.click('button.big:has-text("開始練習")'); await playRound(page); await page.waitForSelector('#clsUp .clsup.ok');
+    const p = Object.values((await db(page)).class_plays).pop();
+    ok(p.lv === 2 && p.rg === 'd=height,age&t=decode,pick&n=5' && p.max === 50, '班級＋範圍碼：成績回傳帶範圍', p.rg);
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+  { const { page, errors, ctx } = await open(browser, '/index.html?r=zzzz99998888');
+    await page.waitForSelector('.lvl');
+    ok((await page.textContent('#app')).includes('找不到老師的練習範圍'), '範圍碼不存在：提示並退回一般模式');
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+  { const { page, errors, ctx } = await open(browser, `/index.html?class=${CID}&lv=2&d=height,hair&t=pick,fill&n=5`, { ls: { ['bbk_nick_' + CID]: 'Leo' } });
+    await page.waitForSelector('.clsb h3:has-text("週三班")');
+    ok((await page.textContent('#app')).includes('開始練習'), '舊格式連結＋班級：顯示老師指定練習');
+    await page.click('button.big:has-text("開始練習")'); const n = await playRound(page);
+    await page.waitForSelector('#clsUp .clsup.ok');
+    const p = Object.values((await db(page)).class_plays)[0];
+    ok(p.rg === 'd=height,hair&t=pick,fill&n=5' && p.lv === 2 && n === 5 && p.qs.every(q => ['height', 'hair'].includes(q.d)), '記下範圍、題目都在範圍內', p.rg);
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+  { const { page, errors, ctx } = await open(browser, '/index.html?lv=1&d=height&t=tf&n=5');
+    await page.waitForSelector('.panel h3:has-text("老師指定的練習")');
+    ok(await page.evaluate(() => !window.__apps), '舊格式連結：不用連網');
+    await page.click('button.big:has-text("一般模式")');
+    ok(await page.$('.lvl') !== null && await page.evaluate(() => !location.search.includes('lv=')), '「一般模式」：回到選關卡');
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+
+  console.log('\n[K] 別的分頁改了共用設定');
+  { const { page, errors, ctx } = await open(browser, '/index.html');
+    await page.waitForSelector('.lvl');
+    await page.evaluate(k => { const v = JSON.stringify({ v: 1, script: 'simp', lang: 'en', phon: 'off', rate: 'slow' }); localStorage.setItem(k, v);
+      window.dispatchEvent(new StorageEvent('storage', { key: k, newValue: v })); }, SK);
+    ok((await page.textContent('h3')).includes('选择难度') && (await page.textContent('h3')).includes('Choose a level'), '主選單跟著更新');
+    await page.evaluate(() => startRound(1, null)); const i0 = await page.evaluate(() => S.qs[0].type);
+    await page.evaluate(k => { const v = JSON.stringify({ v: 1, script: 'trad', lang: 'es', phon: 'off' }); localStorage.setItem(k, v);
+      window.dispatchEvent(new StorageEvent('storage', { key: k, newValue: v })); }, SK);
+    ok(await page.evaluate(() => SET.script === 'simp' && S.i === 0), '遊戲中先不理');
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+
+  await browser.close(); server.close();
+  console.log(`\n通過 ${pass}，失敗 ${fail}`); process.exit(fail ? 1 : 0);
+});
