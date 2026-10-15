@@ -65,7 +65,7 @@ server.listen(0, 'localhost', async () => {
     const a = await page.$('a.big[href="https://wangchiapin.github.io/profesor/#/settings"]');
     ok(!!a && (await a.textContent()).includes('老師管理中心'), '有「👩‍🏫 老師管理中心」按鈕，連到中心的遊戲設定頁');
     ok(!(await page.textContent('#app')).includes('老師設定') && !(await page.textContent('#app')).includes('班級成績簿'), '遊戲裡沒有舊的老師區');
-    ok((await page.textContent('.ver')) === 'v6-6', '最下面有版本號 v6-6');
+    ok((await page.textContent('.ver')) === 'v6-7', '最下面有版本號 v6-7');
     // 步驟 6-4：主題
     const th = await page.$$eval('.thm .opt', b => b.map(x => [x.dataset.th, x.classList.contains('on'), x.classList.contains('lock'), x.innerText.replace(/\s+/g, ' ').trim()]));
     ok(JSON.stringify(th.map(x => x[0])) === JSON.stringify(['people', 'fruit', 'animal', 'action']) && th[0][1] && !th[0][2] && th.slice(1).every(x => x[2] && x[3].includes('陸續開放')),
@@ -117,6 +117,37 @@ server.listen(0, 'localhost', async () => {
     ok(r.out[2].includes('MEI:比/跟/沒有') && r.out[2].some(x => x.startsWith('DEG:一點/很多/很')) && !r.out[2].some(x => x.includes('一樣/') && x.startsWith('DEG')), '第 2 關：比／跟／沒有；一點／很多／很', r.out[2]);
     ok(r.out[3].includes('MOST:最/更/比') && r.out[3].some(x => /^GENG:(更|還)\/很\/最$/.test(x)), '第 3 關：更或還／很／最；最／更／比', r.out[3]);
     ok(r.bad.length === 0, '每題只有一個對的選項；更＋還、一樣＋差不多、比＋比較不會同時出現；填好的句子 = 解答句', r.bad);
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+
+  console.log('\n[A4] 第 3 批：選形容詞');
+  { const { page, errors, ctx } = await open(browser, '/index.html');
+    await page.waitForSelector('.lvl');
+    const r = await page.evaluate(() => {
+      const D = window.THEME_PACK.dims, ALLOW = ['height', 'age', 'build', 'eyes', 'nose', 'hair'], seen = {}, bad = [];
+      for(const lv of [1, 2]) for(let k = 0; k < 300; k++) for(const q of E.makeRound(lv, { dims: [], types: ['adj'], n: 5 })){
+        if(q.type !== 'adj'){ bad.push(['type', q.type]); continue; }
+        const [a, b] = q.its; seen[lv + q.f] = 1;
+        if(!ALLOW.includes(q.d.key)) bad.push(['dim', q.d.key]);
+        if(q.btns.length !== (q.d.poss ? 2 : 3)) bad.push(['n', q.d.key, q.btns.length]);
+        // 每個選項放進句子：只有正確的那個為真；年齡的大／小只會是答案，不會當干擾項
+        let trues = 0;
+        for(const bt of q.btns){ let t = false;
+          for(const dk of ALLOW){ const d = D[dk]; if(!!d.poss !== !!q.d.poss || (d.poss && dk !== q.d.key)) continue;
+            for(const pol of [1, -1]){ const A = pol > 0 ? d.pos : d.neg; if(!A || A.z !== bt.w) continue;
+              if(Math.sign(d.v(a) - d.v(b)) === (q.f === 'MEI' ? -pol : pol)) t = true; } }
+          if(t) trues++; if(t !== bt.ok) bad.push(['opt', q.f, q.d.key, a.name, b.name, bt.w]);
+          if(!bt.ok && q.d.key !== 'age' && ['大', '小'].includes(bt.w) && !q.d.poss) bad.push(['ageDistractor', q.d.key, bt.w]); }
+        if(trues !== 1) bad.push(['trues', trues]);
+        if(q.blankZ.map(t => t.blank ? q.fillAns : t.t).join('') !== q.full.z.map(t => t.t).join('')) bad.push(['full']);
+      }
+      return { seen: Object.keys(seen).sort(), bad: bad.slice(0, 5), pool: [E.POOL[1].includes('adj'), E.POOL[2].includes('adj'), E.POOL[3].includes('adj')], tn: E.TN.adj };
+    });
+    ok(r.pool.join() === 'true,true,false', '第 1、2 關有「選形容詞」，第 3 關沒有', r.pool);
+    ok(r.tn.join() === '選形容詞,Elige el adjetivo,Pick the adjective', '題型名稱', r.tn);
+    ok(JSON.stringify(r.seen) === JSON.stringify(['1BI', '2BI', '2MEI']), '第 1 關：A 比 B ＿＿；第 2 關再加：A 沒有 B 那麼＿＿', r.seen);
+    ok(r.bad.length === 0, '只用身高／年齡／胖瘦／眼睛／鼻子／頭髮長短；身體部位 2 個選項、其他 3 個；每題只有一個對；年齡的大小不當干擾項', r.bad);
+    const none = await page.evaluate(() => E.makeRound(2, { dims: ['skin', 'tex', 'muscle'], types: ['adj'], n: 5 }).filter(q => q.type === 'adj').length);
+    ok(none === 0, '只勾膚色／髮質／壯不壯：不會出「選形容詞」', none);
     ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
 
   console.log('\n[B] 共用設定：第一次、舊設定搬家、保留別款的欄位');

@@ -219,6 +219,8 @@ window.BBK_ENGINE=function(THEME){
     const words=['最','更','比'];
     return mkQ('fill',d,shuffle([w,...sample(sideOf(d,w,pol)[1],n-1)]),{blankZ:[...subj(d,w),...grp,BL,tkA(d,pol),tk('的')],fillAns:'最',q:ask('FILL',d,{}),
       btns:words.map(x=>({z:[tk(x)],ok:x==='最',w:x})),full:{z:[...subj(d,w),...grp,tk('最'),tkA(d,pol),tk('的')],es:es0+' del grupo',en:en0+' of the group'},row:1,f:'MOST',pol});}
+  // 選形容詞用的特徵（主觀的膚色、髮質、壯不壯不出）
+  const ADJ_OK=['height','age','build','eyes','nose','hair'];
   const GEN={
    // 解碼：兩人不顯示名字
    decode(lv){const d=pick(LV_DIMS(lv).filter(d=>d.neg||true));
@@ -293,6 +295,27 @@ window.BBK_ENGINE=function(THEME){
        if(truth(st)!==true)continue;
        return mkQ('fill',d,[a,b],{blankZ:z,fillAns:ans,q:ask('FILL',d,{}),btns:words.map(w=>({z:[tk(w)],ok:w===ans,w})),full:sent(st),row:1,tagCm:k==='deg'&&d.key==='height',f:st.f,pol:st.pol});}
      return null;},
+   // 選形容詞（步驟 6-4 討論定案）
+   //   第 1 關：A 比 B ＿＿。第 2 關再加：A 沒有 B 那麼＿＿。
+   //   整個人的特徵（身高、年齡、胖瘦）：3 個選項 = 正確、反義詞、另一個特徵的形容詞（程式確認它一定是錯的）
+   //   身體部位（眼睛、鼻子、頭髮長短）：句子寫出部位，只給 2 個選項（正確、反義詞）
+   //   膚色、髮質、壯不壯：不出這個題型
+   adj(lv){const ds=LV_DIMS(lv).filter(d=>ADJ_OK.includes(d.key));if(!ds.length)return null;const d=pick(ds);
+     for(let i=0;i<80;i++){const [a,b]=shuffle(ITEMS).slice(0,2);const c=clear(d,a,b);if(c===null)continue;
+       const mei=lv>=2&&Math.random()<.5,pol=mei?-c:c;if(!polOK(d,pol)||!polOK(d,-pol))continue;
+       const st=mei?{f:'MEI',d,a,b,pol}:{f:'BI',d,a,b,pol};if(truth(st)!==true)continue;
+       const z=mei?[...subj(d,a),tk('沒有'),NM(b),tk('那麼'),BL]:[...subj(d,a),tk('比'),NM(b),BL];
+       const ans=adj(d,pol),opts=[ans,adj(d,-pol)];
+       if(!d.poss){
+         // 第三個選項：另一個整個人的特徵，而且放進同一個句子一定是錯的（A 在那個特徵上明顯是反方向）
+         const wrong=[];
+         for(const d2 of Object.values(DIMS)){if(d2===d||d2.poss||d2.key==='age'||!ADJ_OK.includes(d2.key))continue;   // 年齡的大／小不當干擾項（會被讀成體型大小）
+         const c2=clear(d2,a,b);if(c2===null)continue;
+           const p2=mei?c2:-c2;if(polOK(d2,p2))wrong.push(adj(d2,p2));}
+         const w=wrong.filter(x=>x.z!==ans.z&&x.z!==adj(d,-pol).z);if(!w.length)continue;opts.push(pick(w));}
+       const btns=shuffle(opts).map(x=>({z:[tk(x.z,x.p)],ok:x===ans,w:x.z}));
+       return mkQ('adj',d,[a,b],{blankZ:z,fillAns:ans.z,q:ask('FILL',d,{}),btns,full:sent(st),row:1,f:st.f,pol});}
+     return null;},
    // 連鎖解碼（三人，更／還）
    chain(lv){const ch=chooseDP(lv,d=>chains(d).length>0);if(!ch)return null;const {d,pol}=ch;
      const cs=chains(d),[x,y,z]=cs[R(cs.length)];
@@ -309,7 +332,7 @@ window.BBK_ENGINE=function(THEME){
        en:ps?`${w.name}'s ${ps.en} ${ps.be} the ${adj(d,pol).en[2]}`:`${w.name} is the ${adj(d,pol).en[2]}`};
      return mkQ('most',d,shuffle([w,...sample(sideOf(d,w,pol)[1],n-1)]),{q:ask('MOST',d,{pol}),ans:w.id,expl:[ex],f:'MOST',pol});},
   };
-  const POOL={1:['decode','tf','pick','more','fill'],2:['decode','pick','whobi','biwho','fill'],3:['chain','most','whobi','biwho','pick','fill']};
+  const POOL={1:['decode','tf','pick','more','fill','adj'],2:['decode','pick','whobi','biwho','fill','adj'],3:['chain','most','whobi','biwho','pick','fill']};
   const qKey=q=>q.type+q.d.key+q.its.map(p=>p.id).sort().join();
   const poolOf=lv=>POOL[lv].filter(t=>!RANGE||!RANGE.types.length||RANGE.types.includes(t));   // 老師有勾題型時只出勾的
   function makeRound(lv){USED={};const pool=poolOf(lv);if(!pool.length||!LV_DIMS(lv).length)return [];
@@ -360,7 +383,7 @@ window.BBK_ENGINE=function(THEME){
   const TN={
     decode:['看句子找人','Encuentra a la persona','Find the person'],tf:['對錯題','Verdadero o falso','True or false'],pick:['看圖選句子','Elige la frase','Pick the sentence'],
     more:['選人：誰比較＿？','Elige: ¿quién es más ＿?','Pick: who is more ＿?'],whobi:['選人：誰比 A ＿？','Elige: ¿quién es más ＿ que A?','Pick: who is more ＿ than A?'],biwho:['選人：A 比誰＿？','Elige: ¿A es más ＿ que quién?','Pick: A is more ＿ than whom?'],
-    fill:['選比較詞','Elige la palabra de comparación','Pick the comparison word'],chain:['連鎖解碼','Decodifica en cadena','Chain clues'],most:['選人：誰最＿？','Elige: ¿quién es el más ＿?','Pick: who is the most ＿?'],
+    fill:['選比較詞','Elige la palabra de comparación','Pick the comparison word'],adj:['選形容詞','Elige el adjetivo','Pick the adjective'],chain:['連鎖解碼','Decodifica en cadena','Chain clues'],most:['選人：誰最＿？','Elige: ¿quién es el más ＿?','Pick: who is the most ＿?'],
   };
   return {THEME,ITEMS,DIMS,POOL,TN,LV_CNT,PASS,passMark,makeRound:round,feasible,zh,esc,rt,rtS,tr,cropHtml,tagHtml,zy:zyOf,tk,P_};
 };
