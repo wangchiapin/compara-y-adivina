@@ -96,16 +96,16 @@ small{display:block;font-size:.72em;color:var(--mut);font-weight:400;line-height
 <div id="setov" class="ov hide"></div>
 <script>
 // 主題包：預設 people，可用 ?theme=<名稱> 切換（對應 themes/<名稱>.js）；同步載入，引擎執行時一定已就緒
-document.write('<script src="themes/'+(new URLSearchParams(location.search).get('theme')||'people').replace(/[^\w-]/g,'')+'.js"><\/script>');
+document.write('<script src="themes/'+(new URLSearchParams(location.search).get('theme')||'people').replace(/[^\w-]/g,'')+'.js?v=6-5"><\/script>');
 </script>
-<script src="engine.js?v=5-4"></script>
+<script src="engine.js?v=6-5"></script>
 <script>
 if(!window.THEME_PACK){document.getElementById('app').innerHTML='<p style="padding:20px;text-align:center">找不到主題包 / Theme pack not found</p>';throw new Error('no theme pack');}
 const THEME=window.THEME_PACK;
 const E=BBK_ENGINE(THEME);          // 出題引擎（engine.js，跟老師管理中心的學習單共用）
 const {DIMS,POOL,TN,LV_CNT,passMark,esc}=E;
 const app=document.getElementById('app');
-const VERSION='v6-4';
+const VERSION='v6-5';
 const CENTER_URL='https://wangchiapin.github.io/profesor/#/settings';
 
 // ===== 三款遊戲共用的基本設定（⚙️）：localStorage 'hanziGames.settings'，格式見 corre/README.md =====

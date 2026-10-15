@@ -65,7 +65,7 @@ server.listen(0, 'localhost', async () => {
     const a = await page.$('a.big[href="https://wangchiapin.github.io/profesor/#/settings"]');
     ok(!!a && (await a.textContent()).includes('老師管理中心'), '有「👩‍🏫 老師管理中心」按鈕，連到中心的遊戲設定頁');
     ok(!(await page.textContent('#app')).includes('老師設定') && !(await page.textContent('#app')).includes('班級成績簿'), '遊戲裡沒有舊的老師區');
-    ok((await page.textContent('.ver')) === 'v6-4', '最下面有版本號 v6-4');
+    ok((await page.textContent('.ver')) === 'v6-5', '最下面有版本號 v6-5');
     // 步驟 6-4：主題
     const th = await page.$$eval('.thm .opt', b => b.map(x => [x.dataset.th, x.classList.contains('on'), x.classList.contains('lock'), x.innerText.replace(/\s+/g, ' ').trim()]));
     ok(JSON.stringify(th.map(x => x[0])) === JSON.stringify(['people', 'fruit', 'animal', 'action']) && th[0][1] && !th[0][2] && th.slice(1).every(x => x[2] && x[3].includes('陸續開放')),
@@ -78,6 +78,23 @@ server.listen(0, 'localhost', async () => {
     const g = await page.$eval('.gear', e => { const r = e.getBoundingClientRect(); return { x: r.right, y: r.top }; });
     ok(g.x > 340 && g.y < 30, '⚙️ 在右上角', g);
     await shot(page, 'a_menu');
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+
+  console.log('\n[A2] 6-4 討論第 1 批：主觀特徵只出差很多的、題型名稱');
+  { const { page, errors, ctx } = await open(browser, '/index.html');
+    await page.waitForSelector('.lvl');
+    const r = await page.evaluate(() => {
+      const P = window.THEME_PACK, D = P.dims, bad = [];
+      for(let k = 0; k < 400; k++) for(const lv of [1, 2, 3]) for(const q of E.makeRound(lv, null)){
+        if(['build', 'muscle', 'tex'].indexOf(q.d.key) < 0 || q.type === 'decode' || q.type === 'chain') continue;
+        const vs = q.its.map(p => D[q.d.key].v(p));
+        if(q.type === 'more' && Math.abs(vs[0] - vs[1]) === 1) bad.push([q.type, q.d.key, vs]);
+      }
+      return { bad: bad.slice(0, 5), thr: ['build', 'muscle', 'tex'].map(k => D[k].thr) };
+    });
+    ok(r.thr.join() === '2,2,2' && r.bad.length === 0, '胖瘦、壯不壯、髮質：只有差很多（1 對 3）才出題', r);
+    const tn = await page.evaluate(() => [E.TN.more[0], E.TN.whobi[0], E.TN.biwho[0], E.TN.most[0], E.TN.fill[0]]);
+    ok(JSON.stringify(tn) === JSON.stringify(['選人：誰比較＿？', '選人：誰比 A ＿？', '選人：A 比誰＿？', '選人：誰最＿？', '選比較詞']), '題型名稱改成空格寫法', tn);
     ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
 
   console.log('\n[B] 共用設定：第一次、舊設定搬家、保留別款的欄位');

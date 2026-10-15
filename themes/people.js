@@ -72,6 +72,7 @@ window.THEME_PACK={
  // crop: 卡片怎麼裁圖（full 全身按真實比例、half 半身、face 臉）；lv: 第幾關開始出現；w: 出現權重；
  // pos／neg: 正反形容詞（中文字、拼音、西、英）；poss: 「的頭髮」這類所屬名詞；unit: 具體差距的單位；
  // eq: 可出「一樣」；same／diff: 可出「差不多／不一樣」；tagA: 卡片上常駐的小標；tagB: 只在要看數字時顯示。
+ // 胖瘦、壯不壯、髮質比較主觀：thr:2 = 只有 1 對 3（差很多）才出題（步驟 6-4 討論）
  dims:{
   height:{name:['身高','Estatura','Height'],v:p=>p.h,num:1,thr:8,near:3,crop:'full',lv:1,w:2.5,
     pos:{z:'高',p:'gāo',es:['alto','alta'],en:['tall','taller','tallest']},neg:{z:'矮',p:'ǎi',es:['bajo','baja'],en:['short','shorter','shortest']},
@@ -81,7 +82,7 @@ window.THEME_PACK={
     pos:{z:'大',p:'dà',es:['mayor','mayor'],en:['old','older','oldest']},neg:{z:'小',p:'xiǎo',es:['menor','menor'],en:['young','younger','youngest']},
     unit:{t:'歲',p:'suì'},esU:'años',enU:'years',esSame:'la misma edad',enSame:'are not the same age',same:1,diff:1,
     tagA:p=>[p.age,'歲']},
-  build:{name:['胖瘦','Complexión','Build'],v:p=>p.build,thr:1,crop:'half',lv:1,w:2,eq:1,
+  build:{name:['胖瘦','Complexión','Build'],v:p=>p.build,thr:2,crop:'half',lv:1,w:2,eq:1,
     pos:{z:'胖',p:'pàng',es:['gordo','gorda'],en:['heavy','heavier','heaviest']},neg:{z:'瘦',p:'shòu',es:['delgado','delgada'],en:['thin','thinner','thinnest']}},
   hair:{name:['頭髮長短','Largo del pelo','Hair length'],v:p=>p.hair,thr:1,crop:'face',lv:1,w:2.5,eq:1,poss:{z:'頭髮',p:'tóufa',es:'el pelo',en:'hair',be:'is'},
     pos:{z:'長',p:'cháng',es:'largo',en:['long','longer','longest']},neg:{z:'短',p:'duǎn',es:'corto',en:['short','shorter','shortest']},
@@ -90,9 +91,9 @@ window.THEME_PACK={
     pos:{z:'大',p:'dà',es:'grandes',en:['big','bigger','biggest']},neg:{z:'小',p:'xiǎo',es:'pequeños',en:['small','smaller','smallest']}},
   nose:{name:['鼻子大小','Tamaño de nariz','Nose size'],v:p=>p.nose,thr:2,crop:'face',lv:1,w:1.5,poss:{z:'鼻子',p:'bízi',es:'la nariz',en:'nose',be:'is'},
     pos:{z:'大',p:'dà',es:'grande',en:['big','bigger','biggest']},neg:{z:'小',p:'xiǎo',es:'pequeña',en:['small','smaller','smallest']}},
-  muscle:{name:['壯不壯','Fuerza','Muscles'],v:p=>p.muscle,thr:1,crop:'half',lv:2,w:1.5,eq:1,
+  muscle:{name:['壯不壯','Fuerza','Muscles'],v:p=>p.muscle,thr:2,crop:'half',lv:2,w:1.5,eq:1,
     pos:{z:'壯',p:'zhuàng',es:['fuerte','fuerte'],en:['strong','stronger','strongest']},neg:null},
-  tex:{name:['髮質（直／捲）','Tipo de pelo','Hair type'],v:p=>p.tex,thr:1,crop:'face',lv:2,w:2,eq:1,poss:{z:'頭髮',p:'tóufa',es:'el pelo',en:'hair',be:'is'},
+  tex:{name:['髮質（直／捲）','Tipo de pelo','Hair type'],v:p=>p.tex,thr:2,crop:'face',lv:2,w:2,eq:1,poss:{z:'頭髮',p:'tóufa',es:'el pelo',en:'hair',be:'is'},
     pos:{z:'捲',p:'juǎn',es:'rizado',en:['curly','curlier','curliest']},neg:{z:'直',p:'zhí',es:'lacio',en:['straight','straighter','straightest']}},
   skin:{name:['膚色','Color de piel','Skin tone'],v:p=>4-p.skin,thr:2,crop:'face',lv:2,w:1.5,poss:{z:'皮膚',p:'pífū',es:'la piel',en:'skin',be:'is'},
     pos:{z:'白',p:'bái',es:'clara',en:['light','lighter','lightest']},neg:{z:'黑',p:'hēi',es:'oscura',en:['dark','darker','darkest']}},

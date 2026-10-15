@@ -329,8 +329,8 @@ window.BBK_ENGINE=function(THEME){
   // 題型名稱：[中, 西, 英]
   const TN={
     decode:['看句子找人','Encuentra a la persona','Find the person'],tf:['對錯題','Verdadero o falso','True or false'],pick:['看圖選句子','Elige la frase','Pick the sentence'],
-    more:['誰比較…','¿Quién es más…?','Who is more…?'],whobi:['誰比…','¿Quién … que X?','Who is … than X?'],biwho:['…比誰','X … que ¿quién?','X is … than whom?'],
-    fill:['填空','Completa la frase','Fill in the blank'],chain:['連鎖解碼','Decodifica en cadena','Chain clues'],most:['誰最…','¿Quién es el más…?','Who is the most…?'],
+    more:['選人：誰比較＿？','Elige: ¿quién es más ＿?','Pick: who is more ＿?'],whobi:['選人：誰比 A ＿？','Elige: ¿quién es más ＿ que A?','Pick: who is more ＿ than A?'],biwho:['選人：A 比誰＿？','Elige: ¿A es más ＿ que quién?','Pick: A is more ＿ than whom?'],
+    fill:['選比較詞','Elige la palabra de comparación','Pick the comparison word'],chain:['連鎖解碼','Decodifica en cadena','Chain clues'],most:['選人：誰最＿？','Elige: ¿quién es el más ＿?','Pick: who is the most ＿?'],
   };
   return {THEME,ITEMS,DIMS,POOL,TN,LV_CNT,PASS,passMark,makeRound:round,feasible,zh,esc,rt,rtS,tr,cropHtml,tagHtml,zy:zyOf,tk,P_};
 };
