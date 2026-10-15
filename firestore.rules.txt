@@ -4,10 +4,11 @@
     // 班級（teacher_classes、classes）沿用跑吧！漢字、色數消消樂的共用規則，不用改。
     // 資料：
     //   class_plays/{自動 id} → 學生每玩完一回合寫一筆
-    //     { cid, owner, game:'bbk', h, nick, at, th, lv, rg, score, max, qs }
+    //     { cid, owner, game:'bbk', h, nick, at, th, lv, rg, r, score, max, qs }
     //     h    = 暱稱雜湊（16 碼，同暱稱不分大小寫與空白視為同一人）
     //     th   = 主題包（people…）
     //     lv   = 關卡 1–3；rg = 老師範圍（'' = 一般模式，否則像 'd=height,age&t=pick&n=10'）
+    //     r    = 範圍碼（?r=；一般模式或舊格式範圍＝''）：中心成績冊依範圍分開顯示（步驟 6-2）
     //     qs   = 每題一筆 { t 題型, d 特徵, f 句型, p 方向(1/-1/0), ok 是否答對, f1 是否第一次就答對, ids 人物, tv 對錯題的句子本身是對是錯 }
     // 規則：
     //   - 學生（匿名登入）知道班級碼才能寫；老師要訂閱中才收得到
@@ -15,10 +16,11 @@
     //   - 到期後老師仍可讀、匯出、刪除
     // ===================================================================
     match /class_plays/{pid} {
+      // 步驟 6-2：多了 r（老師範圍的範圍碼；一般模式或舊格式範圍＝''）
       function okPlay() {
         let d = request.resource.data;
-        return d.keys().hasOnly(['cid','owner','game','h','nick','at','th','lv','rg','score','max','qs'])
-          && d.keys().hasAll(['cid','owner','game','h','nick','at','th','lv','rg','score','max','qs'])
+        return d.keys().hasOnly(['cid','owner','game','h','nick','at','th','lv','rg','r','score','max','qs'])
+          && d.keys().hasAll(['cid','owner','game','h','nick','at','th','lv','rg','r','score','max','qs'])
           && d.game == 'bbk'
           && d.cid is string && d.cid.matches('^[a-z0-9]{8,32}$')
           && d.owner == get(/databases/$(database)/documents/classes/$(d.cid)).data.owner
@@ -28,6 +30,7 @@
           && d.th is string && d.th.size() <= 20
           && d.lv is int && d.lv >= 1 && d.lv <= 3
           && d.rg is string && d.rg.size() <= 200
+          && d.r is string && d.r.matches('^([a-z0-9]{8,32})?$')
           && d.max is int && d.max >= 10 && d.max <= 300
           && d.score is int && d.score >= 0 && d.score <= d.max
           && d.qs is list && d.qs.size() >= 1 && d.qs.size() <= 30

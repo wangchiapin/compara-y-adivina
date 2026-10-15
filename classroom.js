@@ -1,5 +1,6 @@
 // 比比看：學生端的班級連結與老師範圍碼（接中央訂閱專案 subscription-48d3c，做法同跑吧！漢字、色數消消樂）
 // - 班級連結 ?class=<班級碼>：輸入暱稱；每玩完一回合，把每題作答寫進 class_plays（老師在「老師管理中心」看成績）
+//   r = 老師範圍的範圍碼（?r=，沒用範圍＝''）：中心成績冊用它依「哪一組範圍」分開顯示（步驟 6-2）
 // - 範圍碼 ?r=<範圍碼>：從 shared_bbk 讀老師在中心存的範圍（不用登入），鎖定成「老師指定的練習」
 // 老師的功能（班級、成績簿、範圍、學習單）都在老師管理中心，遊戲裡不再有老師區。
 // Firebase SDK 只在需要時才載入（一般學生玩遊戲不會載入）。
@@ -114,7 +115,7 @@ async function upload(){
     const qs=(round.log||[]).filter(Boolean);if(!qs.length){C.up='';showUp();return;}
     const h=await nickHash(C.nick);
     await C.db.collection('class_plays').add({cid:CLASS_ID,owner:C.cls.owner,game:GAME,h,nick:C.nick,at:firebase.firestore.FieldValue.serverTimestamp(),th:THEME_NAME,
-      lv:round.lv,rg:rangeStr(round.rg),score:round.score,max:round.qs.length*10,qs});
+      lv:round.lv,rg:rangeStr(round.rg),r:(round.rg&&RCODE)?RCODE:'',score:round.score,max:round.qs.length*10,qs});
     round.sent=true;C.up='ok';
   }catch(e){console.warn('upload failed',e);C.up='err';C.upErr=errText(e);}
   if(S===round)showUp();}

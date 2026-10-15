@@ -18,10 +18,11 @@
   function checkWrite(pid, c, id, data, user){
     if(c !== 'class_plays') return;
     const d = data, keys = Object.keys(d).sort().join();
-    if(keys !== ['at','cid','game','h','lv','max','nick','owner','qs','rg','score','th'].sort().join()) deny();
+    if(keys !== ['at','cid','game','h','lv','max','nick','owner','qs','r','rg','score','th'].sort().join()) deny();
     const cls = col(pid, 'classes')[d.cid]; if(!cls || cls.owner !== d.owner) deny();
     const p = col(pid, 'site_plans')[d.owner]; if(!p || !(p.expiresAt > NOW())) deny();
     if(!user) deny();
+    if(typeof d.r !== 'string' || !/^([a-z0-9]{8,32})?$/.test(d.r)) deny();
     if(d.game !== 'bbk' || !/^[a-f0-9]{16}$/.test(d.h) || !(d.nick.length >= 1 && d.nick.length <= 16)) deny();
     if(!(d.lv >= 1 && d.lv <= 3) || !(d.score >= 0 && d.score <= d.max) || !(d.qs.length >= 1 && d.qs.length <= 30)) deny();
   }

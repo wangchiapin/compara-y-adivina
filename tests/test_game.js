@@ -236,7 +236,7 @@ server.listen(0, 'localhost', async () => {
       await page.evaluate(lv => startRound(lv, null), lv); const n = await playRound(page);
       await page.waitForSelector('#clsUp .clsup.ok');
       const plays = Object.values((await db(page)).class_plays); const p = plays[plays.length - 1];
-      ok(plays.length === lv && p.lv === lv && p.qs.length === n && p.max === n * 10 && p.rg === '' && p.th === 'people' && p.owner === 'u1' && p.nick === 'Ana María', `第 ${lv} 關：寫入一筆，欄位正確`);
+      ok(plays.length === lv && p.lv === lv && p.qs.length === n && p.max === n * 10 && p.rg === '' && p.r === '' && p.th === 'people' && p.owner === 'u1' && p.nick === 'Ana María', `第 ${lv} 關：寫入一筆，欄位正確`);
       ok(p.qs.every((q, i) => (i % 2 === 0 ? q.f1 && q.ok : !q.f1) && q.t && q.d && q.f && typeof q.ok === 'boolean' && Array.isArray(q.ids)), `第 ${lv} 關：每題紀錄正確`);
       ok(p.score === p.qs.reduce((s, q) => s + (q.f1 ? 10 : q.ok ? 5 : 0), 0), `第 ${lv} 關：分數與每題紀錄一致`);
     }
@@ -285,6 +285,7 @@ server.listen(0, 'localhost', async () => {
     await page.click('button.big:has-text("開始練習")'); await playRound(page); await page.waitForSelector('#clsUp .clsup.ok');
     const p = Object.values((await db(page)).class_plays).pop();
     ok(p.lv === 2 && p.rg === 'd=height,age&t=decode,pick&n=5' && p.max === 50, '班級＋範圍碼：成績回傳帶範圍', p.rg);
+    ok(p.r === RS, '步驟 6-2：成績記下範圍碼 r（中心依範圍分開顯示）', p.r);
     ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
   { const { page, errors, ctx } = await open(browser, '/index.html?r=zzzz99998888');
     await page.waitForSelector('.lvl');
@@ -296,7 +297,7 @@ server.listen(0, 'localhost', async () => {
     await page.click('button.big:has-text("開始練習")'); const n = await playRound(page);
     await page.waitForSelector('#clsUp .clsup.ok');
     const p = Object.values((await db(page)).class_plays)[0];
-    ok(p.rg === 'd=height,hair&t=pick,fill&n=5' && p.lv === 2 && n === 5 && p.qs.every(q => ['height', 'hair'].includes(q.d)), '記下範圍、題目都在範圍內', p.rg);
+    ok(p.rg === 'd=height,hair&t=pick,fill&n=5' && p.r === '' && p.lv === 2 && n === 5 && p.qs.every(q => ['height', 'hair'].includes(q.d)), '記下範圍、題目都在範圍內', p.rg);
     ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
   { const { page, errors, ctx } = await open(browser, '/index.html?lv=1&d=height&t=tf&n=5');
     await page.waitForSelector('.panel h3:has-text("老師指定的練習")');
