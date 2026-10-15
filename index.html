@@ -27,6 +27,11 @@ small{display:block;font-size:.72em;color:var(--mut);font-weight:400;line-height
 .lvl{display:block;width:100%;min-height:54px;text-align:center;border:2px solid #eee;background:#fff;border-radius:999px;padding:9px 26px;margin:8px 0;cursor:pointer;font-size:1.05rem;color:var(--ink);line-height:1.3;font-family:inherit}
 .lvl b{color:var(--acc);margin-right:6px}
 .lvl small{display:inline;margin-left:6px}
+.thm{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:4px 0}
+.thm .opt{flex:1 1 40%;min-height:44px;line-height:1.2}
+.thm .opt.lock{opacity:.5;border-style:dashed;cursor:default}
+.thm .opt small{display:block;font-size:.72rem;font-weight:400}
+.thnote{text-align:center;font-size:.85rem;color:var(--mut);margin:2px 0 0}
 .lvl .d{font-size:.8rem;color:var(--mut);margin-top:2px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.95rem}
 .top .grow{flex:1}
@@ -100,7 +105,7 @@ const THEME=window.THEME_PACK;
 const E=BBK_ENGINE(THEME);          // 出題引擎（engine.js，跟老師管理中心的學習單共用）
 const {DIMS,POOL,TN,LV_CNT,passMark,esc}=E;
 const app=document.getElementById('app');
-const VERSION='v5-4';
+const VERSION='v6-4';
 const CENTER_URL='https://wangchiapin.github.io/profesor/#/settings';
 
 // ===== 三款遊戲共用的基本設定（⚙️）：localStorage 'hanziGames.settings'，格式見 corre/README.md =====
@@ -146,6 +151,8 @@ const U={
  phon:['拼音／注音','Pinyin / Zhuyin','Pinyin / Zhuyin'],pinyin:['拼音','Pinyin','Pinyin'],zhuyin:['注音','Zhuyin','Zhuyin'],
  both:['兩個都顯示','Los dos','Both'],phOff:['關','No','Off'],done:['完成','Listo','Done'],
  choose:['選擇難度','Elige el nivel','Choose a level'],
+ theme:['主題','Tema','Theme'],th_people:['人物','Personas','People'],th_fruit:['水果','Frutas','Fruits'],th_animal:['動物','Animales','Animals'],th_action:['動作','Acciones','Actions'],
+ soon:['陸續開放','Próximamente','Coming soon'],
  l1:['入門','Básico','Basic'],l2:['進階','Intermedio','Intermediate'],l3:['挑戰','Desafío','Challenge'],
  d1:['比、比較、一樣、差不多、不一樣','比, 比較, 一樣, 差不多, 不一樣','比, 比較, 一樣, 差不多, 不一樣'],
  d2:['加上 沒有…那麼、一點、很多、誰比…／…比誰','+ 沒有…那麼, 一點, 很多, 誰比… / …比誰','+ 沒有…那麼, 一點, 很多, 誰比… / …比誰'],
@@ -212,6 +219,16 @@ const CR=()=>window.CLASSROOM||null;     // classroom.js：班級連結（暱稱
 let S=null,screen='menu';
 let RANGE=null;   // 這一回合的範圍（null = 一般模式）
 function gearBtn(){return `<button class="gear" onclick="openSet()" title="${esc(u('settings'))}" aria-label="${esc(u('settings'))}">⚙️</button>`;}
+// 主題：目前只有人物可以玩；其他「🔒 陸續開放」（步驟 6-4）
+const THEMES=[['people','👤',1],['fruit','🍎',0],['animal','🐶',0],['action','🏃',0]];
+const CUR_THEME=(qp.get('theme')||'people').replace(/[^\w-]/g,'')||'people';
+let thNote=false;
+function themeSoon(){thNote=true;renderMenu();}
+function themeHtml(){
+  return `<h3 style="margin:14px 0 4px;text-align:center">${L('theme')}</h3><div class="thm">`+THEMES.map(([k,ic,ok])=>ok
+    ?`<button class="opt ${CUR_THEME===k?'on':''}" data-th="${k}">${ic} ${L('th_'+k)}</button>`
+    :`<button class="opt lock" data-th="${k}" onclick="themeSoon()">${ic} ${esc(u('th_'+k))}<small>🔒 ${esc(u('soon'))}</small></button>`).join('')+'</div>'+
+    (thNote?`<div class="thnote">🔒 ${esc(u('soon'))}${fx('soon')?' '+esc(fx('soon')):''}</div>`:'');}
 function renderMenu(){S=null;screen='menu';
   document.title=zh('比比看')+' Compara y Adivina';
   const cm=CR()&&CR().classMode();
@@ -228,7 +245,7 @@ function renderMenu(){S=null;screen='menu';
   }else{
     if(LK.note)h+=`<div class="panel" style="font-size:.92rem">⚠ ${L(LK.note)}</div>`;
     const nn=SET.lang==='zh'?'':THEME.noun[LI()];
-    h+=`<h3 style="margin:16px 0 4px;text-align:center">${L('choose')}</h3>`+[1,2,3].map(n=>`<button class="lvl" onclick="startRound(${n},null)"><b>${n}</b>${esc(u('l'+n))}${fx('l'+n)?`<small>${esc(fx('l'+n))}</small>`:''}<div class="d">${esc(zh(U['d'+n][0]+'｜'+LV_CNT[n]+' '+THEME.noun[0]))}${nn?'<br>'+esc(U['d'+n][LI()]+' · '+LV_CNT[n]+' '+nn):''}</div></button>`).join('');
+    h+=themeHtml()+`<h3 style="margin:16px 0 4px;text-align:center">${L('choose')}</h3>`+[1,2,3].map(n=>`<button class="lvl" onclick="startRound(${n},null)"><b>${n}</b>${esc(u('l'+n))}${fx('l'+n)?`<small>${esc(fx('l'+n))}</small>`:''}<div class="d">${esc(zh(U['d'+n][0]+'｜'+LV_CNT[n]+' '+THEME.noun[0]))}${nn?'<br>'+esc(U['d'+n][LI()]+' · '+LV_CNT[n]+' '+nn):''}</div></button>`).join('');
   }
   if(!cm&&!LK.locked)h+=`<a class="big sec" href="${CENTER_URL}">👩‍🏫 ${L('teacher')}</a>`;
   app.innerHTML=h+`<p class="ver">${VERSION}</p>`;}
