@@ -72,7 +72,7 @@ window.BBK_ENGINE=function(THEME){
   const PASS={1:80,2:75,3:70};   // 各關及格分數（10 題，每題最多 10 分）。第一關很多題只有 2 個選項、容易猜中，所以門檻較高
   const passMark=(lv,n)=>Math.round(PASS[lv]*n/10);   // 題數不是 10 題時，及格線依比例換算
   let RANGE=null;
-  const W={比:'bǐ',跟:'gēn',沒有:'méiyǒu',那麼:'nàme',一樣:'yíyàng',差不多:'chàbuduō',不:'bù',誰:'shéi',是:'shì',比較:'bǐjiào',最:'zuì',更:'gèng',還:'hái',一點:'yìdiǎn',很多:'hěn duō',多了:'duō le',的:'de',公分:'gōngfēn',歲:'suì',對:'duì',錯:'cuò',哪:'nǎ',一句:'yí jù',選出:'xuǎnchū',正確:'zhèngquè',詞:'cí',還是:'háishì'};
+  const W={比:'bǐ',跟:'gēn',沒有:'méiyǒu',那麼:'nàme',一樣:'yíyàng',差不多:'chàbuduō',不:'bù',誰:'shéi',是:'shì',比較:'bǐjiào',最:'zuì',更:'gèng',還:'hái',一點:'yìdiǎn',很:'hěn',很多:'hěn duō',多了:'duō le',的:'de',公分:'gōngfēn',歲:'suì',對:'duì',錯:'cuò',哪:'nǎ',一句:'yí jù',選出:'xuǎnchū',正確:'zhèngquè',詞:'cí',還是:'háishì'};
   const tk=(t,p)=>({t,p:p===undefined?(W[t]||''):p});
   const NM=p=>({t:p.name,nm:1});
   const P_=t=>({t,p:'',punc:1});
@@ -195,6 +195,30 @@ window.BBK_ENGINE=function(THEME){
     for(const x of ITEMS)for(const y of ITEMS){if(x===y||THEME.grp(x)!==THEME.grp(y)||clear(d,x,y)!==1)continue;
       for(const z of ITEMS){if(z===x||z===y||THEME.grp(z)!==THEME.grp(x)||clear(d,y,z)!==1)continue;out.push([x,y,z]);}}
     return CH[d.key]=out;}
+  // ---- 選比較詞・第 3 關 ----
+  // 前情提要「B 很高」要說得通：B 在這個方向上至少贏過一半的人；年齡不出這句（「阿明很大」不自然）
+  function fillGeng(lv){const ch=chooseDP(lv,(d,pol)=>d.key!=='age'&&gengPairs(d,pol).length>0);if(!ch)return null;const {d,pol}=ch,ps=d.poss;
+    const pr=gengPairs(d,pol),[a,b]=pr[R(pr.length)],w=Math.random()<.3?'還':'更';
+    const st={f:'GENG',d,a,b,pol,alt:w==='還'},full=sent(st);
+    const pre=[...subj(d,b),tk('很'),tkA(d,pol),P_('，')];
+    const ea=esA(d,pol,b),en0=adj(d,pol).en[0];
+    const preEs=ps?`${b.name} tiene ${ps.es} muy ${ea}`:`${b.name} es muy ${ea}`,preEn=ps?`${b.name}'s ${ps.en} ${ps.be} very ${en0}`:`${b.name} is very ${en0}`;
+    const words=[w,'很','最'];
+    return mkQ('fill',d,[a,b],{blankZ:[...pre,...subj(d,a),tk('比'),NM(b),BL,tkA(d,pol)],fillAns:w,q:ask('FILL',d,{}),btns:words.map(x=>({z:[tk(x)],ok:x===w,w:x})),
+      full:{z:[...pre,...full.z],es:preEs+'; '+full.es,en:preEn+'; '+full.en},row:1,f:'GENG',pol});}
+  const GP={};
+  function gengPairs(d,pol){const k=d.key+pol;if(GP[k])return GP[k];const out=[],half=ITEMS.length/2;
+    for(const b of ITEMS){if(sideOf(d,b,pol)[1].length<half)continue;for(const a of sideOf(d,b,pol)[0])out.push([a,b]);}
+    return GP[k]=out;}
+  function fillMost(lv){let n=Math.random()<.5?3:4;let ch=chooseDP(lv,(d,pol)=>mostW(d,pol,n).length>0);
+    if(!ch){n=3;ch=chooseDP(lv,(d,pol)=>mostW(d,pol,n).length>0);}if(!ch)return null;
+    const {d,pol}=ch,ws=mostW(d,pol,n),w=ws[R(ws.length)],ps=d.poss,cnt=n===3?'三':'四';
+    const grp=[tk('是'),tk(cnt+THEME.noun[0],(n===3?'sān':'sì')+' ge rén'),tk('裡','lǐ')];
+    const es0=ps?`${w.name} tiene ${ps.es} ${esMas(d,pol,w)}`:`${w.name} es ${d.noMas?THEME.art(w)+esA(d,pol,w):THEME.art(w)+esMas(d,pol,w)}`;
+    const en0=ps?`${w.name}'s ${ps.en} ${ps.be} the ${adj(d,pol).en[2]}`:`${w.name} is the ${adj(d,pol).en[2]}`;
+    const words=['最','更','比'];
+    return mkQ('fill',d,shuffle([w,...sample(sideOf(d,w,pol)[1],n-1)]),{blankZ:[...subj(d,w),...grp,BL,tkA(d,pol),tk('的')],fillAns:'最',q:ask('FILL',d,{}),
+      btns:words.map(x=>({z:[tk(x)],ok:x==='最',w:x})),full:{z:[...subj(d,w),...grp,tk('最'),tkA(d,pol),tk('的')],es:es0+' del grupo',en:en0+' of the group'},row:1,f:'MOST',pol});}
   const GEN={
    // 解碼：兩人不顯示名字
    decode(lv){const d=pick(LV_DIMS(lv).filter(d=>d.neg||true));
@@ -251,15 +275,21 @@ window.BBK_ENGINE=function(THEME){
    biwho(lv){const n=lv>=3?4:3;const ch=chooseDP(lv,(d,pol)=>triT(d,pol,n,'bi').length>0);if(!ch)return null;const {d,pol}=ch;
      const ts=triT(d,pol,n,'bi'),t=ts[R(ts.length)],[s,o]=sideOf(d,t,pol),y=o[R(o.length)];
      return mkQ('biwho',d,shuffle([t,y,...sample(s,n-2)]),{q:ask('BIWHO',d,{t,pol}),ans:y.id,expl:[sent({f:'BI',d,a:t,b:y,pol})],f:'BIWHO',pol});},
-   // 填空
-   fill(lv){const d=pick(LV_DIMS(lv));
+   // 選比較詞（步驟 6-4 討論定案）：每題只有一個對的選項；「更／還」「一樣／差不多」「比／比較」不會同時出現
+   //   第 1 關：A ＿ B 高（比）、A ＿ B 一樣高（跟）；選項 比／跟／很
+   //   第 2 關：比／跟／沒有；A 比 B 高＿（一點／很多，第三個選項是「很」）
+   //   第 3 關：B 很高，A 比 B ＿高（更或還／很／最）；A 是三個人裡＿高的（最／更／比）
+   fill(lv){
+     if(lv>=3)return Math.random()<.5?(fillGeng(lv)||fillMost(lv)):(fillMost(lv)||fillGeng(lv));
+     const d=pick(LV_DIMS(lv));
      for(let i=0;i<80;i++){const [a,b]=shuffle(ITEMS).slice(0,2);const c=cmp(d,a,b);if(c===null)continue;const kinds=[];
-       if(c!==0){kinds.push('bi','mei');if(d.num)kinds.push('deg');}if(c===0&&d.eq&&(d.v(a)===1||d.v(a)===3))kinds.push('same');if(!kinds.length)continue;
-       const k=pick(kinds);let st,z,words,ans;
-       if(k==='bi'){const pol=polOK(d,c)?c:null;if(!pol)continue;st={f:'BI',d,a,b,pol};z=[...subj(d,a),BL,NM(b),tkA(d,pol)];words=['比','跟','沒有'];ans='比';}
-       else if(k==='mei'){const pol=-c;if(!polOK(d,pol))continue;st={f:'MEI',d,a,b,pol};z=[...subj(d,a),BL,NM(b),tk('那麼'),tkA(d,pol)];words=['比','跟','沒有'];ans='沒有';}
-       else if(k==='same'){const pol=d.v(a)===3?1:-1;if(!polOK(d,pol))continue;st={f:'SAME',d,a,b,pol};z=[...subj(d,a),BL,NM(b),tk('一樣'),tkA(d,pol)];words=['比','跟','沒有'];ans='跟';}
-       else{const pol=polOK(d,c)?c:null;if(!pol)continue;const g=degree(d,a,b);if(!g)continue;st={f:'DEG',d,a,b,pol,deg:g};z=[...subj(d,a),tk('比'),NM(b),tkA(d,pol),BL];words=['一點','很多','一樣'];ans=g===1?'一點':'很多';}
+       if(c!==0){kinds.push('bi');if(lv>=2){kinds.push('mei');if(d.num)kinds.push('deg');}}
+       if(c===0&&d.eq&&(d.v(a)===1||d.v(a)===3))kinds.push('same');if(!kinds.length)continue;
+       const k=pick(kinds);let st,z,words,ans;const W3=lv>=2?['比','跟','沒有']:['比','跟','很'];
+       if(k==='bi'){const pol=polOK(d,c)?c:null;if(!pol)continue;st={f:'BI',d,a,b,pol};z=[...subj(d,a),BL,NM(b),tkA(d,pol)];words=W3;ans='比';}
+       else if(k==='mei'){const pol=-c;if(!polOK(d,pol))continue;st={f:'MEI',d,a,b,pol};z=[...subj(d,a),BL,NM(b),tk('那麼'),tkA(d,pol)];words=W3;ans='沒有';}
+       else if(k==='same'){const pol=d.v(a)===3?1:-1;if(!polOK(d,pol))continue;st={f:'SAME',d,a,b,pol};z=[...subj(d,a),BL,NM(b),tk('一樣'),tkA(d,pol)];words=W3;ans='跟';}
+       else{const pol=polOK(d,c)?c:null;if(!pol)continue;const g=degree(d,a,b);if(!g)continue;st={f:'DEG',d,a,b,pol,deg:g};z=[...subj(d,a),tk('比'),NM(b),tkA(d,pol),BL];words=['一點','很多','很'];ans=g===1?'一點':'很多';}
        if(truth(st)!==true)continue;
        return mkQ('fill',d,[a,b],{blankZ:z,fillAns:ans,q:ask('FILL',d,{}),btns:words.map(w=>({z:[tk(w)],ok:w===ans,w})),full:sent(st),row:1,tagCm:k==='deg'&&d.key==='height',f:st.f,pol:st.pol});}
      return null;},
@@ -279,7 +309,7 @@ window.BBK_ENGINE=function(THEME){
        en:ps?`${w.name}'s ${ps.en} ${ps.be} the ${adj(d,pol).en[2]}`:`${w.name} is the ${adj(d,pol).en[2]}`};
      return mkQ('most',d,shuffle([w,...sample(sideOf(d,w,pol)[1],n-1)]),{q:ask('MOST',d,{pol}),ans:w.id,expl:[ex],f:'MOST',pol});},
   };
-  const POOL={1:['decode','tf','pick','more'],2:['decode','pick','whobi','biwho','fill'],3:['chain','most','whobi','biwho','pick']};
+  const POOL={1:['decode','tf','pick','more','fill'],2:['decode','pick','whobi','biwho','fill'],3:['chain','most','whobi','biwho','pick','fill']};
   const qKey=q=>q.type+q.d.key+q.its.map(p=>p.id).sort().join();
   const poolOf=lv=>POOL[lv].filter(t=>!RANGE||!RANGE.types.length||RANGE.types.includes(t));   // 老師有勾題型時只出勾的
   function makeRound(lv){USED={};const pool=poolOf(lv);if(!pool.length||!LV_DIMS(lv).length)return [];

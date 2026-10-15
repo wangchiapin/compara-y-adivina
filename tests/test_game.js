@@ -65,7 +65,7 @@ server.listen(0, 'localhost', async () => {
     const a = await page.$('a.big[href="https://wangchiapin.github.io/profesor/#/settings"]');
     ok(!!a && (await a.textContent()).includes('老師管理中心'), '有「👩‍🏫 老師管理中心」按鈕，連到中心的遊戲設定頁');
     ok(!(await page.textContent('#app')).includes('老師設定') && !(await page.textContent('#app')).includes('班級成績簿'), '遊戲裡沒有舊的老師區');
-    ok((await page.textContent('.ver')) === 'v6-5', '最下面有版本號 v6-5');
+    ok((await page.textContent('.ver')) === 'v6-6', '最下面有版本號 v6-6');
     // 步驟 6-4：主題
     const th = await page.$$eval('.thm .opt', b => b.map(x => [x.dataset.th, x.classList.contains('on'), x.classList.contains('lock'), x.innerText.replace(/\s+/g, ' ').trim()]));
     ok(JSON.stringify(th.map(x => x[0])) === JSON.stringify(['people', 'fruit', 'animal', 'action']) && th[0][1] && !th[0][2] && th.slice(1).every(x => x[2] && x[3].includes('陸續開放')),
@@ -95,6 +95,28 @@ server.listen(0, 'localhost', async () => {
     ok(r.thr.join() === '2,2,2' && r.bad.length === 0, '胖瘦、壯不壯、髮質：只有差很多（1 對 3）才出題', r);
     const tn = await page.evaluate(() => [E.TN.more[0], E.TN.whobi[0], E.TN.biwho[0], E.TN.most[0], E.TN.fill[0]]);
     ok(JSON.stringify(tn) === JSON.stringify(['選人：誰比較＿？', '選人：誰比 A ＿？', '選人：A 比誰＿？', '選人：誰最＿？', '選比較詞']), '題型名稱改成空格寫法', tn);
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+
+  console.log('\n[A3] 第 2 批：選比較詞');
+  { const { page, errors, ctx } = await open(browser, '/index.html');
+    await page.waitForSelector('.lvl');
+    const r = await page.evaluate(() => {
+      const out = { 1: {}, 2: {}, 3: {} }, bad = [];
+      const BAN = [['更', '還'], ['一樣', '差不多'], ['比', '比較']];
+      for(const lv of [1, 2, 3]) for(let k = 0; k < 300; k++) for(const q of E.makeRound(lv, { dims: [], types: ['fill'], n: 5 })){
+        const ws = q.btns.map(b => b.w), oks = q.btns.filter(b => b.ok).length;
+        out[lv][q.f + ':' + ws.join('/')] = 1;
+        if(oks !== 1 || BAN.some(([x, y]) => ws.includes(x) && ws.includes(y))) bad.push([lv, ws]);
+        const filled = q.blankZ.map(t => t.blank ? q.fillAns : t.t).join(''), full = q.full.z.map(t => t.t).join('');
+        if(filled !== full) bad.push([lv, filled, full]);
+      }
+      return { out: Object.fromEntries(Object.entries(out).map(([k, v]) => [k, Object.keys(v).sort()])), bad: bad.slice(0, 5), pool: [1, 2, 3].map(l => E.POOL[l].includes('fill')) };
+    });
+    ok(r.pool.join() === 'true,true,true', '三關都有「選比較詞」', r.pool);
+    ok(JSON.stringify(r.out[1]) === JSON.stringify(['BI:比/跟/很', 'SAME:比/跟/很']), '第 1 關：比／跟／很（A＿B高、A＿B一樣高）', r.out[1]);
+    ok(r.out[2].includes('MEI:比/跟/沒有') && r.out[2].some(x => x.startsWith('DEG:一點/很多/很')) && !r.out[2].some(x => x.includes('一樣/') && x.startsWith('DEG')), '第 2 關：比／跟／沒有；一點／很多／很', r.out[2]);
+    ok(r.out[3].includes('MOST:最/更/比') && r.out[3].some(x => /^GENG:(更|還)\/很\/最$/.test(x)), '第 3 關：更或還／很／最；最／更／比', r.out[3]);
+    ok(r.bad.length === 0, '每題只有一個對的選項；更＋還、一樣＋差不多、比＋比較不會同時出現；填好的句子 = 解答句', r.bad);
     ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
 
   console.log('\n[B] 共用設定：第一次、舊設定搬家、保留別款的欄位');
