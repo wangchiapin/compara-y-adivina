@@ -127,11 +127,16 @@ async function loadRange(){
   catch(e){console.warn('range load failed',e);lockFail('error');}
   refreshMenu();}
 
+// ---- 🚩 這題怪怪的：題目回報（bbk_reports；一般模式也能送，按了才連線、匿名登入）----
+async function report(o){
+  await init();if(!C.user)await C.auth.signInAnonymously();
+  await C.db.collection('bbk_reports').add(Object.assign({},o,{done:false,at:firebase.firestore.FieldValue.serverTimestamp()}));}
+
 // ---- 給 index.html 用 ----
 window.CLASSROOM={
   classMode:()=>!!CLASS_ID,
   classId:()=>CLASS_ID,
-  bannerHtml,upHtml,
+  bannerHtml,upHtml,report,
   // 開始一回合前：班級連結要先有暱稱
   canStart(){
     if(!CLASS_ID)return true;

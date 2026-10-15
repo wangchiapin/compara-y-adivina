@@ -16,6 +16,7 @@
   const NOW = () => Date.now();
   function stamp(d){ const o = {}; for(const k in d) o[k] = (d[k] && d[k].__ts) ? NOW() : d[k]; return o; }
   function checkWrite(pid, c, id, data, user){
+    if(c === 'bbk_reports') return checkReport(data, user);
     if(c !== 'class_plays') return;
     const d = data, keys = Object.keys(d).sort().join();
     if(keys !== ['at','cid','game','h','lv','max','nick','owner','qs','r','rg','score','th'].sort().join()) deny();
@@ -25,6 +26,18 @@
     if(typeof d.r !== 'string' || !/^([a-z0-9]{8,32})?$/.test(d.r)) deny();
     if(d.game !== 'bbk' || !/^[a-f0-9]{16}$/.test(d.h) || !(d.nick.length >= 1 && d.nick.length <= 16)) deny();
     if(!(d.lv >= 1 && d.lv <= 3) || !(d.score >= 0 && d.score <= d.max) || !(d.qs.length >= 1 && d.qs.length <= 30)) deny();
+  }
+  // 比比看第 4 批：題目回報 bbk_reports（同規則：已登入含匿名、欄位固定、長度限制）；window.__FAIL_REPORT = true 模擬失敗
+  function checkReport(d, user){
+    if(window.__FAIL_REPORT){ const e = new Error('offline'); e.code = 'unavailable'; throw e; }
+    if(!user) deny();
+    const keys = Object.keys(d).sort().join();
+    if(keys !== ['why','note','type','d','f','ids','q','ans','pick','lv','r','th','lang','ver','done','at'].sort().join()) deny();
+    const str = (v, n) => typeof v === 'string' && v.length <= n;
+    if(!['wrong','image','other'].includes(d.why) || !str(d.note, 100) || !str(d.type, 10) || !str(d.d, 20) || !str(d.f, 10)) deny();
+    if(!Array.isArray(d.ids) || d.ids.length < 1 || d.ids.length > 6 || !str(d.q, 300) || !str(d.ans, 100) || !str(d.pick, 100)) deny();
+    if(!(Number.isInteger(d.lv) && d.lv >= 1 && d.lv <= 3) || !/^([a-z0-9]{8,32})?$/.test(d.r) || !str(d.th, 20)) deny();
+    if(!['es','en','zh'].includes(d.lang) || !str(d.ver, 12) || d.done !== false) deny();
   }
   function docSnap(pid, c, id){
     const data = col(pid, c)[id];

@@ -78,6 +78,17 @@ small{display:block;font-size:.72em;color:var(--mut);font-weight:400;line-height
 .fb.ok{background:#eaf7ef}.fb.no{background:#fdecec}
 .fb .tr{color:#555;font-size:.92rem;margin-top:4px}
 .fb small{display:inline;margin-left:6px}
+.rep{text-align:center;margin:2px 0 8px}
+.repbtn{border:0;background:transparent;color:#999;font-size:.88rem;cursor:pointer;padding:4px 8px;font-family:inherit;line-height:1.3}
+.repbtn small{display:block;font-size:.78rem;color:#aaa}
+.repbox{background:#f6f6f7;border-radius:12px;padding:10px 12px;margin:4px 0 8px;text-align:left}
+.repbox .opts{margin:6px 0;flex-direction:column;gap:6px}
+.repbox .opt{flex:none;width:100%;min-height:42px;font-size:.95rem}
+.repbox input{width:100%;min-height:42px;border:2px solid #ddd;border-radius:999px;padding:6px 14px;font-size:.95rem;font-family:inherit;margin:4px 0}
+.repbox .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+.repbox .acts button{min-height:40px;border-radius:999px;padding:4px 16px;font-size:.95rem;cursor:pointer;font-family:inherit;border:0;background:#eee;color:var(--ink)}
+.repbox .acts button.go{background:var(--acc);color:#fff;font-weight:700}
+.repmsg{font-size:.9rem;color:var(--mut);margin-top:4px}.repmsg.ok{color:var(--ok);font-weight:700}.repmsg.no{color:var(--bad)}
 .score{text-align:center;font-size:3rem;font-weight:800;color:var(--acc);margin:16px 0 0}
 .comment{text-align:center;font-size:1.3rem;font-weight:800;color:var(--ok);margin:10px 0 4px}
 .passmsg{text-align:center;font-size:1rem;margin:4px 0 8px}
@@ -98,14 +109,14 @@ small{display:block;font-size:.72em;color:var(--mut);font-weight:400;line-height
 // 主題包：預設 people，可用 ?theme=<名稱> 切換（對應 themes/<名稱>.js）；同步載入，引擎執行時一定已就緒
 document.write('<script src="themes/'+(new URLSearchParams(location.search).get('theme')||'people').replace(/[^\w-]/g,'')+'.js?v=6-5"><\/script>');
 </script>
-<script src="engine.js?v=6-7"></script>
+<script src="engine.js?v=6-8"></script>
 <script>
 if(!window.THEME_PACK){document.getElementById('app').innerHTML='<p style="padding:20px;text-align:center">找不到主題包 / Theme pack not found</p>';throw new Error('no theme pack');}
 const THEME=window.THEME_PACK;
 const E=BBK_ENGINE(THEME);          // 出題引擎（engine.js，跟老師管理中心的學習單共用）
 const {DIMS,POOL,TN,LV_CNT,passMark,esc}=E;
 const app=document.getElementById('app');
-const VERSION='v6-7';
+const VERSION='v6-8';
 const CENTER_URL='https://wangchiapin.github.io/profesor/#/settings';
 
 // ===== 三款遊戲共用的基本設定（⚙️）：localStorage 'hanziGames.settings'，格式見 corre/README.md =====
@@ -181,6 +192,18 @@ const U={
  tPractice:['老師指定的練習','Práctica del profesor','Teacher\'s practice'],loading:['載入中…','Cargando…','Loading…'],
  startP:['開始練習','Empezar','Start'],normal:['一般模式（自己選關卡）','Modo normal (elegir nivel)','Normal mode (choose a level)'],
  qn:['題','preguntas','questions'],
+ // 🚩 題目回報（第 4 批）
+ flag:['這題怪怪的','Algo raro en esta pregunta','Something\'s off here'],
+ rWhy:['哪裡怪怪的？','¿Qué pasa?','What\'s wrong?'],
+ r_wrong:['答案好像不對','La respuesta parece incorrecta','The answer seems wrong'],
+ r_image:['圖看不清楚','La imagen no se ve bien','The picture is unclear'],
+ r_other:['其他','Otro','Other'],
+ rNote:['想說的話（可以不寫）','Comentario (opcional)','Comment (optional)'],
+ rSend:['送出','Enviar','Send'],rCancel:['取消','Cancelar','Cancel'],
+ rPick:['請先選一個原因','Elige un motivo','Choose a reason'],
+ rSending:['送出中…','Enviando…','Sending…'],
+ rSent:['謝謝，已經送出！','¡Gracias! Enviado.','Thanks! Sent.'],
+ rFail:['沒有送出去，請再試一次','No se pudo enviar, inténtalo otra vez','Could not send, please try again'],
  codeMissing:['找不到老師的練習範圍（可能已經刪除），先用一般模式。','No se encontró el rango del profesor (quizá se borró). Usa el modo normal.','The teacher\'s range was not found (maybe deleted). Using normal mode.'],
  codeErr:['老師的練習範圍載入失敗，先用一般模式。','No se pudo cargar el rango del profesor. Usa el modo normal.','Could not load the teacher\'s range. Using normal mode.'],
 };
@@ -253,7 +276,7 @@ function startRound(lv,rg){
   if(CR()&&!CR().canStart())return;          // 班級連結：要先輸入暱稱
   if(rg!==undefined)RANGE=rg;   // 一般關卡傳 null；老師範圍傳範圍；「再玩一次」「下一關」不傳，沿用目前的
   const qs=E.makeRound(lv,RANGE);if(!qs.length){alert(u('noQ'));return;}
-  S={lv,qs,i:0,score:0,tries:0,done:false,wrong:[],dict:false,log:[],rg:RANGE};screen='game';renderQ();window.scrollTo(0,0);}
+  S={lv,qs,i:0,score:0,tries:0,done:false,wrong:[],picks:[],rep:null,dict:false,log:[],rg:RANGE};screen='game';renderQ();window.scrollTo(0,0);}
 function quit(){const f=fx('quitQ');if(confirm(u('quitQ')+(f?'\n'+f:'')))renderMenu();}
 const sentHtml=s=>E.rtS(s.z,RO());
 function cardHtml(p,i,q){const name=q.hide&&!S.done?'':esc(p.name);
@@ -291,13 +314,47 @@ function fbHtml(){const q=S.qs[S.i];const ok=S.gain>0;let lines=[];
   const qt=E.tr(q.q,SET.lang);
   const last=S.i===S.qs.length-1;
   return `<div class="fb ${ok?'ok':'no'}"><b>${ok?esc(u('right'))+' +'+S.gain:esc(u('ans'))}</b>${ok?(fx('right')?`<small>${esc(fx('right'))}</small>`:''):(fx('ans')?`<small>${esc(fx('ans'))}</small>`:'')}${qt?`<div class="tr">${esc(qt)}</div>`:''}${lines.join('')}</div>
-  <button class="big" onclick="nextQ()">${L(last?'finish':'next')}</button>`;}
+  <button class="big" onclick="nextQ()">${L(last?'finish':'next')}</button><div id="rep" class="rep">${repHtml()}</div>`;}
+// ===== 🚩 這題怪怪的：學生回報題目（存到中心專案 bbk_reports，只有 Ben 在分享區 stats.html 看得到）=====
+const REASONS=['wrong','image','other'];
+function repHtml(){const r=S.rep;
+  if(!r)return `<button class="repbtn" onclick="repOpen()">🚩 ${esc(u('flag'))}${fx('flag')?`<small>${esc(fx('flag'))}</small>`:''}</button>`;
+  if(r.st==='ok')return `<div class="repmsg ok">✅ ${esc(u('rSent'))}${fx('rSent')?' '+esc(fx('rSent')):''}</div>`;
+  const busy=r.st==='sending';
+  return `<div class="repbox"><b>🚩 ${L('rWhy')}</b>
+    <div class="opts">${REASONS.map(k=>`<button class="opt ${r.why===k?'on':''}" onclick="repWhy('${k}')" ${busy?'disabled':''}>${L('r_'+k)}</button>`).join('')}</div>
+    <input id="repNote" maxlength="100" value="${esc(r.note)}" placeholder="${esc(u('rNote'))}${fx('rNote')?' / '+esc(fx('rNote')):''}" oninput="S.rep.note=this.value" ${busy?'disabled':''}>
+    ${r.msg?`<div class="repmsg ${r.st==='err'||r.msg==='rPick'?'no':''}">${r.msg==='rSending'?'':'⚠ '}${esc(u(r.msg))}${fx(r.msg)?' '+esc(fx(r.msg)):''}</div>`:''}
+    <div class="acts"><button onclick="repClose()" ${busy?'disabled':''}>${esc(u('rCancel'))}</button><button class="go" onclick="repSend()" ${busy?'disabled':''}>${esc(u('rSend'))}</button></div></div>`;}
+function drawRep(){const el=document.getElementById('rep');if(el)el.innerHTML=repHtml();}
+function repOpen(){S.rep={why:'',note:'',st:'',msg:''};drawRep();}
+function repClose(){S.rep=null;drawRep();}
+function repWhy(k){S.rep.why=k;if(S.rep.msg==='rPick')S.rep.msg='';drawRep();}
+// tokens → 純文字（空格＝＿＿）
+const ztx=z=>(z||[]).map(t=>t.blank?'＿＿':t.t).join('');
+// 一個選項（'c0' 卡片、'b1' 按鈕）→ 文字
+function choiceText(q,key){const i=+key.slice(1);if(key[0]==='c'){const p=q.its[i];return p?p.name+'（'+p.id+'）':'';}
+  const b=q.btns&&q.btns[i];return b?ztx(b.z):'';}
+function reportData(){const q=S.qs[S.i];
+  const ci=q.btns?q.btns.findIndex(b=>b.ok):q.its.findIndex(p=>p.id===q.ans);
+  const qtext=[...(q.sents||[]).map(s=>ztx(s.z)),q.blankZ?ztx(q.blankZ):'',ztx(q.q.z)].filter(Boolean).join(' ／ ');
+  return {why:S.rep.why,note:String(S.rep.note||'').trim().slice(0,100),type:String(q.type||''),d:String(q.d.key||''),f:String(q.f||''),
+    ids:q.its.map(p=>String(p.id)).slice(0,6),q:qtext.slice(0,300),ans:choiceText(q,(q.btns?'b':'c')+ci).slice(0,100),
+    pick:S.picks.map(k=>choiceText(q,k)).join(' → ').slice(0,100),lv:S.lv,r:(S.rg&&RCODE)?RCODE:'',th:CUR_THEME.slice(0,20),lang:SET.lang,ver:VERSION};}
+async function repSend(){const r=S.rep;if(!r||r.st==='sending')return;
+  if(!r.why){r.msg='rPick';return drawRep();}
+  const n=document.getElementById('repNote');if(n)r.note=n.value;
+  const at=S;r.st='sending';r.msg='rSending';drawRep();
+  try{if(!CR())throw new Error('no classroom');await CR().report(reportData());r.st='ok';r.msg='';}
+  catch(e){console.warn('report failed',e);r.st='err';r.msg='rFail';}
+  if(S===at&&S.rep===r)drawRep();}
 // 每題作答紀錄（班級連結時會回傳給老師）
 function recordAnswer(){const q=S.qs[S.i];if(S.log[S.i])return;
   const r={t:q.type,d:q.d.key,f:q.f||'',p:q.pol||0,ok:S.gain>0,f1:S.gain===10,ids:q.its.map(p=>p.id)};
   if(q.type==='tf')r.tv=!!q.tv;
   S.log[S.i]=r;}
 function judge(ok,key){const q=S.qs[S.i];if(S.done)return;
+  S.picks.push(key);
   const nopt=q.btns?q.btns.length:q.its.length;
   if(ok){S.gain=S.tries===0?10:5;S.score+=S.gain;S.done=true;recordAnswer();renderQ();return;}
   S.wrong.push(key);S.tries++;
@@ -305,7 +362,7 @@ function judge(ok,key){const q=S.qs[S.i];if(S.done)return;
   renderQ();}
 function pickCard(i){const q=S.qs[S.i];if(q.btns||S.done||S.wrong.includes('c'+i))return;judge(q.its[i].id===q.ans,'c'+i);}
 function pickBtn(i){const q=S.qs[S.i];if(S.done||S.wrong.includes('b'+i))return;judge(q.btns[i].ok,'b'+i);}
-function nextQ(){S.i++;S.tries=0;S.done=false;S.wrong=[];S.gain=0;S.dict=false;
+function nextQ(){S.i++;S.tries=0;S.done=false;S.wrong=[];S.picks=[];S.rep=null;S.gain=0;S.dict=false;
   if(S.i>=S.qs.length)return renderResult();renderQ();window.scrollTo(0,0);}
 // 五級評語（依得分比例）
 function commentKey(sc,max){const p=max?sc/max:0;return p>=1?'cm4':p>=.8?'cm3':p>=.6?'cm2':p>=.4?'cm1':'cm0';}
@@ -350,7 +407,7 @@ window.addEventListener('storage',e=>{
   Object.assign(SET,readSettings());rerender();
 });
 </script>
-<script src="classroom.js?v=6-2"></script>
+<script src="classroom.js?v=6-8"></script>
 <script>renderMenu();</script>
 </body>
 </html>

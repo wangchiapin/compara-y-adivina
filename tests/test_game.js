@@ -65,7 +65,7 @@ server.listen(0, 'localhost', async () => {
     const a = await page.$('a.big[href="https://wangchiapin.github.io/profesor/#/settings"]');
     ok(!!a && (await a.textContent()).includes('老師管理中心'), '有「👩‍🏫 老師管理中心」按鈕，連到中心的遊戲設定頁');
     ok(!(await page.textContent('#app')).includes('老師設定') && !(await page.textContent('#app')).includes('班級成績簿'), '遊戲裡沒有舊的老師區');
-    ok((await page.textContent('.ver')) === 'v6-7', '最下面有版本號 v6-7');
+    ok((await page.textContent('.ver')) === 'v6-8', '最下面有版本號 v6-8');
     // 步驟 6-4：主題
     const th = await page.$$eval('.thm .opt', b => b.map(x => [x.dataset.th, x.classList.contains('on'), x.classList.contains('lock'), x.innerText.replace(/\s+/g, ' ').trim()]));
     ok(JSON.stringify(th.map(x => x[0])) === JSON.stringify(['people', 'fruit', 'animal', 'action']) && th[0][1] && !th[0][2] && th.slice(1).every(x => x[2] && x[3].includes('陸續開放')),
@@ -397,6 +397,58 @@ server.listen(0, 'localhost', async () => {
     await page.evaluate(k => { const v = JSON.stringify({ v: 1, script: 'trad', lang: 'es', phon: 'off' }); localStorage.setItem(k, v);
       window.dispatchEvent(new StorageEvent('storage', { key: k, newValue: v })); }, SK);
     ok(await page.evaluate(() => SET.script === 'simp' && S.i === 0), '遊戲中先不理');
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+
+  console.log('\n[L] 第 4 批：🚩 這題怪怪的（題目回報）');
+  const answerFirst = page => page.evaluate(() => { const q = S.qs[S.i];
+    const ci = q.btns ? q.btns.findIndex(b => b.ok) : q.its.findIndex(p => p.id === q.ans);
+    const wi = (q.btns ? q.btns : q.its).findIndex((_, j) => j !== ci);
+    q.btns ? pickBtn(wi) : pickCard(wi); if(!S.done) q.btns ? pickBtn(ci) : pickCard(ci); });
+  { const { page, errors, ctx } = await open(browser, '/index.html');
+    await page.waitForSelector('.lvl');
+    ok((await page.textContent('.ver')) === 'v6-8', '版本號 v6-8');
+    await page.evaluate(() => startRound(2, null));
+    ok(await page.$('.repbtn') === null, '還沒作答：沒有 🚩');
+    await answerFirst(page);
+    const t = await page.textContent('.repbtn');
+    ok(t.includes('🚩 這題怪怪的') && t.includes('Algo raro en esta pregunta'), '作答後出現「🚩 這題怪怪的」（中文＋西文兩行）', t);
+    ok(await page.evaluate(() => !window.__apps), '只是顯示按鈕：還不連 Firebase');
+    await page.click('.repbtn');
+    ok(await page.$$eval('.repbox .opt', b => b.length) === 3 && (await page.textContent('.repbox')).includes('圖看不清楚'), '展開：三個原因＋留言');
+    await page.click('.repbox .go');
+    ok((await page.textContent('.repbox')).includes('請先選一個原因') && await page.evaluate(() => !window.__apps), '沒選原因：提醒，不送出');
+    await page.click('.repbox .opt:has-text("答案好像不對")');
+    await page.fill('#repNote', '我覺得兩個人一樣高');
+    await page.evaluate(() => { S.dict = true; renderQ(); });   // 中途重畫，選擇和留言要留著
+    ok(await page.$eval('#repNote', i => i.value) === '我覺得兩個人一樣高' && await page.$('.repbox .opt.on') !== null, '重畫畫面：原因和留言還在');
+    await page.click('.repbox .go'); await page.waitForSelector('.repmsg.ok');
+    const reps = Object.values((await db(page)).bbk_reports || {});
+    const r = reps[0], q = await page.evaluate(() => { const q = S.qs[S.i]; return { type: q.type, d: q.d.key, ids: q.its.map(p => p.id), picks: S.picks.length }; });
+    ok(reps.length === 1 && r.why === 'wrong' && r.note === '我覺得兩個人一樣高' && r.done === false && typeof r.at === 'number', '一般模式也能送：存進 bbk_reports', r);
+    ok(r.type === q.type && r.d === q.d && JSON.stringify(r.ids) === JSON.stringify(q.ids) && r.lv === 2 && r.r === '' && r.lang === 'es' && r.ver === 'v6-8' && r.th === 'people', '自動記下題型、特徵、人物、關卡、範圍碼、語言、版本', r);
+    ok(r.q.length > 0 && r.ans.length > 0 && !/undefined|\[object/.test(r.q + r.ans + r.pick), '記下題目文字與正確答案', [r.q, r.ans]);
+    ok(r.pick.split(' → ').length === q.picks && r.pick.split(' → ')[0] !== r.ans && (q.picks === 1 || r.pick.split(' → ').pop() === r.ans), '學生選的答案照順序記下（先錯的、後對的）', [r.pick, r.ans]);
+    ok(await page.$('.repbtn') === null && (await page.textContent('#rep')).includes('謝謝'), '送出後顯示謝謝，不能再送');
+    await page.evaluate(() => nextQ()); await answerFirst(page);
+    ok(await page.$('.repbtn') !== null, '下一題：🚩 重新出現');
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+  { const { page, errors, ctx } = await open(browser, '/index.html', { ls: { [SK]: JSON.stringify({ v: 1, script: 'trad', lang: 'en', phon: 'pinyin' }) } });
+    await page.waitForSelector('.lvl'); await page.evaluate(() => startRound(1, null));
+    await answerFirst(page); await page.evaluate(() => { window.__FAIL_REPORT = true; });
+    ok((await page.textContent('.repbtn')).includes("Something's off here"), '英文介面：英文小字');
+    await page.click('.repbtn'); await page.click('.repbox .opt:has-text("其他")'); await page.click('.repbox .go');
+    await page.waitForSelector('.repmsg.no:has-text("沒有送出去")');
+    ok(Object.keys((await db(page)).bbk_reports || {}).length === 0 && await page.$('.repbox .go') !== null, '送不出去：提示，可以再試');
+    await page.evaluate(() => { window.__FAIL_REPORT = false; }); await page.click('.repbox .go'); await page.waitForSelector('.repmsg.ok');
+    const r = Object.values((await db(page)).bbk_reports)[0];
+    ok(r.why === 'other' && r.note === '' && r.lang === 'en' && r.lv === 1, '再試一次就送出（留言可以空白）', r);
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+  { const { page, errors, ctx } = await open(browser, `/index.html?class=${CID}&r=${RS}`, { ls: { ['bbk_nick_' + CID]: 'Ana' } });
+    await page.waitForSelector('button.big:has-text("開始練習")');
+    await page.click('button.big:has-text("開始練習")'); await answerFirst(page);
+    await page.click('.repbtn'); await page.click('.repbox .opt:has-text("圖看不清楚")'); await page.click('.repbox .go'); await page.waitForSelector('.repmsg.ok');
+    const r = Object.values((await db(page)).bbk_reports)[0];
+    ok(r.why === 'image' && r.r === RS && r.lv === 2 && ['height', 'age'].includes(r.d), '老師範圍＋班級：記下範圍碼', r);
     ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
 
   await browser.close(); server.close();
