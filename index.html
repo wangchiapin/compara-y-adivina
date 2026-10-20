@@ -75,7 +75,7 @@ small{display:block;font-size:.72em;color:var(--mut);font-weight:400;line-height
 .ob.right{border-color:var(--ok);background:#eaf7ef;animation:pop .35s}
 .ob.wrong{border-color:var(--bad);background:#fdecec;animation:shake .35s}
 .fb{border-radius:12px;padding:10px 12px;margin:8px 0;font-size:1rem}
-.fb.ok{background:#eaf7ef}.fb.no{background:#fdecec}
+.fb.ok{background:#eaf7ef}.fb.no{background:#fdecec}.fb.ans{background:#eaf3fb}
 .fb .tr{color:#555;font-size:.92rem;margin-top:4px}
 .fb small{display:inline;margin-left:6px}
 .rep{text-align:center;margin:2px 0 8px}
@@ -116,7 +116,7 @@ const THEME=window.THEME_PACK;
 const E=BBK_ENGINE(THEME);          // 出題引擎（engine.js，跟老師管理中心的學習單共用）
 const {DIMS,POOL,TN,LV_CNT,passMark,esc}=E;
 const app=document.getElementById('app');
-const VERSION='v6-8';
+const VERSION='v6-9';
 const CENTER_URL='https://wangchiapin.github.io/profesor/#/settings';
 
 // ===== 三款遊戲共用的基本設定（⚙️）：localStorage 'hanziGames.settings'，格式見 corre/README.md =====
@@ -313,7 +313,7 @@ function fbHtml(){const q=S.qs[S.i];const ok=S.gain>0;let lines=[];
   if(q.btns&&q.type==='pick')add(q.btns.find(b=>b.ok).tr);
   const qt=E.tr(q.q,SET.lang);
   const last=S.i===S.qs.length-1;
-  return `<div class="fb ${ok?'ok':'no'}"><b>${ok?esc(u('right'))+' +'+S.gain:esc(u('ans'))}</b>${ok?(fx('right')?`<small>${esc(fx('right'))}</small>`:''):(fx('ans')?`<small>${esc(fx('ans'))}</small>`:'')}${qt?`<div class="tr">${esc(qt)}</div>`:''}${lines.join('')}</div>
+  return `<div class="fb ${ok?'ok':'ans'}"><b>${ok?esc(u('right'))+' +'+S.gain:esc(u('ans'))}</b>${ok?(fx('right')?`<small>${esc(fx('right'))}</small>`:''):(fx('ans')?`<small>${esc(fx('ans'))}</small>`:'')}${qt?`<div class="tr">${esc(qt)}</div>`:''}${lines.join('')}</div>
   <button class="big" onclick="nextQ()">${L(last?'finish':'next')}</button><div id="rep" class="rep">${repHtml()}</div>`;}
 // ===== 🚩 這題怪怪的：學生回報題目（存到中心專案 bbk_reports，只有 Ben 在分享區 stats.html 看得到）=====
 const REASONS=['wrong','image','other'];
