@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>比比看 Compara y Adivina</title>
 <style>
-:root{--acc:#ff7a59;--acc2:#ffe8e0;--ink:#222;--mut:#777;--ok:#2e9d5b;--bad:#e0464b;--bg:#fff;--panel:#f6f6f7}
+:root{--acc:#2f3e6b;--acc2:#e3e9f5;--ink:#3a3633;--mut:#7a7570;--ok:#5a9a6b;--bad:#c8665f;--bg:#f3f6fb;--panel:#e9eef7;--line:#cfd6e4}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif}
 #app{position:relative;max-width:520px;margin:0 auto;padding:14px 16px 40px}
@@ -15,16 +15,16 @@ small{display:block;font-size:.72em;color:var(--mut);font-weight:400;line-height
 .panel{background:var(--panel);border-radius:14px;padding:12px 14px;margin:10px 0}
 .panel h3{margin:0 0 8px;font-size:1rem}
 .note{color:var(--mut);font-size:.85rem;text-align:center}
-.ver{text-align:center;color:#bbb;font-size:.75rem;margin-top:18px}
+.ver{text-align:center;color:#a9a49e;font-size:.75rem;margin-top:18px}
 /* 統一按鈕（三款遊戲同一規格）：膠囊形；選項按鈕高 46px、主要按鈕滿寬（最寬 300px）高 54px */
 .opts{display:flex;gap:8px;flex-wrap:wrap}
 .opts.two .opt{flex:1 1 40%}
-.opt{flex:1 1 0;min-width:0;min-height:46px;border:2px solid #ddd;background:#fff;border-radius:999px;padding:5px 10px;font-size:1rem;cursor:pointer;text-align:center;color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2;font-family:inherit}
+.opt{flex:1 1 0;min-width:0;min-height:46px;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:5px 10px;font-size:1rem;cursor:pointer;text-align:center;color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2;font-family:inherit}
 .opt.on{border-color:var(--acc);background:var(--acc2);font-weight:700}
 .big{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:300px;min-height:54px;margin:10px auto;border:0;border-radius:999px;padding:6px 18px;font-size:1.15rem;background:var(--acc);color:#fff;cursor:pointer;font-weight:700;line-height:1.2;text-decoration:none;font-family:inherit}
-.big.sec{background:#eee;color:var(--ink)}
+.big.sec{background:#fff;border:1.5px solid var(--line);color:var(--ink)}
 .big small{color:inherit;opacity:.8}
-.lvl{display:block;width:100%;min-height:54px;text-align:center;border:2px solid #eee;background:#fff;border-radius:999px;padding:9px 26px;margin:8px 0;cursor:pointer;font-size:1.05rem;color:var(--ink);line-height:1.3;font-family:inherit}
+.lvl{display:block;width:100%;min-height:54px;text-align:center;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:9px 26px;margin:8px 0;cursor:pointer;font-size:1.05rem;color:var(--ink);line-height:1.3;font-family:inherit}
 .lvl b{color:var(--acc);margin-right:6px}
 .lvl small{display:inline;margin-left:6px}
 .thm{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:4px 0}
@@ -35,13 +35,13 @@ small{display:block;font-size:.72em;color:var(--mut);font-weight:400;line-height
 .lvl .d{font-size:.8rem;color:var(--mut);margin-top:2px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.95rem}
 .top .grow{flex:1}
-.pillx{border:1.5px solid #ddd;background:#fff;border-radius:999px;min-width:42px;height:42px;padding:0 12px;cursor:pointer;font-size:1rem;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);font-family:inherit}
-.gear{position:absolute;top:10px;right:12px;width:42px;height:42px;border-radius:999px;border:1.5px solid #ddd;background:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:2}
+.pillx{border:1.5px solid var(--line);background:#fff;border-radius:999px;min-width:42px;height:42px;padding:0 12px;cursor:pointer;font-size:1rem;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);font-family:inherit}
+.gear{position:absolute;top:10px;right:12px;width:42px;height:42px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:2}
 .top .gear{position:static;flex:0 0 42px}
-.bar{height:6px;background:#eee;border-radius:3px;margin:8px 0 4px;overflow:hidden}
+.bar{height:6px;background:#dfe5f0;border-radius:3px;margin:8px 0 4px;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--acc);transition:width .3s}
 .q{font-size:1.35rem;line-height:1.9;margin:12px 0 6px;text-align:center}
-.nm{color:#2a5bd7;font-weight:700;margin:0 .15em}
+.nm{color:var(--acc);font-weight:700;margin:0 .15em}
 .blank{display:inline-block;min-width:2.6em;border-bottom:3px solid var(--acc);margin:0 .2em;color:var(--acc);font-weight:700}
 .q .ask{display:block;font-weight:700;margin-top:4px}
 /* 拼音／注音：放在每個詞的上面 */
@@ -50,43 +50,43 @@ small{display:block;font-size:.72em;color:var(--mut);font-weight:400;line-height
 .w .ph.zy{font-size:.56em}
 .w .hz{line-height:1.45}
 .dict{border:0;background:var(--acc2);border-radius:999px;min-height:36px;padding:4px 14px;cursor:pointer;font-size:.9rem;font-family:inherit}
-.dictBox{background:#fffaf2;border:1px solid #f3dcc0;border-radius:12px;padding:8px 12px;margin:6px 0;font-size:.95rem}
+.dictBox{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:6px 0;font-size:.95rem}
 .dictBox div{margin:3px 0}
 .cards{display:flex;gap:10px;justify-content:center;align-items:flex-end;margin:12px 0}
 .cards.wrap{flex-wrap:wrap}
-.card{flex:1;max-width:170px;background:#fff;border:2px solid #eee;border-radius:14px;padding:6px;cursor:pointer;text-align:center;transition:transform .15s}
+.card{flex:1;max-width:170px;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:6px;cursor:pointer;text-align:center;transition:transform .15s}
 .card.full{border:0;background:transparent;padding:0 2px;max-width:120px}
 .card:active{transform:scale(.97)}
 .card .crop{position:relative;overflow:hidden;border-radius:10px;background:#f3f6fa;margin:0 auto}
 .card .crop img{position:absolute;top:0;left:50%;transform:translateX(-50%);display:block;width:auto;max-width:none}
-.card.full .fig{display:flex;justify-content:center;align-items:flex-end;border-bottom:3px solid #ccc}
+.card.full .fig{display:flex;justify-content:center;align-items:flex-end;border-bottom:3px solid #c3cadb}
 .card.full .fig img{display:block}
 .card .lab{margin-top:4px;font-weight:700}
 .card .lab:empty{display:none}
-.card .tag{display:inline-block;background:#eef3fb;border-radius:8px;padding:1px 7px;font-size:.85rem;margin-top:3px;color:#335}
+.card .tag{display:inline-block;background:#eef3fb;border-radius:8px;padding:1px 7px;font-size:.85rem;margin-top:3px;color:var(--acc)}
 .card.right{border-color:var(--ok);animation:pop .35s}
 .card.wrong{border-color:var(--bad);animation:shake .35s;opacity:.55}
-.card.full.right .fig{filter:drop-shadow(0 0 6px #2e9d5b)}
+.card.full.right .fig{filter:drop-shadow(0 0 6px #5a9a6b)}
 .card.full.wrong{opacity:.4}
 .btns{display:flex;flex-direction:column;gap:8px;margin:12px 0}
 .btns.row{flex-direction:row}
-.ob{min-height:46px;border:2px solid #e3e3e3;background:#fff;border-radius:999px;padding:6px 22px;font-size:1.15rem;cursor:pointer;line-height:1.7;color:var(--ink);font-family:inherit}
+.ob{min-height:46px;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:6px 22px;font-size:1.15rem;cursor:pointer;line-height:1.7;color:var(--ink);font-family:inherit}
 .btns.row .ob{flex:1}
-.ob.right{border-color:var(--ok);background:#eaf7ef;animation:pop .35s}
-.ob.wrong{border-color:var(--bad);background:#fdecec;animation:shake .35s}
+.ob.right{border-color:var(--ok);background:#e6f1e9;animation:pop .35s}
+.ob.wrong{border-color:var(--bad);background:#f8e9e8;animation:shake .35s}
 .fb{border-radius:12px;padding:10px 12px;margin:8px 0;font-size:1rem}
-.fb.ok{background:#eaf7ef}.fb.no{background:#fdecec}.fb.ans{background:#eaf3fb}
-.fb .tr{color:#555;font-size:.92rem;margin-top:4px}
+.fb.ok{background:#e6f1e9}.fb.no{background:#f8e9e8}.fb.ans{background:#eaf3fb}
+.fb .tr{color:#6a655f;font-size:.92rem;margin-top:4px}
 .fb small{display:inline;margin-left:6px}
 .rep{text-align:center;margin:2px 0 8px}
-.repbtn{border:0;background:transparent;color:#999;font-size:.88rem;cursor:pointer;padding:4px 8px;font-family:inherit;line-height:1.3}
-.repbtn small{display:block;font-size:.78rem;color:#aaa}
-.repbox{background:#f6f6f7;border-radius:12px;padding:10px 12px;margin:4px 0 8px;text-align:left}
+.repbtn{border:0;background:transparent;color:#8f8a84;font-size:.88rem;cursor:pointer;padding:4px 8px;font-family:inherit;line-height:1.3}
+.repbtn small{display:block;font-size:.78rem;color:#a29d97}
+.repbox{background:var(--panel);border-radius:12px;padding:10px 12px;margin:4px 0 8px;text-align:left}
 .repbox .opts{margin:6px 0;flex-direction:column;gap:6px}
 .repbox .opt{flex:none;width:100%;min-height:42px;font-size:.95rem}
-.repbox input{width:100%;min-height:42px;border:2px solid #ddd;border-radius:999px;padding:6px 14px;font-size:.95rem;font-family:inherit;margin:4px 0}
+.repbox input{width:100%;min-height:42px;border:1.5px solid var(--line);border-radius:999px;padding:6px 14px;font-size:.95rem;font-family:inherit;margin:4px 0}
 .repbox .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
-.repbox .acts button{min-height:40px;border-radius:999px;padding:4px 16px;font-size:.95rem;cursor:pointer;font-family:inherit;border:0;background:#eee;color:var(--ink)}
+.repbox .acts button{min-height:40px;border-radius:999px;padding:4px 16px;font-size:.95rem;cursor:pointer;font-family:inherit;border:0;background:#dfe5f0;color:var(--ink)}
 .repbox .acts button.go{background:var(--acc);color:#fff;font-weight:700}
 .repmsg{font-size:.9rem;color:var(--mut);margin-top:4px}.repmsg.ok{color:var(--ok);font-weight:700}.repmsg.no{color:var(--bad)}
 .score{text-align:center;font-size:3rem;font-weight:800;color:var(--acc);margin:16px 0 0}
@@ -116,7 +116,7 @@ const THEME=window.THEME_PACK;
 const E=BBK_ENGINE(THEME);          // 出題引擎（engine.js，跟老師管理中心的學習單共用）
 const {DIMS,POOL,TN,LV_CNT,passMark,esc}=E;
 const app=document.getElementById('app');
-const VERSION='v6-9';
+const VERSION='v6-10';
 const CENTER_URL='https://wangchiapin.github.io/profesor/#/settings';
 
 // ===== 三款遊戲共用的基本設定（⚙️）：localStorage 'hanziGames.settings'，格式見 corre/README.md =====
@@ -373,7 +373,7 @@ function renderResult(redraw){screen='result';const sc=S.score,lv=S.lv,max=S.qs.
   else if(pass&&lv<3){msg=L('clear');btn=`<button class="big" onclick="startRound(${lv+1})">${L('nextLv')}</button>`;}
   else if(pass)msg=L('allClear');else msg=Lv('tryAgain',passMark(lv,10));
   app.innerHTML=`${gearBtn()}<h1>${esc(u('title'))}</h1><div class="sub">${esc(zh(U.lvName[0].replace('{n}',lv)))} · ${esc(u('res'))}</div>
-  <div class="score">${sc}<span style="font-size:1.2rem;color:#999"> / ${max}</span></div>
+  <div class="score">${sc}<span style="font-size:1.2rem;color:#8f8a84"> / ${max}</span></div>
   <div class="comment">${L(commentKey(sc,max))}</div>
   <div class="passmsg">${msg}</div>
   <div id="clsUp">${CR()?CR().upHtml():''}</div>
