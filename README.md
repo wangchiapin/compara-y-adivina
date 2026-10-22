@@ -55,7 +55,7 @@
 
 ## 老師功能 → 老師管理中心
 
-遊戲裡已經沒有老師區（5-4 起），主選單最下面是「👩‍🏫 老師管理中心」按鈕，連到 https://wangchiapin.github.io/profesor/#/home 。
+遊戲裡已經沒有老師區（5-4 起），主選單最下面是「老師管理中心」按鈕，連到 https://wangchiapin.github.io/profesor/#/home 。
 出題範圍、練習連結、班級與成績簿、常錯統計、匯出 CSV、學習單都在中心。舊的分享連結 `?lv=…&d=…&t=…&n=…` 照常可用。
 
 ## 班級連結（classroom.js）

@@ -270,7 +270,7 @@ function renderMenu(){S=null;screen='menu';
     const nn=SET.lang==='zh'?'':THEME.noun[LI()];
     h+=themeHtml()+`<h3 style="margin:16px 0 4px;text-align:center">${L('choose')}</h3>`+[1,2,3].map(n=>`<button class="lvl" onclick="startRound(${n},null)"><b>${n}</b>${esc(u('l'+n))}${fx('l'+n)?`<small>${esc(fx('l'+n))}</small>`:''}<div class="d">${esc(zh(U['d'+n][0]+'｜'+LV_CNT[n]+' '+THEME.noun[0]))}${nn?'<br>'+esc(U['d'+n][LI()]+' · '+LV_CNT[n]+' '+nn):''}</div></button>`).join('');
   }
-  if(!cm&&!LK.locked)h+=`<a class="big sec" href="${CENTER_URL}">👩‍🏫 ${L('teacher')}</a>`;
+  if(!cm&&!LK.locked)h+=`<a class="big sec" href="${CENTER_URL}">${L('teacher')}</a>`;
   app.innerHTML=h+`<p class="ver">${VERSION}</p>`;}
 function startRound(lv,rg){
   if(CR()&&!CR().canStart())return;          // 班級連結：要先輸入暱稱

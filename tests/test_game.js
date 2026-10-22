@@ -63,7 +63,7 @@ server.listen(0, 'localhost', async () => {
     await page.waitForSelector('.lvl');
     ok(await page.evaluate(() => !window.__apps), '一般模式不載入 Firebase');
     const a = await page.$('a.big[href="https://wangchiapin.github.io/profesor/#/home"]');
-    ok(!!a && (await a.textContent()).includes('老師管理中心'), '有「👩‍🏫 老師管理中心」按鈕，連到中心的遊戲設定頁');
+    ok(!!a && (await a.textContent()).includes('老師管理中心'), '有「老師管理中心」按鈕，連到中心的遊戲設定頁');
     ok(!(await page.textContent('#app')).includes('老師設定') && !(await page.textContent('#app')).includes('班級成績簿'), '遊戲裡沒有舊的老師區');
     ok((await page.textContent('.ver')) === 'v6-10', '最下面有版本號 v6-10');
     // 步驟 6-4：主題
