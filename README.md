@@ -61,3 +61,11 @@
 ## 班級連結（classroom.js）
 
 `?class=<班級碼>`（可再加 `&r=<範圍碼>` 或舊格式範圍）：學生輸入暱稱，每玩完一回合把每題作答寫進中心專案的 `class_plays`（`game:'bbk'`；步驟 6-2 起多記範圍碼 `r`，中心成績冊依範圍分開顯示）。老師的訂閱到期時傳不進去，但學生照樣可以玩。Firebase SDK 只在需要時載入。
+
+## 手機瀏覽器備註：捲動後回不到頂端（2026-10-24）
+iPhone 版 Chrome 上，頁面可以捲動時，往下捲之後有時回不到最上面（Safari 正常）。
+處理方式（已套用在本遊戲）：
+- `<meta name="viewport">` 設 `maximum-scale=1`，不使用 `viewport-fit=cover`。
+- `<html>` 加 `html{color-scheme:light}`。
+
+兩項一起改後，手機 Chrome 測試恢復正常；尚未分開測是哪一項有效。新增頁面請照這個寫。
