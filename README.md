@@ -3,7 +3,7 @@
 > 中文比較句遊戲：看人物圖，依比較句找出正確的人
 
 - **網址：** https://wangchiapin.github.io/compara-y-adivina/
-- **Firebase 專案：** 中心專案 subscription-48d3c（與跑吧！漢字、色數消消樂共用）
+- **Firebase 專案：** 中心專案 subscription-48d3c（與跑吧！漢字、色數消消樂共用）；遊玩紀錄（訪客、開始、玩完）另寫到 memorma-24dab 的 `plays`、`visits`（遊戲代號 `compara`）
 - **登入方式：** 老師 Google 登入；學生用班級連結＋暱稱（匿名登入）
 - **狀態：** 使用中（第一版）
 
@@ -20,6 +20,8 @@
 - `themes/people.js`：**主題包**——人物資料、特徵定義（高矮、頭髮…）、分組與西語規則
 - `calibrate.html`：特徵校正工具（讀同一份主題包）
 - `img/P01.webp`–`P50.webp`：50 位人物（透明背景，臉／半身由程式裁切）
+- Firebase 規則：不放在這個 repo；正本在 game-kit（私人 repo）的 `firebase-rules/``subscription-48d3c.rules.txt`（含 `class_plays`）
+- `og.jpg`：分享連結預覽縮圖（1200x630），貼到 LINE／WhatsApp 時顯示；名稱來自 `index.html` 的 `og:title`「比比看 · Compara y Adivina」（2026-10-28 加入）
 - `tests/test_game.js`：自動測試（`node tests/test_game.js [截圖資料夾]`）
 
 ## ⚙️ 基本設定（三款遊戲共用）
@@ -27,6 +29,10 @@
 右上角 ⚙️：字形（繁／簡）、語言（中＋西／中＋英／只有中文）、拼音／注音（拼音、注音、兩個都顯示、關）。比比看沒有語音，所以沒有語速。
 設定存在 `localStorage` 的 `hanziGames.settings`（格式見 `corre/README.md`）；寫回時只改自己的欄位，保留語速 `rate`。第一次會從比比看舊的 `bbk_cfg` 搬過來。
 拼音／注音顯示在題目、問句、選項按鈕、答完的說明句、小字典的每個詞上面（人名沒有）。
+
+## 🚩 這題怪怪的（回報題目）
+
+每題答完可按「🚩 這題怪怪的」回報（原因、留言），一般模式也能送；存到中心專案的 `bbk_reports`，只有 Ben 在分享區 `stats.html` 看得到。
 
 ## 結果畫面
 
