@@ -337,8 +337,8 @@ server.listen(0, 'localhost', async () => {
     ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
   { const { page, errors, ctx } = await open(browser, '/index.html?class=nosuchclass1');
     await page.waitForSelector('.clsb h3:has-text("找不到")');
-    await page.evaluate(() => startRound(1, null)); ok(await page.evaluate(() => S !== null), '班級不存在：仍然可以玩');
-    await playRound(page); ok((await page.textContent('#clsUp')).trim() === '', '不嘗試傳送');
+    ok((await page.textContent('.clsb')).includes('請向老師要新的連結'), '班級不存在：提示請向老師要新連結');
+    await page.evaluate(() => startRound(1, null)); ok(await page.evaluate(() => S === null), '班級不存在：不讓開始（避免白玩）');
     ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
 
   console.log('\n[J] 老師範圍：?r= 範圍碼、舊格式連結');

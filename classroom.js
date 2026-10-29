@@ -29,6 +29,7 @@ const lsSet=(k,v)=>{try{if(v===null)localStorage.removeItem(k);else localStorage
 const TX={
   connecting:['正在連線到班級…','Conectando con la clase…','Connecting to the class…'],
   missing:['找不到這個班級','No se encontró la clase','Class not found'],
+  missingNote:['班級連結有誤或已失效，請向老師要新的連結。','El enlace de la clase es incorrecto o ya no es válido; pide un enlace nuevo a tu profesor.','This class link is wrong or no longer valid; please ask your teacher for a new one.'],
   error:['連不上班級','No se pudo conectar','Could not connect'],
   noSend:['可以照常玩，但成績不會傳給老師。','Puedes jugar, pero tu puntuación no llegará al profesor.','You can play, but your score won\'t reach your teacher.'],
   nick:['暱稱','Apodo','Nickname'],change:['更改','Cambiar','Change'],ok:['確定','OK','OK'],
@@ -92,6 +93,7 @@ const canUpload=()=>CLASS_ID&&C.clsState==='ok'&&!!C.nick;
 function bannerHtml(){
   let h=`<div class="panel clsb"><h3>🏫 `;
   if(C.clsState==='loading')return h+`${L1('connecting')}</h3></div>`;
+  if(C.clsState==='missing')return h+`${L1('missing')}</h3><div class="note" style="text-align:left">${L('missingNote')}</div></div>`;   // 班級碼打錯：不讓學生白玩，請他向老師要新連結
   if(C.clsState==='missing'||C.clsState==='error')return h+`${L1(C.clsState)}</h3><div class="note" style="text-align:left">${L('noSend')}</div></div>`;
   h+=`${esc(C.cls.name)}</h3>`;
   if(C.nick)h+=`<div class="clsrow">${L1('nick')}：<b>${esc(C.nick)}</b><button class="tmini" onclick="CLASSROOM.editNick()">${L1('change')}</button></div>
@@ -141,6 +143,7 @@ window.CLASSROOM={
   canStart(){
     if(!CLASS_ID)return true;
     if(C.clsState==='loading')return false;
+    if(C.clsState==='missing'){S=null;renderMenu();window.scrollTo(0,0);return false;}
     if(C.clsState==='ok'&&!C.nick){C.nickMsg=L1('nickFirst');S=null;renderMenu();const i=document.getElementById('nickIn');if(i)i.focus();window.scrollTo(0,0);return false;}
     return true;},
   onResult(){C.up='';C.upErr='';if(canUpload())upload();},
