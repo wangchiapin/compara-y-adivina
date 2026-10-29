@@ -40,6 +40,7 @@ const TX={
   sending:['傳送成績中…','Enviando…','Sending…'],
   sent:['✅ 成績已回傳給老師','Resultado enviado a tu profesor','Result sent to your teacher'],
   failed:['⚠ 成績沒有傳出去：','No se pudo enviar: ','Could not send: '],
+  maint:['維修中，請稍後再來','En mantenimiento; vuelve más tarde','Under maintenance — please come back later'],
   retry:['再試一次','Reintentar','Try again'],
   noPerm:['沒有權限（老師的訂閱可能已到期）','Sin permiso (la suscripción del profesor puede haber vencido)','No permission (the teacher\'s subscription may have expired)'],
   offline:['連不上網路，請稍後再試','Sin conexión, inténtalo más tarde','Offline, try again later'],
@@ -51,7 +52,7 @@ const L1=k=>esc(tz(k))+(fx(k)?' · '+esc(fx(k)):'');      // 單行
 
 const C={ready:null,app:null,auth:null,db:null,user:null,
   cls:null,clsState:CLASS_ID?'loading':'',nick:CLASS_ID?(lsGet(LS_NICK)||''):'',nickMsg:'',
-  up:'',upErr:''};   // up: '' | sending | ok | err
+  up:'',upErr:'',maint:false};   // up: '' | sending | ok | err
 
 // ---- Firebase（compat SDK，需要時才載入）----
 function loadScript(src){return new Promise((res,rej)=>{const el=document.createElement('script');el.src=src;el.onload=res;el.onerror=()=>rej(new Error('load failed: '+src));document.head.appendChild(el);});}
@@ -80,9 +81,20 @@ async function nickHash(nick){
   catch(e){let h1=0x811c9dc5,h2=0x01000193;for(const ch of norm){const c=ch.codePointAt(0);h1=Math.imul(h1^c,16777619)>>>0;h2=Math.imul(h2+c,2246822519)>>>0;}
     return h1.toString(16).padStart(8,'0')+h2.toString(16).padStart(8,'0');}}
 
+// ---- 維修開關：老師管理中心的 portalStatus/center-bbk（off:true＝維修中）----
+// 維修中：班級連結（?class=）和老師範圍碼（?r=）都不能玩、不記成績。?preview（老師預覽）不受影響；讀不到開關就照常放行。
+async function checkMaint(){
+  if(qp.has('preview')||(!CLASS_ID&&!RCODE))return;
+  try{await init();if(!C.user)await C.auth.signInAnonymously();
+    const m=await C.db.collection('portalStatus').doc('center-bbk').get();
+    if(m.exists&&m.data().off===true)C.maint=true;
+  }catch(e){console.warn('maint check failed',e);}
+}
+
 // ---- 班級 ----
 async function loadClass(){
-  try{await init();
+  try{await checkMaint();if(C.maint){C.clsState='maint';return refreshMenu();}
+    await init();
     if(!C.user)await C.auth.signInAnonymously();
     const s=await C.db.collection('classes').doc(CLASS_ID).get();
     if(!s.exists)C.clsState='missing';else{C.cls=s.data();C.clsState='ok';}
@@ -124,7 +136,8 @@ async function upload(){
 
 // ---- 老師的範圍碼 ?r=（shared_bbk 任何人可讀，不用登入）----
 async function loadRange(){
-  try{await init();const s=await C.db.collection('shared_bbk').doc(RCODE).get();
+  try{await checkMaint();if(C.maint){LK.pending=false;return refreshMenu();}
+    await init();const s=await C.db.collection('shared_bbk').doc(RCODE).get();
     if(!s.exists)lockFail('missing');else lockApply(s.data());}
   catch(e){console.warn('range load failed',e);lockFail('error');}
   refreshMenu();}
@@ -139,8 +152,11 @@ window.CLASSROOM={
   classMode:()=>!!CLASS_ID,
   classId:()=>CLASS_ID,
   bannerHtml,upHtml,report,
+  maintHtml:()=>`<div class="panel" style="text-align:center"><h3>🔧 ${L('maint')}</h3></div>`,
   // 開始一回合前：班級連結要先有暱稱
+  isMaint:()=>C.maint,
   canStart(){
+    if(C.maint){S=null;renderMenu();window.scrollTo(0,0);return false;}
     if(!CLASS_ID)return true;
     if(C.clsState==='loading')return false;
     if(C.clsState==='missing'){S=null;renderMenu();window.scrollTo(0,0);return false;}

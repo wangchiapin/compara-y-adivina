@@ -18,8 +18,9 @@ const server = http.createServer((req, res) => {
 const CID = 'class0000aaaa';
 const RS = 'rng000011112';
 const SK = 'hanziGames.settings';
-function seed({ expired = false } = {}){
+function seed({ expired = false, maint = false } = {}){
   return { 'subscription-48d3c': {
+    portalStatus: maint ? { 'center-bbk': { off: true } } : {},
     classes: { [CID]: { owner: 'u1', slot: 0, name: '週三班', showBoard: false, updatedAt: 1 } },
     teacher_classes: { u1: { slots: { '0': CID }, updatedAt: 1 } },
     site_plans: { u1: { plan: 'year', expiresAt: Date.now() + (expired ? -1 : 1) * 30 * 86400000 } }, class_plays: {},
@@ -340,6 +341,18 @@ server.listen(0, 'localhost', async () => {
     ok((await page.textContent('.clsb')).includes('請向老師要新的連結'), '班級不存在：提示請向老師要新連結');
     await page.evaluate(() => startRound(1, null)); ok(await page.evaluate(() => S === null), '班級不存在：不讓開始（避免白玩）');
     ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+
+  console.log('\n[M] 2026-10-29：老師中心維修開關開啟 → 班級連結／範圍碼都不能玩、不記成績；?preview 不受影響');
+  for(const q of ['?class=' + CID, '?r=' + RS, '?class=' + CID + '&r=' + RS]){
+    const { page, errors, ctx } = await open(browser, '/index.html' + q, { seedOpt: { maint: true }, ls: { ['bbk_nick_' + CID]: 'Leo' } });
+    await page.waitForSelector('text=維修中');
+    ok(!(await page.$('.lvl')) && !(await page.$('button.big')), '維修中：沒有關卡鈕、不能開始 ' + q);
+    await page.evaluate(() => startRound(1, null)); ok(await page.evaluate(() => S === null), '維修中：startRound 也不會開始 ' + q);
+    ok(Object.keys(await page.evaluate(() => window.__DB['subscription-48d3c'].class_plays || {})).length === 0, '維修中：沒有寫成績 ' + q);
+    ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }
+  { const { page, ctx } = await open(browser, '/index.html?class=' + CID + '&preview=1', { seedOpt: { maint: true }, ls: { ['bbk_nick_' + CID]: 'Leo' } });
+    await page.waitForSelector('.clsb h3:has-text("週三班")');
+    ok(!!(await page.$('.lvl')), '預覽（?preview）不受維修影響'); await ctx.close(); }
 
   console.log('\n[J] 老師範圍：?r= 範圍碼、舊格式連結');
   { const { page, errors, ctx } = await open(browser, '/index.html?r=' + RS);

@@ -268,6 +268,7 @@ function renderMenu(){S=null;screen='menu';
   document.title=zh('比比看')+' Compara y Adivina';
   const cm=CR()&&CR().classMode();
   let h=`${gearBtn()}<h1>${esc(u('title'))}</h1><div class="sub">Compara y Adivina</div>`;
+  if(CR()&&CR().isMaint()){app.innerHTML=h+CR().maintHtml()+`<p class="ver">${VERSION}</p>`;return;}   // 老師中心維修中：不能玩
   if(cm)h+=CR().bannerHtml();
   if(LK.pending)h+=`<div class="panel"><h3>👩‍🏫 ${L('tPractice')}</h3><div class="note">${L('loading')}</div></div>`;
   else if(LK.locked){
@@ -421,7 +422,7 @@ window.addEventListener('storage',e=>{
   Object.assign(SET,readSettings());rerender();
 });
 </script>
-<script src="classroom.js?v=6-8"></script>
+<script src="classroom.js?v=6-9"></script>
 <script>renderMenu();</script>
 <script>
 /* ===== 版權說明 ===== */
