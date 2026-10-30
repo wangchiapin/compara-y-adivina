@@ -100,7 +100,7 @@ async function loadClass(){
     if(!s.exists)C.clsState='missing';else{C.cls=s.data();C.clsState='ok';}
   }catch(e){console.warn('class load failed',e);C.clsState='error';}
   refreshMenu();}
-const canUpload=()=>CLASS_ID&&C.clsState==='ok'&&!!C.nick;
+const canUpload=()=>CLASS_ID&&!qp.has('preview')&&C.clsState==='ok'&&!!C.nick;   // ?preview（老師預覽）不回傳成績
 
 function bannerHtml(){
   let h=`<div class="panel clsb"><h3>🏫 `;
