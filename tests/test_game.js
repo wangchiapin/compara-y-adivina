@@ -98,6 +98,11 @@ server.listen(0, 'localhost', async () => {
     ok(ht.includes('比較') && ht.includes('沒有…那麼') && ht.includes('更、還、最') && ht.includes('80 分過關') && ht.includes('70 分過關'), '說明視窗：三個難度的句型和過關分數');
     ok(ht.includes('Cómo jugar') && ht.includes('Los niveles'), '說明視窗：西文小字');
     await shot(page, 'a_info', false);
+    // 矮螢幕（手機網址列、工具列佔掉一塊）：視窗不能比畫面高，而且要能上下滑
+    await page.setViewportSize({ width: 390, height: 520 });
+    const sc = await page.$eval('#infoov .setcard', e => { const r = e.getBoundingClientRect(); const before = e.scrollTop; e.scrollTop = 9999; return { top: Math.round(r.top), bottom: Math.round(r.bottom), vh: innerHeight, canScroll: e.scrollHeight > e.clientHeight, moved: e.scrollTop > before }; });
+    ok(sc.top >= 0 && sc.bottom <= sc.vh && sc.canScroll && sc.moved, '矮螢幕：說明視窗完整在畫面內、可以上下滑', sc);
+    await page.setViewportSize({ width: 390, height: 844 });
     await page.click('#infoov .big'); ok(await page.$eval('#infoov', e => e.classList.contains('hide')), '按「完成」關閉說明視窗');
     await page.click('.infob'); await page.mouse.click(5, 5); ok(await page.$eval('#infoov', e => e.classList.contains('hide')), '點視窗外面也會關');
     ok(errors.length === 0, '沒有頁面錯誤', errors); await ctx.close(); }

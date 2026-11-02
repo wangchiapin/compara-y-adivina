@@ -143,9 +143,9 @@ small{display:block;font-size:.72em;color:var(--mut);font-weight:400;line-height
 @keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 /* ⚙️ 設定視窗 */
-.ov{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.ov{position:fixed;inset:0;height:100vh;height:100dvh;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20;overflow:hidden}
 .ov.hide{display:none}
-.setcard{background:#fff;border-radius:20px;padding:14px 12px;width:100%;max-width:420px;max-height:92vh;overflow:auto;box-shadow:0 6px 30px rgba(0,0,0,.15)}
+.setcard{background:#fff;border-radius:20px;padding:14px 12px;width:100%;max-width:420px;max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;box-shadow:0 6px 30px rgba(0,0,0,.15)}
 .setcard h2{margin:0 0 10px;text-align:center;font-size:1.3rem}
 .setcard h2 small{display:block}
 </style>
