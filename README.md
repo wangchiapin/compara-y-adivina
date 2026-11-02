@@ -18,7 +18,7 @@
 - `worksheet.js`：學習單（A4、可列印／存 PDF、可附答案頁），由老師管理中心載入
 - `classroom.js`：學生端——班級連結（暱稱、成績回傳）、老師範圍碼 `?r=`
 - `themes/people.js`：**主題包**——人物資料、特徵定義（高矮、頭髮…）、分組與西語規則
-- `themes/fruit.js`：水果主題包（32 種，`?theme=fruit`；2026-11-02 加入，v6-12）
+- `themes/fruit.js`：水果主題包（32 種，`?theme=fruit` 可玩；2026-11-02 做好，選單暫不開放——要開放時把 index.html 的 THEMES 裡 fruit 那格改成 1，並把 test_game.js 的主題上鎖檢查跟著改）
 - `calibrate.html`：特徵校正工具（讀同一份主題包）
 - `img/P01.webp`–`P50.webp`：50 位人物（透明背景，臉／半身由程式裁切）
 - `img/fruit/<id>.webp`：32 種水果（Gemini 畫九宮格、程式切割去背，最長邊 480px、透明背景）

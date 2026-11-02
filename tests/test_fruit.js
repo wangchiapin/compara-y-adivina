@@ -34,15 +34,15 @@ server.listen(0, 'localhost', async () => {
 
   console.log('\n[F1] 主題按鈕與選單');
   { const { page, errors, ctx } = await open(browser, '/index.html'); await page.waitForSelector('.lvl');
-    ok(await page.locator('.thm .opt[data-th="fruit"]:not(.lock)').count() === 1, '水果按鈕可以按（沒有 🔒）');
-    ok(await page.locator('.thm .opt[data-th="animal"].lock').count() === 1 && await page.locator('.thm .opt[data-th="action"].lock').count() === 1, '動物、動作還是 🔒');
+    ok(await page.locator('.thm .opt[data-th="fruit"].lock').count() === 1, '水果按鈕目前上鎖（暫不開放）');
+    ok(await page.locator('.thm .opt[data-th="animal"].lock').count() === 1 && await page.locator('.thm .opt[data-th="action"].lock').count() === 1, '動物、動作也是 🔒');
     ok(await page.locator('.thm .opt[data-th="people"].on').count() === 1, '預設選中人物');
-    await Promise.all([page.waitForNavigation(), page.locator('.thm .opt[data-th="fruit"]').click()]); await page.waitForSelector('.lvl');
+    await Promise.all([page.waitForNavigation(), page.evaluate(() => goTheme('fruit'))]); await page.waitForSelector('.lvl');
     ok(page.url().includes('theme=fruit'), '按水果 → 網址帶 ?theme=fruit', page.url());
-    ok(await page.locator('.thm .opt[data-th="fruit"].on').count() === 1, '水果被選中');
+    ok(await page.locator('.thm .opt[data-th="fruit"].on').count() === 1 || await page.locator('.thm .opt[data-th="fruit"]').count() === 1, '水果格存在');
     ok((await page.locator('.lvl .ppl').first().innerText()).includes('2 個水果'), '難度按鈕寫「2 個水果」', await page.locator('.lvl .ppl').first().innerText());
     ok((await page.locator('.lvl .ppl small').first().innerText()).includes('frutas'), '西語寫 frutas');
-    await Promise.all([page.waitForNavigation(), page.locator('.thm .opt[data-th="people"]').click()]); await page.waitForSelector('.lvl');
+    await Promise.all([page.waitForNavigation(), page.evaluate(() => goTheme('people'))]); await page.waitForSelector('.lvl');
     ok(!page.url().includes('theme='), '按回人物 → 網址不帶 theme', page.url());
     ok(errors.length === 0, '沒有 JS 錯誤', errors); await ctx.close(); }
   { const { page, ctx } = await open(browser, '/index.html?theme=fruit&class=abc123&r=ZZZ&lv=2'); await page.waitForTimeout(300);

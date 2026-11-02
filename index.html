@@ -309,8 +309,8 @@ let S=null,screen='menu';
 let RANGE=null;   // 這一回合的範圍（null = 一般模式）
 function infoBtn(){return `<button class="infob" onclick="openInfo()" title="${esc(u('info'))}" aria-label="${esc(u('info'))}">i</button>`;}
 function gearBtn(){return `<button class="gear" onclick="openSet()" title="${esc(u('settings'))}" aria-label="${esc(u('settings'))}">⚙️</button>`;}
-// 主題：人物、水果可以玩；其他「🔒 陸續開放」（步驟 6-4）
-const THEMES=[['people','👤',1],['fruit','🍎',1],['animal','🐶',0],['action','🏃',0]];
+// 主題：目前選單只開放人物（水果已做好，用 ?theme=fruit 可玩，之後把 fruit 那格改成 1 就開放）；其他「🔒 陸續開放」（步驟 6-4）
+const THEMES=[['people','👤',1],['fruit','🍎',0],['animal','🐶',0],['action','🏃',0]];
 const CUR_THEME=(qp.get('theme')||'people').replace(/[^\w-]/g,'')||'people';
 let thNote=false;
 function themeSoon(){thNote=true;renderMenu();}

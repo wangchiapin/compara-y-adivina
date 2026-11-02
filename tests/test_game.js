@@ -69,10 +69,10 @@ server.listen(0, 'localhost', async () => {
     ok((await page.textContent('.ver')) === 'v6-12', '最下面有版本號 v6-12');
     // 步驟 6-4：主題
     const th = await page.$$eval('.thm .opt', b => b.map(x => [x.dataset.th, x.classList.contains('on'), x.classList.contains('lock'), x.innerText.replace(/\s+/g, ' ').trim()]));
-    ok(JSON.stringify(th.map(x => x[0])) === JSON.stringify(['people', 'fruit', 'animal', 'action']) && th[0][1] && !th[0][2] && !th[1][2] && th.slice(2).every(x => x[2] && x[3].includes('陸續開放')),
-      '主題：人物已選；水果開放；動物、動作上鎖「陸續開放」', th);
+    ok(JSON.stringify(th.map(x => x[0])) === JSON.stringify(['people', 'fruit', 'animal', 'action']) && th[0][1] && !th[0][2] && th.slice(1).every(x => x[2] && x[3].includes('陸續開放')),
+      '主題：人物已選；水果、動物、動作上鎖「陸續開放」（水果已做好，暫不開放）', th);
     ok(th[0][3].includes('人物') && th[0][3].includes('Personas') && th[1][3].includes('水果'), '主題按鈕：中文＋西文', th);
-    await page.click('.thm [data-th=animal]'); await page.waitForSelector('.thnote');
+    await page.click('.thm [data-th=fruit]'); await page.waitForSelector('.thnote');
     ok((await page.textContent('.thnote')).includes('陸續開放') && (await page.textContent('.thnote')).includes('Próximamente') && !!(await page.$('.thm [data-th=people].on')), '點上鎖的主題：出現「陸續開放」，主題不變');
     const order = await page.$$eval('#app h3', h => h.map(x => x.textContent));
     ok(order[0].startsWith('主題') && order[1].startsWith('選擇難度'), '主題在選擇難度上面', order);
