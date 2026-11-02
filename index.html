@@ -165,16 +165,16 @@ small{display:block;font-size:.72em;color:var(--mut);font-weight:400;line-height
 <div id="infoov" class="ov hide"></div>
 <script>
 // 主題包：預設 people，可用 ?theme=<名稱> 切換（對應 themes/<名稱>.js）；同步載入，引擎執行時一定已就緒
-document.write('<script src="themes/'+(new URLSearchParams(location.search).get('theme')||'people').replace(/[^\w-]/g,'')+'.js?v=6-5"><\/script>');
+document.write('<script src="themes/'+(new URLSearchParams(location.search).get('theme')||'people').replace(/[^\w-]/g,'')+'.js?v=6-12"><\/script>');
 </script>
-<script src="engine.js?v=6-8"></script>
+<script src="engine.js?v=6-12"></script>
 <script>
 if(!window.THEME_PACK){document.getElementById('app').innerHTML='<p style="padding:20px;text-align:center">找不到主題包 / Theme pack not found</p>';throw new Error('no theme pack');}
 const THEME=window.THEME_PACK;
 const E=BBK_ENGINE(THEME);          // 出題引擎（engine.js，跟老師管理中心的學習單共用）
 const {DIMS,POOL,TN,LV_CNT,passMark,esc}=E;
 const app=document.getElementById('app');
-const VERSION='v6-11';
+const VERSION='v6-12';
 const CENTER_URL='https://wangchiapin.github.io/profesor/#/home';
 
 // ===== 三款遊戲共用的基本設定（⚙️）：localStorage 'hanziGames.settings'，格式見 corre/README.md =====
@@ -309,14 +309,19 @@ let S=null,screen='menu';
 let RANGE=null;   // 這一回合的範圍（null = 一般模式）
 function infoBtn(){return `<button class="infob" onclick="openInfo()" title="${esc(u('info'))}" aria-label="${esc(u('info'))}">i</button>`;}
 function gearBtn(){return `<button class="gear" onclick="openSet()" title="${esc(u('settings'))}" aria-label="${esc(u('settings'))}">⚙️</button>`;}
-// 主題：目前只有人物可以玩；其他「🔒 陸續開放」（步驟 6-4）
-const THEMES=[['people','👤',1],['fruit','🍎',0],['animal','🐶',0],['action','🏃',0]];
+// 主題：人物、水果可以玩；其他「🔒 陸續開放」（步驟 6-4）
+const THEMES=[['people','👤',1],['fruit','🍎',1],['animal','🐶',0],['action','🏃',0]];
 const CUR_THEME=(qp.get('theme')||'people').replace(/[^\w-]/g,'')||'people';
 let thNote=false;
 function themeSoon(){thNote=true;renderMenu();}
+// 換主題：重新載入該主題的主題包（?theme=）；保留班級連結，老師範圍／舊關卡連結不帶過去（範圍是綁主題的）
+function goTheme(k){if(k===CUR_THEME)return;const u=new URL(location.href);
+  ['r','lv','d','t','n'].forEach(x=>u.searchParams.delete(x));
+  if(k==='people')u.searchParams.delete('theme');else u.searchParams.set('theme',k);
+  location.href=u.toString();}
 function themeHtml(){
   return `<h3 class="h3s">${L('theme')}</h3><div class="thm">`+THEMES.map(([k,ic,ok])=>ok
-    ?`<button class="opt ${CUR_THEME===k?'on':''}" data-th="${k}"><span class="ic">${ic}</span>${L('th_'+k)}</button>`
+    ?`<button class="opt ${CUR_THEME===k?'on':''}" data-th="${k}" onclick="goTheme('${k}')"><span class="ic">${ic}</span>${L('th_'+k)}</button>`
     :`<button class="opt lock" data-th="${k}" onclick="themeSoon()"><span class="ic">${ic}</span>${esc(u('th_'+k))}<small>🔒 ${esc(u('soon'))}</small></button>`).join('')+'</div>'+
     (thNote?`<div class="thnote">🔒 ${esc(u('soon'))}${fx('soon')?' '+esc(fx('soon')):''}</div>`:'');}
 function renderMenu(){S=null;screen='menu';
@@ -348,7 +353,7 @@ function startRound(lv,rg){
   try{window.HGPlays&&HGPlays.start((RANGE?'range':'L'+lv));}catch(e){}}
 function quit(){const f=fx('quitQ');if(confirm(u('quitQ')+(f?'\n'+f:'')))renderMenu();}
 const sentHtml=s=>E.rtS(s.z,RO());
-function cardHtml(p,i,q){const name=q.hide&&!S.done?'':esc(p.name);
+function cardHtml(p,i,q){const name=q.hide&&!S.done?'':esc(zh(p.name));
   return `<div class="card ${q.crop==='full'?'full':''}" data-i="${i}" onclick="pickCard(${i})">${E.cropHtml(p,q,{height:250})}<div class="lab">${name}</div>${E.tagHtml(p,q,simp())}</div>`;}
 function dictPh(p){const m=SET.phon==='off'?'pinyin':SET.phon;
   return m==='pinyin'?esc(p):m==='zhuyin'?esc(E.zy(p)):esc(p)+' · '+esc(E.zy(p));}

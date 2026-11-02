@@ -66,20 +66,20 @@ server.listen(0, 'localhost', async () => {
     const a = await page.$('a.big[href="https://wangchiapin.github.io/profesor/#/home"]');
     ok(!!a && (await a.textContent()).includes('老師管理中心'), '有「老師管理中心」按鈕，連到中心的遊戲設定頁');
     ok(!(await page.textContent('#app')).includes('老師設定') && !(await page.textContent('#app')).includes('班級成績簿'), '遊戲裡沒有舊的老師區');
-    ok((await page.textContent('.ver')) === 'v6-11', '最下面有版本號 v6-11');
+    ok((await page.textContent('.ver')) === 'v6-12', '最下面有版本號 v6-12');
     // 步驟 6-4：主題
     const th = await page.$$eval('.thm .opt', b => b.map(x => [x.dataset.th, x.classList.contains('on'), x.classList.contains('lock'), x.innerText.replace(/\s+/g, ' ').trim()]));
-    ok(JSON.stringify(th.map(x => x[0])) === JSON.stringify(['people', 'fruit', 'animal', 'action']) && th[0][1] && !th[0][2] && th.slice(1).every(x => x[2] && x[3].includes('陸續開放')),
-      '主題：人物已選；水果、動物、動作上鎖「陸續開放」', th);
+    ok(JSON.stringify(th.map(x => x[0])) === JSON.stringify(['people', 'fruit', 'animal', 'action']) && th[0][1] && !th[0][2] && !th[1][2] && th.slice(2).every(x => x[2] && x[3].includes('陸續開放')),
+      '主題：人物已選；水果開放；動物、動作上鎖「陸續開放」', th);
     ok(th[0][3].includes('人物') && th[0][3].includes('Personas') && th[1][3].includes('水果'), '主題按鈕：中文＋西文', th);
-    await page.click('.thm [data-th=fruit]'); await page.waitForSelector('.thnote');
+    await page.click('.thm [data-th=animal]'); await page.waitForSelector('.thnote');
     ok((await page.textContent('.thnote')).includes('陸續開放') && (await page.textContent('.thnote')).includes('Próximamente') && !!(await page.$('.thm [data-th=people].on')), '點上鎖的主題：出現「陸續開放」，主題不變');
     const order = await page.$$eval('#app h3', h => h.map(x => x.textContent));
     ok(order[0].startsWith('主題') && order[1].startsWith('選擇難度'), '主題在選擇難度上面', order);
     const g = await page.$eval('.gear', e => { const r = e.getBoundingClientRect(); return { x: r.right, y: r.top }; });
     ok(g.x > 340 && g.y < 30, '⚙️ 在右上角', g);
     await shot(page, 'a_menu');
-    // v6-11 首頁改版：副標、ⓘ 說明、三個難度按鈕一樣大、主題一排
+    // v6-12 首頁改版：副標、ⓘ 說明、三個難度按鈕一樣大、主題一排
     ok((await page.textContent('.subrow')).includes('練習中文比較級') && (await page.textContent('.subes')).includes('Practica los comparativos'), '副標：練習中文比較級（西文小字在下）');
     const ib = await page.$eval('.infob', e => { const r = e.getBoundingClientRect(); return { r: r.right, y: r.top }; });
     const gb = await page.$eval('.gear', e => e.getBoundingClientRect().left);
@@ -445,7 +445,7 @@ server.listen(0, 'localhost', async () => {
     q.btns ? pickBtn(wi) : pickCard(wi); if(!S.done) q.btns ? pickBtn(ci) : pickCard(ci); });
   { const { page, errors, ctx } = await open(browser, '/index.html');
     await page.waitForSelector('.lvl');
-    ok((await page.textContent('.ver')) === 'v6-11', '版本號 v6-11');
+    ok((await page.textContent('.ver')) === 'v6-12', '版本號 v6-12');
     await page.evaluate(() => startRound(2, null));
     ok(await page.$('.repbtn') === null, '還沒作答：沒有 🚩');
     await answerFirst(page);
@@ -464,7 +464,7 @@ server.listen(0, 'localhost', async () => {
     const reps = Object.values((await db(page)).bbk_reports || {});
     const r = reps[0], q = await page.evaluate(() => { const q = S.qs[S.i]; return { type: q.type, d: q.d.key, ids: q.its.map(p => p.id), picks: S.picks.length }; });
     ok(reps.length === 1 && r.why === 'wrong' && r.note === '我覺得兩個人一樣高' && r.done === false && typeof r.at === 'number', '一般模式也能送：存進 bbk_reports', r);
-    ok(r.type === q.type && r.d === q.d && JSON.stringify(r.ids) === JSON.stringify(q.ids) && r.lv === 2 && r.r === '' && r.lang === 'es' && r.ver === 'v6-11' && r.th === 'people', '自動記下題型、特徵、人物、關卡、範圍碼、語言、版本', r);
+    ok(r.type === q.type && r.d === q.d && JSON.stringify(r.ids) === JSON.stringify(q.ids) && r.lv === 2 && r.r === '' && r.lang === 'es' && r.ver === 'v6-12' && r.th === 'people', '自動記下題型、特徵、人物、關卡、範圍碼、語言、版本', r);
     ok(r.q.length > 0 && r.ans.length > 0 && !/undefined|\[object/.test(r.q + r.ans + r.pick), '記下題目文字與正確答案', [r.q, r.ans]);
     ok(r.pick.split(' → ').length === q.picks && r.pick.split(' → ')[0] !== r.ans && (q.picks === 1 || r.pick.split(' → ').pop() === r.ans), '學生選的答案照順序記下（先錯的、後對的）', [r.pick, r.ans]);
     ok(await page.$('.repbtn') === null && (await page.textContent('#rep')).includes('謝謝'), '送出後顯示謝謝，不能再送');

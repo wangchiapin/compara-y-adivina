@@ -56,7 +56,7 @@ window.BBK_WORKSHEET=function(E,qs,o){
   const esc=E.esc,zh=s=>E.zh(s,o.simp),ro={simp:o.simp,phon:o.phon},lang=o.lang;
   const fx=(es,en)=>lang==='es'?es:lang==='en'?en:'';                 // 外語小字（只有中文 = 不顯示）
   const bi=(z,es,en)=>esc(zh(z))+(fx(es,en)?`<small>${esc(fx(es,en))}</small>`:'');
-  const card=(p,i,q)=>`<div class="bw-card ${q.crop==='full'?'full':''}">${E.cropHtml(p,q,{base:o.base,height:150})}<div class="lab"><span class="ltr">${LET[i]}</span>${q.hide?'':esc(p.name)}</div>${E.tagHtml(p,q,o.simp)}</div>`;
+  const card=(p,i,q)=>`<div class="bw-card ${q.crop==='full'?'full':''}">${E.cropHtml(p,q,{base:o.base,height:150})}<div class="lab"><span class="ltr">${LET[i]}</span>${q.hide?'':esc(E.zh(p.name,o.simp))}</div>${E.tagHtml(p,q,o.simp)}</div>`;
   function oneQ(q,i){
     let h=`<div class="bw-q"><div class="bw-n">${i+1}</div><div class="bw-b">`;
     if(q.sents)h+=q.sents.map(s=>`<div class="bw-s">${E.rtS(s.z,ro)}</div>`).join('');
@@ -75,7 +75,7 @@ window.BBK_WORKSHEET=function(E,qs,o){
     let a;
     if(q.tf)a=esc(zh(q.btns[k].z[0].t));
     else if(q.btns)a=`${LET[k]}　${E.rt(q.btns[k].z,ro)}`;
-    else a=`${LET[k]}　${esc(q.its[k].name)}`;
+    else a=`${LET[k]}　${esc(E.zh(q.its[k].name,o.simp))}`;
     const lines=[];
     const add=s=>{const t=E.tr(s,lang);lines.push(`<div class="s">${E.rtS(s.z,ro)}</div>${t?`<div class="t">${esc(t)}.</div>`:''}`);};
     if(q.sents)q.sents.forEach(add);

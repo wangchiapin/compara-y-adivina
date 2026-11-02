@@ -74,7 +74,13 @@ window.BBK_ENGINE=function(THEME){
   let RANGE=null;
   const W={比:'bǐ',跟:'gēn',沒有:'méiyǒu',那麼:'nàme',一樣:'yíyàng',差不多:'chàbuduō',不:'bù',誰:'shéi',是:'shì',比較:'bǐjiào',最:'zuì',更:'gèng',還:'hái',一點:'yìdiǎn',很:'hěn',很多:'hěn duō',多了:'duō le',的:'de',公分:'gōngfēn',歲:'suì',對:'duì',錯:'cuò',哪:'nǎ',一句:'yí jù',選出:'xuǎnchū',正確:'zhèngquè',詞:'cí',還是:'háishì'};
   const tk=(t,p)=>({t,p:p===undefined?(W[t]||''):p});
-  const NM=p=>({t:p.name,nm:1});
+  const NM=p=>({t:p.name,nm:1,p:p.py||''});   // 項目名稱；主題包給 py（拼音）時，開拼音／注音會顯示在名稱上面（水果有、人名沒有）
+  // 西／英語的項目名稱：主題包有 nm(項目, 語言, 句首大寫?) 就用它（水果要帶冠詞：la manzana／the apple），沒有就直接用 name（人名）
+  const nmE=(p,l,cap)=>THEME.nm?THEME.nm(p,l,cap):p.name;
+  const ES=(p,cap)=>nmE(p,'es',cap),EN=(p,cap)=>nmE(p,'en',cap);
+  // 「誰」：人物 = 誰／quién／who；水果等主題用 THEME.qw 換成 哪一個／cuál／which one
+  const QW=THEME.qw||{z:'誰',p:'shéi',es:'quién',Es:'Quién',en:'who',En:'Who',whom:'whom'};
+  const tkQ=()=>tk(QW.z,QW.p);
   const P_=t=>({t,p:'',punc:1});
   const BL={blank:1};
   const NUMPY={一:'yī',二:'èr',三:'sān',四:'sì',五:'wǔ',六:'liù',七:'qī',八:'bā',九:'jiǔ',十:'shí'};
@@ -90,8 +96,11 @@ window.BBK_ENGINE=function(THEME){
   function cmp(d,a,b){if(a[d.key]===0||b[d.key]===0)return null;   // 0 = 校正時標為不出題
     const x=d.v(a)-d.v(b),ax=Math.abs(x);
     if(d.num){if(ax<=d.near)return 0;if(ax>=d.thr)return Math.sign(x);return null;}
-    if(x===0)return 0;if(ax>=d.thr)return Math.sign(x);return null;}
+    if(x===0)return d.noTie?null:0;   // noTie：等級一樣不拿來比（甜／酸：兩個都很甜、都很酸不能比）
+    if(ax>=d.thr)return Math.sign(x);return null;}
   function degree(d,a,b){const ax=Math.abs(d.v(a)-d.v(b));
+    if(d.noDeg)return 0;
+    if(d.deg)return d.deg(ax);   // 主題包自訂「一點／很多」的差距範圍
     if(d.key==='height')return ax>=8&&ax<=12?1:ax>=20?2:0;
     if(d.key==='age')return ax>=3&&ax<=5?1:ax>=15?2:0;
     return ax===1?1:ax===2?2:0;}
@@ -105,25 +114,25 @@ window.BBK_ENGINE=function(THEME){
   function enC(d,pol){return adj(d,pol).en[1];}
   // st: {f, d, a, b, pol, deg, n}
   function sent(st){const {f,d,a,b,pol}=st;let z,es,en;const ps=d.poss;
-    const esS=(core)=>ps?`${a.name} tiene ${ps.es} ${core} que ${b.name}`:`${a.name} es ${core} que ${b.name}`;
-    const enS=(core)=>ps?`${a.name}'s ${ps.en} ${ps.be} ${core} than ${b.name}'s`:`${a.name} is ${core} than ${b.name}`;
+    const esS=(core)=>ps?`${ES(a,1)} tiene ${ps.es} ${core} que ${ES(b)}`:`${ES(a,1)} es ${core} que ${ES(b)}`;
+    const enS=(core)=>ps?`${EN(a,1)}'s ${ps.en} ${ps.be} ${core} than ${EN(b)}'s`:`${EN(a,1)} is ${core} than ${EN(b)}`;
     if(f==='BI'){z=[...subj(d,a),tk('比'),NM(b),tkA(d,pol)];es=esS(esMas(d,pol,a));en=enS(enC(d,pol));}
     else if(f==='DEG'){const w=st.deg===1?'一點':(st.alt?'多了':'很多');z=[...subj(d,a),tk('比'),NM(b),tkA(d,pol),tk(w)];
       es=esS(esMas(d,pol,a,st.deg===1?'un poco ':'mucho '));en=enS((st.deg===1?'a bit ':'much ')+enC(d,pol));}
     else if(f==='DIFF'){z=[NM(a),tk('比'),NM(b),tkA(d,pol),cnNum(st.n),d.unit];
-      es=`${a.name} es ${st.n} ${d.esU} ${esMas(d,pol,a)} que ${b.name}`;en=`${a.name} is ${st.n} ${d.enU} ${enC(d,pol)} than ${b.name}`;}
+      es=`${ES(a,1)} es ${st.n} ${d.esU} ${esMas(d,pol,a)} que ${ES(b)}`;en=`${EN(a,1)} is ${st.n} ${d.enU} ${enC(d,pol)} than ${EN(b)}`;}
     else if(f==='GENG'){const w=st.alt?'還':'更';z=[...subj(d,a),tk('比'),NM(b),tk(w),tkA(d,pol)];es=esS(esMas(d,pol,a,'aún '));en=enS('even '+enC(d,pol));}
     else if(f==='MEI'){z=[...subj(d,a),tk('沒有'),NM(b),tk('那麼'),tkA(d,pol)];
-      es=ps?`${a.name} no tiene ${ps.es} tan ${esA(d,pol,a)} como ${b.name}`:`${a.name} no es tan ${esA(d,pol,a)} como ${b.name}`;
-      en=ps?`${a.name}'s ${ps.en} ${ps.be} not as ${adj(d,pol).en[0]} as ${b.name}'s`:`${a.name} is not as ${adj(d,pol).en[0]} as ${b.name}`;}
+      es=ps?`${ES(a,1)} no tiene ${ps.es} tan ${esA(d,pol,a)} como ${ES(b)}`:`${ES(a,1)} no es tan ${esA(d,pol,a)} como ${ES(b)}`;
+      en=ps?`${EN(a,1)}'s ${ps.en} ${ps.be} not as ${adj(d,pol).en[0]} as ${EN(b)}'s`:`${EN(a,1)} is not as ${adj(d,pol).en[0]} as ${EN(b)}`;}
     else if(f==='SAME'){z=[...subj(d,a),tk('跟'),NM(b),tk('一樣'),tkA(d,pol)];
-      es=ps?`${a.name} tiene ${ps.es} tan ${esA(d,pol,a)} como ${b.name}`:`${a.name} es tan ${esA(d,pol,a)} como ${b.name}`;
-      en=ps?`${a.name}'s ${ps.en} ${ps.be} as ${adj(d,pol).en[0]} as ${b.name}'s`:`${a.name} is as ${adj(d,pol).en[0]} as ${b.name}`;}
+      es=ps?`${ES(a,1)} tiene ${ps.es} tan ${esA(d,pol,a)} como ${ES(b)}`:`${ES(a,1)} es tan ${esA(d,pol,a)} como ${ES(b)}`;
+      en=ps?`${EN(a,1)}'s ${ps.en} ${ps.be} as ${adj(d,pol).en[0]} as ${EN(b)}'s`:`${EN(a,1)} is as ${adj(d,pol).en[0]} as ${EN(b)}`;}
     else if(f==='ABOUT'){z=[NM(a),tk('跟'),NM(b),tk('差不多'),tkA(d,1)];
-      es=d.key==='age'?`${a.name} y ${b.name} tienen casi la misma edad`:`${a.name} es casi tan ${esA(d,1,a)} como ${b.name}`;
-      en=d.key==='age'?`${a.name} is about the same age as ${b.name}`:`${a.name} is about as ${adj(d,1).en[0]} as ${b.name}`;}
+      es=d.key==='age'?`${ES(a,1)} y ${ES(b)} tienen casi la misma edad`:`${ES(a,1)} es casi tan ${esA(d,1,a)} como ${ES(b)}`;
+      en=d.key==='age'?`${EN(a,1)} is about the same age as ${EN(b)}`:`${EN(a,1)} is about as ${adj(d,1).en[0]} as ${EN(b)}`;}
     else if(f==='DIFFER'){z=ps?[NM(a),tk('跟'),NM(b),tk('的'),tk(ps.z,ps.p),tk('不'),tk('一樣'),tkA(d,1)]:[NM(a),tk('跟'),NM(b),tk('不'),tk('一樣'),tkA(d,1)];
-      es=`${a.name} y ${b.name} no tienen ${d.esSame}`;en=`${a.name} and ${b.name} ${d.enSame}`;}
+      es=`${ES(a,1)} y ${ES(b)} no tienen ${d.esSame}`;en=`${EN(a,1)} and ${EN(b)} ${d.enSame}`;}
     return {z,es,en};
   }
   function truth(st){const {f,d,a,b,pol}=st;const c=cmp(d,a,b);
@@ -137,19 +146,19 @@ window.BBK_ENGINE=function(THEME){
     return null;}
   // 問句
   function ask(kind,d,o){const ps=d.poss;let z,es,en;const pol=o.pol;
-    if(kind==='WHO'){z=[tk('誰'),tk('是'),NM(o.a),P_('？')];es=`¿Quién es ${o.a.name}?`;en=`Who is ${o.a.name}?`;}
-    else if(kind==='MORE'){z=[NM(o.a),tk('跟'),NM(o.b),P_('，'),tk('誰'),...(ps?[tk('的'),tk(ps.z,ps.p)]:[]),tk('比較'),tkA(d,pol),P_('？')];
-      es=ps?`${o.a.name} y ${o.b.name}, ¿quién tiene ${ps.es} ${esMas(d,pol,null)}?`:`${o.a.name} y ${o.b.name}, ¿quién es ${esMas(d,pol,null)}?`;
-      en=ps?`${o.a.name} or ${o.b.name}: whose ${ps.en} ${ps.be} ${enC(d,pol)}?`:`${o.a.name} or ${o.b.name}: who is ${enC(d,pol)}?`;}
-    else if(kind==='WHOBI'){z=[tk('誰'),...(ps?[tk('的'),tk(ps.z,ps.p)]:[]),tk('比'),NM(o.t),tkA(d,pol),P_('？')];
-      es=ps?`¿Quién tiene ${ps.es} ${esMas(d,pol,null)} que ${o.t.name}?`:`¿Quién es ${esMas(d,pol,null)} que ${o.t.name}?`;
-      en=ps?`Whose ${ps.en} ${ps.be} ${enC(d,pol)} than ${o.t.name}'s?`:`Who is ${enC(d,pol)} than ${o.t.name}?`;}
-    else if(kind==='BIWHO'){z=[...subj(d,o.t),tk('比'),tk('誰'),tkA(d,pol),P_('？')];
-      es=ps?`${o.t.name} tiene ${ps.es} ${esMas(d,pol,o.t)} que… ¿quién?`:`${o.t.name} es ${esMas(d,pol,o.t)} que… ¿quién?`;
-      en=ps?`${o.t.name}'s ${ps.en} ${ps.be} ${enC(d,pol)} than whose?`:`${o.t.name} is ${enC(d,pol)} than whom?`;}
-    else if(kind==='MOST'){z=[tk('誰'),...(ps?[tk('的'),tk(ps.z,ps.p)]:[]),tk('最'),tkA(d,pol),P_('？')];
-      es=ps?`¿Quién tiene ${ps.es} ${esMas(d,pol,null)}?`:`¿Quién es ${d.noMas?'el '+esA(d,pol,null):'el '+esMas(d,pol,null)}?`;
-      en=ps?`Whose ${ps.en} ${ps.be} the ${adj(d,pol).en[2]}?`:`Who is the ${adj(d,pol).en[2]}?`;}
+    if(kind==='WHO'){z=[tkQ(),tk('是'),NM(o.a),P_('？')];es=`¿${QW.Es} es ${ES(o.a)}?`;en=`${QW.En} is ${EN(o.a)}?`;}
+    else if(kind==='MORE'){z=[NM(o.a),tk('跟'),NM(o.b),P_('，'),tkQ(),...(ps?[tk('的'),tk(ps.z,ps.p)]:[]),tk('比較'),tkA(d,pol),P_('？')];
+      es=ps?`${ES(o.a,1)} y ${ES(o.b)}, ¿${QW.es} tiene ${ps.es} ${esMas(d,pol,null)}?`:`${ES(o.a,1)} y ${ES(o.b)}, ¿${QW.es} es ${esMas(d,pol,null)}?`;
+      en=ps?`${EN(o.a,1)} or ${EN(o.b)}: whose ${ps.en} ${ps.be} ${enC(d,pol)}?`:`${EN(o.a,1)} or ${EN(o.b)}: ${QW.en} is ${enC(d,pol)}?`;}
+    else if(kind==='WHOBI'){z=[tkQ(),...(ps?[tk('的'),tk(ps.z,ps.p)]:[]),tk('比'),NM(o.t),tkA(d,pol),P_('？')];
+      es=ps?`¿${QW.Es} tiene ${ps.es} ${esMas(d,pol,null)} que ${ES(o.t)}?`:`¿${QW.Es} es ${esMas(d,pol,null)} que ${ES(o.t)}?`;
+      en=ps?`Whose ${ps.en} ${ps.be} ${enC(d,pol)} than ${EN(o.t)}'s?`:`${QW.En} is ${enC(d,pol)} than ${EN(o.t)}?`;}
+    else if(kind==='BIWHO'){z=[...subj(d,o.t),tk('比'),tkQ(),tkA(d,pol),P_('？')];
+      es=ps?`${ES(o.t,1)} tiene ${ps.es} ${esMas(d,pol,o.t)} que… ¿${QW.es}?`:`${ES(o.t,1)} es ${esMas(d,pol,o.t)} que… ¿${QW.es}?`;
+      en=ps?`${EN(o.t,1)}'s ${ps.en} ${ps.be} ${enC(d,pol)} than whose?`:`${EN(o.t,1)} is ${enC(d,pol)} than ${QW.whom}?`;}
+    else if(kind==='MOST'){z=[tkQ(),...(ps?[tk('的'),tk(ps.z,ps.p)]:[]),tk('最'),tkA(d,pol),P_('？')];
+      es=ps?`¿${QW.Es} tiene ${ps.es} ${esMas(d,pol,null)}?`:`¿${QW.Es} es ${d.noMas?'el '+esA(d,pol,null):'el '+esMas(d,pol,null)}?`;
+      en=ps?`Whose ${ps.en} ${ps.be} the ${adj(d,pol).en[2]}?`:`${QW.En} is the ${adj(d,pol).en[2]}?`;}
     else if(kind==='TF'){z=[tk('對'),tk('還是'),tk('錯'),P_('？')];es='¿Verdadero o falso?';en='True or false?';}
     else if(kind==='PICK'){z=[tk('哪'),tk('一句'),tk('是'),tk('對'),tk('的'),P_('？')];es='¿Qué frase es correcta?';en='Which sentence is correct?';}
     else if(kind==='FILL'){z=[tk('選出'),tk('正確'),tk('的'),tk('詞'),P_('。')];es='Elige la palabra correcta.';en='Choose the correct word.';}
@@ -202,7 +211,7 @@ window.BBK_ENGINE=function(THEME){
     const st={f:'GENG',d,a,b,pol,alt:w==='還'},full=sent(st);
     const pre=[...subj(d,b),tk('很'),tkA(d,pol),P_('，')];
     const ea=esA(d,pol,b),en0=adj(d,pol).en[0];
-    const preEs=ps?`${b.name} tiene ${ps.es} muy ${ea}`:`${b.name} es muy ${ea}`,preEn=ps?`${b.name}'s ${ps.en} ${ps.be} very ${en0}`:`${b.name} is very ${en0}`;
+    const preEs=ps?`${ES(b,1)} tiene ${ps.es} muy ${ea}`:`${ES(b,1)} es muy ${ea}`,preEn=ps?`${EN(b,1)}'s ${ps.en} ${ps.be} very ${en0}`:`${EN(b,1)} is very ${en0}`;
     const words=[w,'很','最'];
     return mkQ('fill',d,[a,b],{blankZ:[...pre,...subj(d,a),tk('比'),NM(b),BL,tkA(d,pol)],fillAns:w,q:ask('FILL',d,{}),btns:words.map(x=>({z:[tk(x)],ok:x===w,w:x})),
       full:{z:[...pre,...full.z],es:preEs+'; '+full.es,en:preEn+'; '+full.en},row:1,f:'GENG',pol});}
@@ -213,14 +222,14 @@ window.BBK_ENGINE=function(THEME){
   function fillMost(lv){let n=Math.random()<.5?3:4;let ch=chooseDP(lv,(d,pol)=>mostW(d,pol,n).length>0);
     if(!ch){n=3;ch=chooseDP(lv,(d,pol)=>mostW(d,pol,n).length>0);}if(!ch)return null;
     const {d,pol}=ch,ws=mostW(d,pol,n),w=ws[R(ws.length)],ps=d.poss,cnt=n===3?'三':'四';
-    const grp=[tk('是'),tk(cnt+THEME.noun[0],(n===3?'sān':'sì')+' ge rén'),tk('裡','lǐ')];
-    const es0=ps?`${w.name} tiene ${ps.es} ${esMas(d,pol,w)}`:`${w.name} es ${d.noMas?THEME.art(w)+esA(d,pol,w):THEME.art(w)+esMas(d,pol,w)}`;
-    const en0=ps?`${w.name}'s ${ps.en} ${ps.be} the ${adj(d,pol).en[2]}`:`${w.name} is the ${adj(d,pol).en[2]}`;
+    const grp=[tk('是'),tk(cnt+THEME.noun[0],(n===3?'sān':'sì')+(THEME.nounPy||' ge rén')),tk('裡','lǐ')];
+    const es0=ps?`${ES(w,1)} tiene ${ps.es} ${esMas(d,pol,w)}`:`${ES(w,1)} es ${d.noMas?THEME.art(w)+esA(d,pol,w):THEME.art(w)+esMas(d,pol,w)}`;
+    const en0=ps?`${EN(w,1)}'s ${ps.en} ${ps.be} the ${adj(d,pol).en[2]}`:`${EN(w,1)} is the ${adj(d,pol).en[2]}`;
     const words=['最','更','比'];
     return mkQ('fill',d,shuffle([w,...sample(sideOf(d,w,pol)[1],n-1)]),{blankZ:[...subj(d,w),...grp,BL,tkA(d,pol),tk('的')],fillAns:'最',q:ask('FILL',d,{}),
       btns:words.map(x=>({z:[tk(x)],ok:x==='最',w:x})),full:{z:[...subj(d,w),...grp,tk('最'),tkA(d,pol),tk('的')],es:es0+' del grupo',en:en0+' of the group'},row:1,f:'MOST',pol});}
   // 選形容詞用的特徵（主觀的膚色、髮質、壯不壯不出）
-  const ADJ_OK=['height','age','build','eyes','nose','hair'];
+  const ADJ_OK=THEME.adjOk||['height','age','build','eyes','nose','hair'];
   const GEN={
    // 解碼：兩人不顯示名字
    decode(lv){const d=pick(LV_DIMS(lv).filter(d=>d.neg||true));
@@ -232,7 +241,7 @@ window.BBK_ENGINE=function(THEME){
        else{if(truth(st)!==true)st.pol=-pol;if(!polOK(d,st.pol)){st={f,d,a:b,b:a,pol:1};}}
        if(!polOK(d,st.pol)||truth(st)!==true)continue;
        const who=Math.random()<.5?st.a:st.b;
-       return mkQ('decode',d,shuffle([a,b]),{hide:1,sents:[sent(st)],q:ask('WHO',d,{a:who}),ans:who.id,tagCm:f==='DEG'&&d.key==='height',f:st.f,pol:st.pol});}
+       return mkQ('decode',d,shuffle([a,b]),{hide:1,sents:[sent(st)],q:ask('WHO',d,{a:who}),ans:who.id,tagCm:f==='DEG'&&!!d.tagB,f:st.f,pol:st.pol});}
      return null;},
    // 對錯
    tf(lv){const d=pick(LV_DIMS(lv));
@@ -250,19 +259,19 @@ window.BBK_ENGINE=function(THEME){
        const c=[];
        for(const pol of [1,-1]){if(!polOK(d,pol))continue;
          for(const [x,y] of [[a,b],[b,a]]){c.push({f:'BI',d,a:x,b:y,pol});
-           if(lv>=2){c.push({f:'MEI',d,a:x,b:y,pol});if(d.num)c.push({f:'DEG',d,a:x,b:y,pol,deg:1},{f:'DEG',d,a:x,b:y,pol,deg:2});}
-           if(lv>=3&&d.num){const n0=Math.abs(d.v(a)-d.v(b));for(const n of [n0,n0+5,Math.max(3,n0-5)])if(n>=3&&n<100)c.push({f:'DIFF',d,a:x,b:y,pol,n});}}
+           if(lv>=2){c.push({f:'MEI',d,a:x,b:y,pol});if(d.num&&!d.noDeg)c.push({f:'DEG',d,a:x,b:y,pol,deg:1},{f:'DEG',d,a:x,b:y,pol,deg:2});}
+           if(lv>=3&&d.num&&!d.noDiff){const n0=Math.abs(d.v(a)-d.v(b));for(const n of [n0,n0+5,Math.max(3,n0-5)])if(n>=3&&n<100)c.push({f:'DIFF',d,a:x,b:y,pol,n});}}
          if(d.eq)c.push({f:'SAME',d,a,b,pol});}
        if(d.num)c.push({f:'ABOUT',d,a,b});if(d.same&&lv<3)c.push({f:'DIFFER',d,a,b});
        // 正確選項必須「遊戲判斷」與「字面」都為真；干擾項則兩者都為假，這樣一題只會有一個為真的選項
        let T=c.filter(s=>truth(s)===true&&litTrue(s)),F=c.filter(s=>truth(s)===false&&!litTrue(s));
-       if(lv>=3&&d.num){const t2=T.filter(s=>s.f==='DIFF');if(t2.length)T=t2;}
+       if(lv>=3&&d.num&&!d.noDiff){const t2=T.filter(s=>s.f==='DIFF');if(t2.length)T=t2;}
        if(!T.length||F.length<2)continue;
        const t=pick(T);const zs=new Set([sent(t).z.map(x=>x.t).join('')]);const fs=[];
        for(const s of shuffle(F)){const k=sent(s).z.map(x=>x.t).join('');if(!zs.has(k)){zs.add(k);fs.push(s);}if(fs.length===nd)break;}
        if(fs.length<2)continue;
        const btns=shuffle([{st:t,ok:true},...fs.map(s=>({st:s,ok:false}))]).map(o=>({z:sent(o.st).z,ok:o.ok,tr:sent(o.st)}));
-       return mkQ('pick',d,[a,b],{q:ask('PICK',d,{}),btns,tagCm:d.key==='height'&&(lv>=2||t.f==='DIFF'),f:t.f,pol:t.pol||0});}
+       return mkQ('pick',d,[a,b],{q:ask('PICK',d,{}),btns,tagCm:!!d.tagB&&(lv>=2||t.f==='DIFF'),f:t.f,pol:t.pol||0});}
      return null;},
    // 誰比較…（兩人）
    more(lv){const d=pick(LV_DIMS(lv));
@@ -293,7 +302,7 @@ window.BBK_ENGINE=function(THEME){
        else if(k==='same'){const pol=d.v(a)===3?1:-1;if(!polOK(d,pol))continue;st={f:'SAME',d,a,b,pol};z=[...subj(d,a),BL,NM(b),tk('一樣'),tkA(d,pol)];words=W3;ans='跟';}
        else{const pol=polOK(d,c)?c:null;if(!pol)continue;const g=degree(d,a,b);if(!g)continue;st={f:'DEG',d,a,b,pol,deg:g};z=[...subj(d,a),tk('比'),NM(b),tkA(d,pol),BL];words=['一點','很多','很'];ans=g===1?'一點':'很多';}
        if(truth(st)!==true)continue;
-       return mkQ('fill',d,[a,b],{blankZ:z,fillAns:ans,q:ask('FILL',d,{}),btns:words.map(w=>({z:[tk(w)],ok:w===ans,w})),full:sent(st),row:1,tagCm:k==='deg'&&d.key==='height',f:st.f,pol:st.pol});}
+       return mkQ('fill',d,[a,b],{blankZ:z,fillAns:ans,q:ask('FILL',d,{}),btns:words.map(w=>({z:[tk(w)],ok:w===ans,w})),full:sent(st),row:1,tagCm:k==='deg'&&!!d.tagB,f:st.f,pol:st.pol});}
      return null;},
    // 選形容詞（步驟 6-4 討論定案）
    //   第 1 關：A 比 B ＿＿。第 2 關再加：A 沒有 B 那麼＿＿。
@@ -328,11 +337,13 @@ window.BBK_ENGINE=function(THEME){
      if(!ch){n=3;ch=chooseDP(lv,(d,pol)=>mostW(d,pol,n).length>0);}if(!ch)return null;
      const {d,pol}=ch,ws=mostW(d,pol,n),w=ws[R(ws.length)],ps=d.poss;
      const ex={z:[...subj(d,w),tk('最'),tkA(d,pol)],
-       es:ps?`${w.name} tiene ${ps.es} ${esMas(d,pol,w)}`:`${w.name} es ${d.noMas?THEME.art(w)+esA(d,pol,w):THEME.art(w)+esMas(d,pol,w)}`,
-       en:ps?`${w.name}'s ${ps.en} ${ps.be} the ${adj(d,pol).en[2]}`:`${w.name} is the ${adj(d,pol).en[2]}`};
+       es:ps?`${ES(w,1)} tiene ${ps.es} ${esMas(d,pol,w)}`:`${ES(w,1)} es ${d.noMas?THEME.art(w)+esA(d,pol,w):THEME.art(w)+esMas(d,pol,w)}`,
+       en:ps?`${EN(w,1)}'s ${ps.en} ${ps.be} the ${adj(d,pol).en[2]}`:`${EN(w,1)} is the ${adj(d,pol).en[2]}`};
      return mkQ('most',d,shuffle([w,...sample(sideOf(d,w,pol)[1],n-1)]),{q:ask('MOST',d,{pol}),ans:w.id,expl:[ex],f:'MOST',pol});},
   };
-  const POOL={1:['decode','tf','pick','more','fill','adj'],2:['decode','pick','whobi','biwho','fill','adj'],3:['chain','most','whobi','biwho','pick','fill']};
+  const POOL0={1:['decode','tf','pick','more','fill','adj'],2:['decode','pick','whobi','biwho','fill','adj'],3:['chain','most','whobi','biwho','pick','fill']};
+  // 主題包可用 noTypes 關掉不適合的題型（水果：項目一眼就認得，「看句子找人」「連鎖解碼」沒有意義）
+  const POOL={};for(const k in POOL0)POOL[k]=POOL0[k].filter(t=>!(THEME.noTypes||[]).includes(t));
   const qKey=q=>q.type+q.d.key+q.its.map(p=>p.id).sort().join();
   const poolOf=lv=>POOL[lv].filter(t=>!RANGE||!RANGE.types.length||RANGE.types.includes(t));   // 老師有勾題型時只出勾的
   function makeRound(lv){USED={};const pool=poolOf(lv);if(!pool.length||!LV_DIMS(lv).length)return [];
@@ -359,15 +370,23 @@ window.BBK_ENGINE=function(THEME){
   function rt(tokens,o,blankHtml){o=o||{};const mode=o.phon&&o.phon!=='off'?o.phon:'';
     return tokens.map(x=>{let inner;
       if(x.blank)inner=blankHtml||'<span class="blank">　</span>';
-      else if(x.nm)inner=`<span class="nm">${esc(x.t)}</span>`;
+      else if(x.nm)inner=`<span class="nm">${esc(zh(x.t,o.simp))}</span>`;
       else inner=esc(zh(x.t,o.simp));
       if(!mode)return inner;
-      return `<span class="w">${phLines(x.blank||x.nm||x.punc?'':x.p,mode)}<span class="hz">${inner}</span></span>`;}).join('');}
+      return `<span class="w">${phLines(x.blank||x.punc?'':x.p,mode)}<span class="hz">${inner}</span></span>`;}).join('');}
   // 一句話（tokens）＋句號
   const rtS=(tokens,o,blankHtml)=>rt([...tokens,P_('。')],o,blankHtml);
   const tr=(s,lang)=>!s||lang==='zh'||!lang?'':(lang==='en'?s.en:s.es);
   // 人物圖（卡片裡的圖）：q.crop = face（臉）／full（全身，依身高等比例）／其他（半身）
   function cropHtml(p,q,o){o=o||{};const base=o.base||'',dd=q.d,src=base+THEME.dir+p.id+'.webp';
+    if(q.crop==='full'&&THEME.scale){   // 依真實大小等比例（水果：每個項目的最長邊 = THEME.scale(項目) 公分）
+      const MP=Math.round((o.height||250)*.46),mx=Math.max(...q.its.map(THEME.scale)),k=MP/mx;
+      const dim=x=>{const s=THEME.scale(x)*k,ar=x.w/x.ih;return ar>=1?[Math.round(s),Math.round(s/ar)]:[Math.round(s*ar),Math.round(s)];};
+      const FH=Math.max(...q.its.map(x=>dim(x)[1])),[w,h]=dim(p);
+      return `<div class="fig" style="height:${FH}px"><img src="${src}" alt="" style="height:${h}px;width:${w}px"></div>`;}
+    if(THEME.scale){   // 非大小的特徵：每張圖一樣大、整張置中，不讓圖的大小洩漏答案
+      const wide=p.w>=p.ih;
+      return `<div class="crop" style="aspect-ratio:1;width:100%"><img src="${src}" alt="" style="${wide?'width:86%;height:auto':'height:86%;width:auto'};top:50%;transform:translate(-50%,-50%)"></div>`;}
     if(q.crop==='full'){const FH=o.height||250;const maxH=Math.max(...q.its.map(x=>dd.v(x)));const H=Math.round(FH*dd.v(p)/maxH);const w=Math.round(p.w*H/p.ih);
       return `<div class="fig" style="height:${FH}px"><img src="${src}" alt="" style="height:${H}px;width:${w}px"></div>`;}
     const fr=q.crop==='face'?p.face*1.15:0.52,ar=q.crop==='face'?1:0.78;
