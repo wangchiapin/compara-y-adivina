@@ -75,7 +75,7 @@ server.listen(0, 'localhost', async () => {
   console.log('\n[F4] 每關每種題型各出 40 回合：文字、正確答案、資料');
   { const { page, errors, ctx } = await open(browser, '/index.html?theme=fruit'); await page.waitForSelector('.lvl');
     const res = await page.evaluate(({ TYPES }) => {
-      const T = window.THEME_PACK, byName = {}; T.items.forEach(p => byName[p.name] = p);
+      const T = window.THEME_PACK, byName = {}; T.items.concat(T.instItems).forEach(p => byName[p.name] = p);
       const ztx = z => (z || []).map(t => t.blank ? '＿' : t.t).join('');
       const issues = [], cnt = {}; let total = 0, sw = 0, so = 0, diffs = 0, ndiffWeight = 0, es0 = 0, bad = /undefined|NaN|\[object|null/;
       const chk = (s, where) => { if(bad.test(String(s))) issues.push(where + ' 文字異常：' + s); };
@@ -203,6 +203,43 @@ server.listen(0, 'localhost', async () => {
   { const { page, errors, ctx } = await open(browser, '/index.html?theme=fruit'); await page.waitForSelector('.lvl');
     const r = await page.evaluate(() => { try{ const qs = E.makeRound(2, { lv: 2, dims: [], types: [], n: 10 }); return { n: qs.length, html: qs.map(q => q.its.map(p => E.cropHtml(p, q, { base: '', height: 150 })).join('') + E.tagHtml(q.its[0], q, false)).join('').length }; }catch(e){ return { err: String(e) }; } });
     ok(!r.err && r.n === 10 && r.html > 1000, '老師範圍（全部題型）出 10 題、卡片圖組得出來', r); ok(errors.length === 0, '沒有 JS 錯誤', errors); await ctx.close(); }
+
+  console.log('\n[F10] 同種水果模式（重量／價錢／甜度）：資料與題目');
+  { const { page, errors, ctx } = await open(browser, '/index.html?theme=fruit'); await page.waitForSelector('.lvl');
+    const res = await page.evaluate(async ({ TYPES }) => {
+      const T = window.THEME_PACK, I = T.instItems, issues = [];
+      const byName = {}; I.forEach(p => byName[p.name] = p);
+      const groups = {}; I.forEach(p => (groups[p.fid] = groups[p.fid] || []).push(p));
+      if(Object.keys(groups).length !== 31) issues.push('水果種類數 ' + Object.keys(groups).length);
+      for(const [f, g] of Object.entries(groups)){
+        if(g.length !== 5) issues.push(f + ' 不是 5 個');
+        for(const k of ['iw', 'ip']){ const v = g.map(p => p[k]).sort((a, b) => a - b); for(let i = 1; i < v.length; i++) if(v[i] < v[i - 1] * 1.2 - 1e-9) issues.push(f + ' ' + k + ' 差距不到 20%：' + v); }
+        const sw = g.map(p => p.isw); if(!sw.includes(1) || !sw.includes(3)) issues.push(f + ' 甜度沒有 1 和 3');
+        for(const p of g){ if(!/^[A-E]$/.test(p.name.slice(-1))) issues.push(p.id + ' 名稱沒有字母'); if(!(p.img && p.fid)) issues.push(p.id + ' 缺 img/fid'); } }
+      const ok1 = await new Promise(r => { const i = new Image(); i.onload = () => r(true); i.onerror = () => r(false); i.src = T.dir + I[0].img + '.webp'; }); if(!ok1) issues.push('實例圖載不到');
+      const ztx = z => (z || []).map(t => t.blank ? '＿' : t.t).join(''), bad = /undefined|NaN|\[object|null/;
+      let total = 0, nums = 0, cnt = {};
+      for(const key of ['iw', 'ip', 'isw']) for(const lv of [1, 2, 3]) for(const type of TYPES[lv]){
+        for(let r = 0; r < 25; r++){
+          const qs = E.makeRound(lv, { lv, dims: [key], types: [type], n: 3 });
+          for(const q of qs){ total++; const tag = `L${lv} ${type} ${q.d.key}`; cnt[q.d.key] = (cnt[q.d.key] || 0) + 1;
+            if(q.d.inst){
+              if(new Set(q.its.map(p => p.fid)).size !== 1) issues.push(tag + ' 同一題不是同一種水果：' + q.its.map(p => p.name));
+              const parts = []; (q.sents || []).forEach(s => parts.push(ztx(s.z), s.es, s.en)); parts.push(ztx(q.q.z), q.q.es, q.q.en);
+              (q.btns || []).forEach(b => { parts.push(ztx(b.z)); if(b.tr) parts.push(b.tr.es, b.tr.en); }); (q.expl || []).forEach(s => parts.push(ztx(s.z), s.es, s.en));
+              const all = parts.join(' '); if(bad.test(all)) issues.push(tag + ' 文字異常：' + all.slice(0, 120));
+              if(/\d/.test(all)) nums++;
+              if(type === 'more' || type === 'most'){ const sc = p => q.d.v(p) * q.pol, a = q.its.find(p => p.id === q.ans); if(!q.its.every(p => p === a || sc(a) > sc(p))) issues.push(tag + ' 答案不是最大／小'); }
+              if(type === 'tf' && q.sents){ const [a, b] = q.sents[0].z.filter(t => t.nm).map(t => byName[t.t]); if(a && b && a.fid !== b.fid) issues.push(tag + ' tf 兩個不同水果'); }
+              if(q.d.key === 'isw'){ if(q.its.length === 2 && Math.abs(q.its[0].isw - q.its[1].isw) !== 2) issues.push(tag + ' 甜度不是 1 對 3'); } } } } }
+      return { total, nums, cnt, issues: issues.slice(0, 12), n: issues.length };
+    }, { TYPES });
+    ok(res.n === 0, '同種水果資料與題目無異常', res.issues);
+    ok(res.cnt.iw > 30 && res.cnt.ip > 30 && res.cnt.isw > 30, '重量、價錢、甜度題都有出', res.cnt);
+    ok(res.nums > 0, '有出現含數字的差距句', res.nums);
+    const cn = await page.evaluate(() => [120, 205, 1205, 2500, 9999].map(n => E.cnNum(n).t));
+    ok(cn[0] && /一百二十/.test(cn[0]) && /兩百零五/.test(cn[1]) && /一千兩百零五/.test(cn[2]) && /兩千五百/.test(cn[3]), '中文大數字', cn);
+    ok(errors.length === 0, '沒有 JS 錯誤', errors); await ctx.close(); }
 
   await browser.close(); server.close();
   console.log(`\n水果主題測試：${pass} 通過、${fail} 失敗`); process.exit(fail ? 1 : 0);

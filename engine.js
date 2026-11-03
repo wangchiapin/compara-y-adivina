@@ -21,6 +21,7 @@ const ZY=(function(){
     v:'ㄩ',ve:'ㄩㄝ',van:'ㄩㄢ',vn:'ㄩㄣ',iong:'ㄩㄥ'};
   var MARK=['','','ˊ','ˇ','ˋ'];
   function one(syl){
+    if(/^[A-Z]$/.test(syl))return syl;   // 項目代號 A、B、C… 不轉注音
     var s=syl.normalize('NFD'),tone=5;
     if(/̄/.test(s))tone=1;else if(/́/.test(s))tone=2;else if(/̌/.test(s))tone=3;else if(/̀/.test(s))tone=4;
     s=s.replace(/ü/g,'v').replace(/ü/g,'v').replace(/Ü/g,'v').replace(/[̀-ͯ]/g,'').toLowerCase();
@@ -66,6 +67,7 @@ const zyOf=py=>pySplit(py).map(ZY.one).join(' ');
 
 window.BBK_ENGINE=function(THEME){
   const ITEMS=THEME.items;
+  const IT=d=>THEME.pool?THEME.pool(d):ITEMS;   // 這個特徵用的項目池（人物：全部）
   const T2S=Object.assign({},T2S_BASE,THEME.t2s||{});
   const zh=(s,simp)=>simp?[...String(s)].map(c=>T2S[c]||c).join(''):String(s);
   const LV_CNT={1:'2',2:'2–3',3:'2–4'};   // 各關一題會出現幾個項目
@@ -83,9 +85,16 @@ window.BBK_ENGINE=function(THEME){
   const tkQ=()=>tk(QW.z,QW.p);
   const P_=t=>({t,p:'',punc:1});
   const BL={blank:1};
-  const NUMPY={一:'yī',二:'èr',三:'sān',四:'sì',五:'wǔ',六:'liù',七:'qī',八:'bā',九:'jiǔ',十:'shí'};
+  const NUMPY={零:'líng',一:'yī',二:'èr',兩:'liǎng',三:'sān',四:'sì',五:'wǔ',六:'liù',七:'qī',八:'bā',九:'jiǔ',十:'shí',百:'bǎi',千:'qiān'};
   function cnNum(n){const d='零一二三四五六七八九';let s;
-    if(n<10)s=d[n];else if(n<20)s='十'+(n%10?d[n%10]:'');else s=d[Math.floor(n/10)]+'十'+(n%10?d[n%10]:'');
+    if(n>=100){   // 100–9999：一百二十、一千兩百零五；2 在百／千前面讀「兩」
+      const th=Math.floor(n/1000),h=Math.floor(n%1000/100),t=Math.floor(n%100/10),o=n%10,dg=(x,u)=>(x===2&&u)?'兩':d[x];
+      s='';if(th)s+=dg(th,1)+'千';
+      if(h)s+=dg(h,1)+'百';else if(th&&(t||o))s+='零';
+      if(t)s+=d[t]+'十';else if(h&&o)s+='零';
+      if(o)s+=d[o];
+    }
+    else if(n<10)s=d[n];else if(n<20)s='十'+(n%10?d[n%10]:'');else s=d[Math.floor(n/10)]+'十'+(n%10?d[n%10]:'');
     return tk(s,[...s].map(c=>NUMPY[c]).join(''));}
   // ===== 比較特徵（由主題包定義）=====
   const DIMS=THEME.dims;
@@ -93,11 +102,14 @@ window.BBK_ENGINE=function(THEME){
   const R=n=>Math.floor(Math.random()*n);
   const pick=a=>{if(a.length&&a[0]&&a[0].key&&a[0].v){let t=0;for(const d of a)t+=dimW(d);let r=Math.random()*t;for(const d of a){r-=dimW(d);if(r<=0)return d;}return a[a.length-1];}return a[R(a.length)];};
   const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=R(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
+  const TH=(d,k,a,b)=>typeof d[k]==='function'?d[k](a,b):d[k];   // thr／near 可以寫成函式 (a,b)=>門檻
   function cmp(d,a,b){if(a[d.key]===0||b[d.key]===0)return null;   // 0 = 校正時標為不出題
+    {const va=d.v(a),vb=d.v(b);if(va==null||vb==null||va!==va||vb!==vb)return null;}       // 這個項目沒有這個特徵（例如水果的「同種」特徵只屬於同種水果的項目）
+    if(THEME.pairOK&&!THEME.pairOK(d,a,b))return null;               // 主題包可限制「只有哪些兩個能比」（同種水果）
     const x=d.v(a)-d.v(b),ax=Math.abs(x);
-    if(d.num){if(ax<=d.near)return 0;if(ax>=d.thr)return Math.sign(x);return null;}
+    if(d.num){if(ax<=TH(d,'near',a,b))return 0;if(ax>=TH(d,'thr',a,b))return Math.sign(x);return null;}
     if(x===0)return d.noTie?null:0;   // noTie：等級一樣不拿來比（甜／酸：兩個都很甜、都很酸不能比）
-    if(ax>=d.thr)return Math.sign(x);return null;}
+    if(ax>=TH(d,'thr',a,b))return Math.sign(x);return null;}
   function degree(d,a,b){const ax=Math.abs(d.v(a)-d.v(b));
     if(d.noDeg)return 0;
     if(d.deg)return d.deg(ax);   // 主題包自訂「一點／很多」的差距範圍
@@ -120,7 +132,7 @@ window.BBK_ENGINE=function(THEME){
     else if(f==='DEG'){const w=st.deg===1?'一點':(st.alt?'多了':'很多');z=[...subj(d,a),tk('比'),NM(b),tkA(d,pol),tk(w)];
       es=esS(esMas(d,pol,a,st.deg===1?'un poco ':'mucho '));en=enS((st.deg===1?'a bit ':'much ')+enC(d,pol));}
     else if(f==='DIFF'){z=[NM(a),tk('比'),NM(b),tkA(d,pol),cnNum(st.n),d.unit];
-      es=`${ES(a,1)} es ${st.n} ${d.esU} ${esMas(d,pol,a)} que ${ES(b)}`;en=`${EN(a,1)} is ${st.n} ${d.enU} ${enC(d,pol)} than ${EN(b)}`;}
+      es=`${ES(a,1)} es ${d.nfmt?d.nfmt.es(st.n):st.n+' '+d.esU} ${esMas(d,pol,a)} que ${ES(b)}`;en=`${EN(a,1)} is ${d.nfmt?d.nfmt.en(st.n):st.n+' '+d.enU} ${enC(d,pol)} than ${EN(b)}`;}
     else if(f==='GENG'){const w=st.alt?'還':'更';z=[...subj(d,a),tk('比'),NM(b),tk(w),tkA(d,pol)];es=esS(esMas(d,pol,a,'aún '));en=enS('even '+enC(d,pol));}
     else if(f==='MEI'){z=[...subj(d,a),tk('沒有'),NM(b),tk('那麼'),tkA(d,pol)];
       es=ps?`${ES(a,1)} no tiene ${ps.es} tan ${esA(d,pol,a)} como ${ES(b)}`:`${ES(a,1)} no es tan ${esA(d,pol,a)} como ${ES(b)}`;
@@ -167,7 +179,12 @@ window.BBK_ENGINE=function(THEME){
   const LV_DIMS=lv=>Object.values(DIMS).filter(d=>d.lv<=lv&&(!RANGE||!RANGE.dims.length||RANGE.dims.includes(d.key)));
   // 各特徵出現機率（眼睛、鼻子在圖上差異較小，比較少出）
   let USED={};const dimW=d=>d.w*Math.pow(.4,USED[d.key]||0);   // 同一回合已出過的特徵，權重每次乘 0.4
-  function people(n,cond,tries=400){for(let i=0;i<tries;i++){const s=shuffle(ITEMS).slice(0,n);if(cond(...s))return s;}return null;}
+  // 從這個特徵的項目池抽 n 個；同種水果的特徵（d.inst）先挑一種水果，再從它的幾個項目抽
+  function draw(d,n){const P=IT(d);if(!(d&&d.inst&&THEME.grpOf))return shuffle(P).slice(0,n);
+    const g={};for(const p of P){const k=THEME.grpOf(p);(g[k]=g[k]||[]).push(p);}
+    const ks=Object.keys(g).filter(k=>g[k].length>=n);if(!ks.length)return shuffle(P).slice(0,n);
+    return shuffle(g[ks[R(ks.length)]]).slice(0,n);}
+  function people(n,cond,tries=400,d){for(let i=0;i<tries;i++){const s=draw(d,n);if(cond(...s))return s;}return null;}
   const clear=(d,a,b)=>{const c=cmp(d,a,b);return c===1||c===-1?c:null;};
   function polOK(d,pol){return pol>0||!!d.neg;}
   function rPol(d){return d.neg&&Math.random()<.5?-1:1;}
@@ -178,14 +195,14 @@ window.BBK_ENGINE=function(THEME){
     if(f==='BI'||f==='GENG')return s===pol;
     if(f==='MEI')return s===-pol;
     if(f==='SAME')return x===0;
-    if(f==='ABOUT')return Math.abs(x)<=d.near;
+    if(f==='ABOUT')return Math.abs(x)<=TH(d,'near',a,b);
     if(f==='DIFFER')return x!==0;
     if(f==='DEG'){if(s!==pol)return false;const g=degree(d,a,b);return g===0||g===st.deg;}
     if(f==='DIFF')return x*pol===st.n;
     return false;}
   const REL={};
   function rel(d,t){const k=d.key+t.id;if(REL[k])return REL[k];const up=[],dn=[];
-    for(const p of ITEMS){if(p===t)continue;const c=clear(d,p,t);if(c===1)up.push(p);else if(c===-1)dn.push(p);}
+    for(const p of IT(d)){if(p===t)continue;const c=clear(d,p,t);if(c===1)up.push(p);else if(c===-1)dn.push(p);}
     return REL[k]={up,dn};}
   // 回傳 [同方向, 反方向]：同方向 = 在 t 的 pol 那一邊（pol=1 是比 t 高／大／長…）的人
   const sideOf=(d,t,pol)=>{const r=rel(d,t);return pol>0?[r.up,r.dn]:[r.dn,r.up];};
@@ -197,12 +214,12 @@ window.BBK_ENGINE=function(THEME){
     let t=0;for(const x of o)t+=dimW(x.d);let r=Math.random()*t,c=o[o.length-1];
     for(const x of o){r-=dimW(x.d);if(r<=0){c=x;break;}}
     return {d:c.d,pol:c.pols[R(c.pols.length)]};}
-  const triT=(d,pol,n,kind)=>ITEMS.filter(t=>{const [s,o]=sideOf(d,t,pol);return kind==='who'?s.length>=1&&o.length>=n-2:o.length>=1&&s.length>=n-2;});
-  const mostW=(d,pol,n)=>ITEMS.filter(w=>sideOf(d,w,pol)[1].length>=n-1);
+  const triT=(d,pol,n,kind)=>IT(d).filter(t=>{const [s,o]=sideOf(d,t,pol);return kind==='who'?s.length>=1&&o.length>=n-2:o.length>=1&&s.length>=n-2;});
+  const mostW=(d,pol,n)=>IT(d).filter(w=>sideOf(d,w,pol)[1].length>=n-1);
   const CH={};
   function chains(d){if(CH[d.key])return CH[d.key];const out=[];
-    for(const x of ITEMS)for(const y of ITEMS){if(x===y||THEME.grp(x)!==THEME.grp(y)||clear(d,x,y)!==1)continue;
-      for(const z of ITEMS){if(z===x||z===y||THEME.grp(z)!==THEME.grp(x)||clear(d,y,z)!==1)continue;out.push([x,y,z]);}}
+    for(const x of IT(d))for(const y of IT(d)){if(x===y||THEME.grp(x)!==THEME.grp(y)||clear(d,x,y)!==1)continue;
+      for(const z of IT(d)){if(z===x||z===y||THEME.grp(z)!==THEME.grp(x)||clear(d,y,z)!==1)continue;out.push([x,y,z]);}}
     return CH[d.key]=out;}
   // ---- 選比較詞・第 3 關 ----
   // 前情提要「B 很高」要說得通：B 在這個方向上至少贏過一半的人；年齡不出這句（「阿明很大」不自然）
@@ -216,8 +233,8 @@ window.BBK_ENGINE=function(THEME){
     return mkQ('fill',d,[a,b],{blankZ:[...pre,...subj(d,a),tk('比'),NM(b),BL,tkA(d,pol)],fillAns:w,q:ask('FILL',d,{}),btns:words.map(x=>({z:[tk(x)],ok:x===w,w:x})),
       full:{z:[...pre,...full.z],es:preEs+'; '+full.es,en:preEn+'; '+full.en},row:1,f:'GENG',pol});}
   const GP={};
-  function gengPairs(d,pol){const k=d.key+pol;if(GP[k])return GP[k];const out=[],half=ITEMS.length/2;
-    for(const b of ITEMS){if(sideOf(d,b,pol)[1].length<half)continue;for(const a of sideOf(d,b,pol)[0])out.push([a,b]);}
+  function gengPairs(d,pol){const k=d.key+pol;if(GP[k])return GP[k];const out=[],half=IT(d).length/2;
+    for(const b of IT(d)){if(sideOf(d,b,pol)[1].length<half)continue;for(const a of sideOf(d,b,pol)[0])out.push([a,b]);}
     return GP[k]=out;}
   function fillMost(lv){let n=Math.random()<.5?3:4;let ch=chooseDP(lv,(d,pol)=>mostW(d,pol,n).length>0);
     if(!ch){n=3;ch=chooseDP(lv,(d,pol)=>mostW(d,pol,n).length>0);}if(!ch)return null;
@@ -234,7 +251,7 @@ window.BBK_ENGINE=function(THEME){
    // 解碼：兩人不顯示名字
    decode(lv){const d=pick(LV_DIMS(lv).filter(d=>d.neg||true));
      const forms=lv>=2?(d.num?['BI','BI','MEI','DEG']:['BI','BI','MEI']):['BI'];const f=pick(forms);
-     for(let i=0;i<60;i++){const s=people(2,(a,b)=>THEME.grp(a)===THEME.grp(b)&&clear(d,a,b)!==null);if(!s)return null;const [a,b]=s;let pol=rPol(d);
+     for(let i=0;i<60;i++){const s=people(2,(a,b)=>THEME.grp(a)===THEME.grp(b)&&clear(d,a,b)!==null,400,d);if(!s)return null;const [a,b]=s;let pol=rPol(d);
        let st={f,d,a,b,pol};
        if(f==='MEI'){st.pol=pol;if(truth(st)!==true){st={f,d,a:b,b:a,pol};}}
        else if(f==='DEG'){const g=degree(d,a,b);if(!g)continue;st.deg=g;st.alt=Math.random()<.4;if(truth(st)!==true)st={...st,pol:-pol};if(!polOK(d,st.pol))continue;}
@@ -245,7 +262,7 @@ window.BBK_ENGINE=function(THEME){
      return null;},
    // 對錯
    tf(lv){const d=pick(LV_DIMS(lv));
-     for(let i=0;i<80;i++){const [a,b]=shuffle(ITEMS).slice(0,2);const c=cmp(d,a,b);if(c===null)continue;
+     for(let i=0;i<80;i++){const [a,b]=draw(d,2);const c=cmp(d,a,b);if(c===null)continue;
        const cands=[];
        for(const pol of [1,-1]){if(!polOK(d,pol))continue;cands.push({f:'BI',d,a,b,pol},{f:'BI',d,a:b,b:a,pol});if(d.eq)cands.push({f:'SAME',d,a,b,pol});}
        if(d.num)cands.push({f:'ABOUT',d,a,b});if(d.same)cands.push({f:'DIFFER',d,a,b});
@@ -255,12 +272,12 @@ window.BBK_ENGINE=function(THEME){
      return null;},
    // 看圖選句子
    pick(lv){let cd=LV_DIMS(lv).filter(d=>lv<3||d.num||Math.random()<.5);if(!cd.length)cd=LV_DIMS(lv);const d=pick(cd);const nd=lv>=2?3:2;   // 干擾項：L1 兩個（共 3 選項）、L2 以上三個（共 4 選項）
-     for(let i=0;i<120;i++){const [a,b]=shuffle(ITEMS).slice(0,2);if(cmp(d,a,b)===null)continue;
+     for(let i=0;i<120;i++){const [a,b]=draw(d,2);if(cmp(d,a,b)===null)continue;
        const c=[];
        for(const pol of [1,-1]){if(!polOK(d,pol))continue;
          for(const [x,y] of [[a,b],[b,a]]){c.push({f:'BI',d,a:x,b:y,pol});
            if(lv>=2){c.push({f:'MEI',d,a:x,b:y,pol});if(d.num&&!d.noDeg)c.push({f:'DEG',d,a:x,b:y,pol,deg:1},{f:'DEG',d,a:x,b:y,pol,deg:2});}
-           if(lv>=3&&d.num&&!d.noDiff){const n0=Math.abs(d.v(a)-d.v(b));for(const n of [n0,n0+5,Math.max(3,n0-5)])if(n>=3&&n<100)c.push({f:'DIFF',d,a:x,b:y,pol,n});}}
+           if(lv>=3&&d.num&&!d.noDiff){const n0=Math.abs(d.v(a)-d.v(b)),st=d.dstep?d.dstep(n0):5,lo=d.dmin||3,hi=d.dmax||100;for(const n of [n0,n0+st,Math.max(lo,n0-st)])if(n>=lo&&n<hi)c.push({f:'DIFF',d,a:x,b:y,pol,n});}}
          if(d.eq)c.push({f:'SAME',d,a,b,pol});}
        if(d.num)c.push({f:'ABOUT',d,a,b});if(d.same&&lv<3)c.push({f:'DIFFER',d,a,b});
        // 正確選項必須「遊戲判斷」與「字面」都為真；干擾項則兩者都為假，這樣一題只會有一個為真的選項
@@ -275,7 +292,7 @@ window.BBK_ENGINE=function(THEME){
      return null;},
    // 誰比較…（兩人）
    more(lv){const d=pick(LV_DIMS(lv));
-     const s=people(2,(a,b)=>clear(d,a,b)!==null);if(!s)return null;const [a,b]=s;const pol=rPol(d);
+     const s=people(2,(a,b)=>clear(d,a,b)!==null,400,d);if(!s)return null;const [a,b]=s;const pol=rPol(d);
      const win=clear(d,a,b)===pol?a:b;
      return mkQ('more',d,[a,b],{q:ask('MORE',d,{a,b,pol}),ans:win.id,expl:[sent({f:'BI',d,a:win,b:win===a?b:a,pol})],f:'MORE',pol});},
    // 誰比 T …（L2 三人、L3 四人）
@@ -293,7 +310,7 @@ window.BBK_ENGINE=function(THEME){
    fill(lv){
      if(lv>=3)return Math.random()<.5?(fillGeng(lv)||fillMost(lv)):(fillMost(lv)||fillGeng(lv));
      const d=pick(LV_DIMS(lv));
-     for(let i=0;i<80;i++){const [a,b]=shuffle(ITEMS).slice(0,2);const c=cmp(d,a,b);if(c===null)continue;const kinds=[];
+     for(let i=0;i<80;i++){const [a,b]=draw(d,2);const c=cmp(d,a,b);if(c===null)continue;const kinds=[];
        if(c!==0){kinds.push('bi');if(lv>=2){kinds.push('mei');if(d.num)kinds.push('deg');}}
        if(c===0&&d.eq&&(d.v(a)===1||d.v(a)===3))kinds.push('same');if(!kinds.length)continue;
        const k=pick(kinds);let st,z,words,ans;const W3=lv>=2?['比','跟','沒有']:['比','跟','很'];
@@ -310,7 +327,7 @@ window.BBK_ENGINE=function(THEME){
    //   身體部位（眼睛、鼻子、頭髮長短）：句子寫出部位，只給 2 個選項（正確、反義詞）
    //   膚色、髮質、壯不壯：不出這個題型
    adj(lv){const ds=LV_DIMS(lv).filter(d=>ADJ_OK.includes(d.key));if(!ds.length)return null;const d=pick(ds);
-     for(let i=0;i<80;i++){const [a,b]=shuffle(ITEMS).slice(0,2);const c=clear(d,a,b);if(c===null)continue;
+     for(let i=0;i<80;i++){const [a,b]=draw(d,2);const c=clear(d,a,b);if(c===null)continue;
        const mei=lv>=2&&Math.random()<.5,pol=mei?-c:c;if(!polOK(d,pol)||!polOK(d,-pol))continue;
        const st=mei?{f:'MEI',d,a,b,pol}:{f:'BI',d,a,b,pol};if(truth(st)!==true)continue;
        const z=mei?[...subj(d,a),tk('沒有'),NM(b),tk('那麼'),BL]:[...subj(d,a),tk('比'),NM(b),BL];
@@ -378,7 +395,7 @@ window.BBK_ENGINE=function(THEME){
   const rtS=(tokens,o,blankHtml)=>rt([...tokens,P_('。')],o,blankHtml);
   const tr=(s,lang)=>!s||lang==='zh'||!lang?'':(lang==='en'?s.en:s.es);
   // 人物圖（卡片裡的圖）：q.crop = face（臉）／full（全身，依身高等比例）／其他（半身）
-  function cropHtml(p,q,o){o=o||{};const base=o.base||'',dd=q.d,src=base+THEME.dir+p.id+'.webp';
+  function cropHtml(p,q,o){o=o||{};const base=o.base||'',dd=q.d,src=base+THEME.dir+(p.img||p.id)+'.webp';
     if(q.crop==='full'&&THEME.scale){   // 依真實大小等比例（水果：每個項目的最長邊 = THEME.scale(項目) 公分）
       const MP=Math.round((o.height||250)*.46),mx=Math.max(...q.its.map(THEME.scale)),k=MP/mx;
       const dim=x=>{const s=THEME.scale(x)*k,ar=x.w/x.ih;return ar>=1?[Math.round(s),Math.round(s/ar)]:[Math.round(s*ar),Math.round(s)];};
@@ -404,7 +421,7 @@ window.BBK_ENGINE=function(THEME){
     more:['選人：誰比較＿？','Elige: ¿quién es más ＿?','Pick: who is more ＿?'],whobi:['選人：誰比 A ＿？','Elige: ¿quién es más ＿ que A?','Pick: who is more ＿ than A?'],biwho:['選人：A 比誰＿？','Elige: ¿A es más ＿ que quién?','Pick: A is more ＿ than whom?'],
     fill:['選比較詞','Elige la palabra de comparación','Pick the comparison word'],adj:['選形容詞','Elige el adjetivo','Pick the adjective'],chain:['連鎖解碼','Decodifica en cadena','Chain clues'],most:['選人：誰最＿？','Elige: ¿quién es el más ＿?','Pick: who is the most ＿?'],
   };
-  return {THEME,ITEMS,DIMS,POOL,TN,LV_CNT,PASS,passMark,makeRound:round,feasible,zh,esc,rt,rtS,tr,cropHtml,tagHtml,zy:zyOf,tk,P_};
+  return {cnNum,THEME,ITEMS,DIMS,POOL,TN,LV_CNT,PASS,passMark,makeRound:round,feasible,zh,esc,rt,rtS,tr,cropHtml,tagHtml,zy:zyOf,tk,P_};
 };
 window.BBK_ENGINE.zy=zyOf;
 window.BBK_ENGINE.pySplit=pySplit;
