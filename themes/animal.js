@@ -87,7 +87,7 @@ window.THEME_PACK={
   {"id":"polarbear","name":"北極熊","py":"běijíxióng","es":"oso polar","en":"polar bear","g":0,"size":250,"kg":450,"speed":40,"w":279,"ih":208},
   {"id":"raccoon","name":"浣熊","py":"huànxióng","es":"mapache","en":"raccoon","g":0,"size":60,"kg":7,"speed":24,"w":302,"ih":186},
   {"id":"wildboar","name":"野豬","py":"yězhū","es":"jabalí","en":"wild boar","g":0,"size":130,"kg":100,"speed":48,"w":276,"ih":204},
-  {"id":"otter","name":"水獺","py":"shuǐtǎ","es":"nutria","en":"otter","g":1,"size":100,"kg":8,"speed":25,"w":277,"ih":214},
+  {"id":"otter","name":"水獺","py":"shuǐtà","es":"nutria","en":"otter","g":1,"size":100,"kg":8,"speed":25,"w":277,"ih":214},
   {"id":"beaver","name":"海狸","py":"hǎilí","es":"castor","en":"beaver","g":0,"size":80,"kg":20,"speed":8,"w":292,"ih":192},
   {"id":"alpaca","name":"羊駝","py":"yángtuó","es":"alpaca","en":"alpaca","g":1,"size":120,"kg":65,"speed":45,"w":230,"ih":292},
   {"id":"capybara","name":"水豚","py":"shuǐtún","es":"capibara","en":"capybara","g":0,"size":110,"kg":50,"speed":35,"w":263,"ih":221},
