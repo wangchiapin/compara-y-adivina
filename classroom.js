@@ -151,6 +151,7 @@ async function report(o){
 window.CLASSROOM={
   classMode:()=>!!CLASS_ID,
   classId:()=>CLASS_ID,
+  nick:()=>C.nick,                 // 分享成績的一句話用（沒有班級連結時是空字串）
   bannerHtml,upHtml,report,
   maintHtml:()=>`<div class="panel" style="text-align:center"><h3>🔧 ${L('maint')}</h3></div>`,
   // 開始一回合前：班級連結要先有暱稱

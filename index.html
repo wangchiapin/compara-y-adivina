@@ -244,7 +244,7 @@ const U={
  clear:['破關了！要繼續下一關嗎？','¡Nivel superado! ¿Pasar al siguiente?','Level cleared! Go to the next level?'],
  allClear:['三關都破了，太厲害了！','¡Superaste los tres niveles!','You cleared all three levels!'],
  tryAgain:['{n} 分以上就破關，再試一次吧！','Con {n} puntos o más superas el nivel. ¡Inténtalo otra vez!','Score {n} or more to clear the level. Try again!'],
- nextLv:['下一關','Siguiente nivel','Next level'],again:['再玩一次','Jugar otra vez','Play again'],menu:['主選單','Menú principal','Main menu'],
+ nextLv:['下一關','Siguiente nivel','Next level'],again:['再玩一次','Jugar otra vez','Play again'],share:['分享成績','Compartir resultado','Share my score'],shareCopied:['已複製，可以貼給朋友','Copiado, ¡pégalo a un amigo!','Copied, paste it to a friend!'],shareFail:['複製失敗','No se pudo copiar','Copy failed'],menu:['主選單','Menú principal','Main menu'],
  lvName:['第 {n} 關','Nivel {n}','Level {n}'],
  passed:['達標了，做得好！','¡Meta lograda, bien hecho!','Goal reached, well done!'],
  noQ:['這個範圍湊不出題目，請多選一些特徵或題型。','Con este rango no se pueden generar preguntas.','No questions can be made from this range.'],
@@ -452,10 +452,52 @@ function renderResult(redraw){screen='result';const sc=S.score,lv=S.lv,max=S.qs.
   <div class="passmsg">${msg}</div>
   <div id="clsUp">${CR()?CR().upHtml():''}</div>
   ${btn}<button class="big ${btn?'sec':''}" onclick="startRound(${lv})">${L('again')}</button>
+  ${sc>0?`<button class="big sec share" id="shareBtn" onclick="doShare()">${L('share')}</button>`:''}
   <button class="big sec" onclick="renderMenu()">${L('menu')}</button>`;
   if(!redraw){try{window.HGPlays&&HGPlays.end({score:sc});}catch(e){}}
   if(CR()&&!redraw)CR().onResult();}
 
+// ---- 分享成績（統一規則見 game-kit parts/share.js：結算畫面「再玩一次」之後、「主選單」之前；0 分不顯示）----
+/* SHARE-BEGIN（HGShare：來自 game-kit parts/share.js） */
+const HGShare = (() => {
+  async function copyText(s) {
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(s); return true; } } catch (e) {}
+    try {
+      const ta = document.createElement('textarea'); ta.value = s; ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+      document.body.appendChild(ta); ta.select();
+      const r = document.execCommand('copy'); ta.remove(); return !!r;
+    } catch (e) { return false; }
+  }
+  async function send({ title, text, url }) {
+    if (navigator.share) {
+      try { await navigator.share({ title, text, url }); return 'shared'; }
+      catch (e) { if (e && e.name === 'AbortError') return 'aborted'; }   // 其他錯誤改走複製
+    }
+    return (await copyText(text + '\n' + url)) ? 'copied' : 'failed';
+  }
+  return { copyText, send };
+})();
+/* SHARE-END */
+const SHARE_URL='https://wangchiapin.github.io/compara-y-adivina/?ref=share';   // 公開頁＋分享記號；不帶班級碼、範圍碼
+function shareMessage(){
+  const nick=String((CR()&&CR().nick&&CR().nick())||'').trim(),sc=S.score,name=zh('比比看');
+  if(SET.lang==='es')return '¡'+(nick?'Soy '+nick+' y saqué':'Saqué')+' '+sc+' puntos en '+name+' (Compara y Adivina)! ¿Puedes superarme?';
+  if(SET.lang==='en')return (nick?'I’m '+nick+' and I scored':'I scored')+' '+sc+' in '+name+' (Compara y Adivina)! Can you beat me?';
+  return zh((nick?'我是'+nick+'，':'我')+'在比比看拿到 '+sc+' 分！你能超過我嗎？');
+}
+let _shareBusy=false,_shareTimer=0;
+async function doShare(){
+  if(_shareBusy||!S)return;_shareBusy=true;
+  const btn=document.getElementById('shareBtn');
+  try{
+    const r=await HGShare.send({title:zh('比比看')+' · Compara y Adivina',text:shareMessage(),url:SHARE_URL});
+    if((r==='copied'||r==='failed')&&btn){
+      btn.innerHTML=L(r==='copied'?'shareCopied':'shareFail');
+      clearTimeout(_shareTimer);_shareTimer=setTimeout(()=>{if(btn.isConnected)btn.innerHTML=L('share');},2200);
+    }
+  }finally{_shareBusy=false;}
+}
 // ===== ⚙️ 設定視窗（字形／語言／拼音注音；比比看沒有語音，不放語速）=====
 function opt(label,on,click){return `<button class="opt ${on?'on':''}" onclick="${click}">${label}</button>`;}
 function openSet(){drawSet();document.getElementById('setov').classList.remove('hide');}
@@ -543,6 +585,19 @@ window.addEventListener('storage',e=>{
   }
   var TZ = tzName();
 
+  /* ref：這個訪客是從哪裡進來的記號（例如 ?ref=share＝朋友分享的連結）。
+     只收英數字、底線、連字號，最長 16 字，統一小寫；其他一律忽略（規則也限制 1～16 字串）。
+     網址有 ?ref= 就記下並暫存在這個分頁（sessionStorage，同分頁的 iframe 讀得到、分頁關掉就消失）；
+     沒有就讀暫存。所以「首頁收到記號、遊戲頁（iframe）才寫紀錄」也記得到。 */
+  function cleanRef(x) { x = String(x == null ? '' : x).trim().toLowerCase(); return /^[a-z0-9_-]{1,16}$/.test(x) ? x : ''; }
+  function refName() {
+    var r = '';
+    try { r = cleanRef(new URLSearchParams(location.search).get('ref')); } catch (e) {}
+    try { if (r) sessionStorage.setItem('hg.ref', r); else r = cleanRef(sessionStorage.getItem('hg.ref')); } catch (e) {}
+    return r;
+  }
+  var REF = refName();
+
   function gid() { try { return (HG.gameFn ? HG.gameFn() : GAME) || GAME; } catch (e) { return GAME; } } // taiwan-life 這類共用引擎的遊戲可改寫 HGPlays.gameFn
   function day() { // 以台灣時間（UTC+8）算「哪一天」，方便老師對帳
     var d = new Date(Date.now() + 8 * 3600e3);
@@ -583,6 +638,7 @@ window.addEventListener('storage',e=>{
         var id = d + '_' + g + '_' + L.uid;
         var v = { game: g, day: d, uid: L.uid, at: L.F.serverTimestamp() };
         if (TZ) v.tz = TZ;
+        if (REF) v.ref = REF;
         return L.F.setDoc(L.F.doc(L.db, 'visits', id), v)
           .then(function () { ls(key, d); });
       }).catch(function () {});
@@ -595,6 +651,7 @@ window.addEventListener('storage',e=>{
         var data = { game: gid(), level: mine.level, uid: L.uid, name: getName(name), day: day(),
                      startedAt: L.F.serverTimestamp(), done: false };
         if (TZ) data.tz = TZ;
+        if (REF) data.ref = REF;
         return L.F.addDoc(L.F.collection(L.db, 'plays'), data).then(function (ref) {
           mine.id = ref.id; if (mine.pendingEnd) HG._finish(mine, mine.pendingEnd);
         });

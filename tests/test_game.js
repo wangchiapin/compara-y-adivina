@@ -282,7 +282,7 @@ server.listen(0, 'localhost', async () => {
     ok(idx('score') < idx('comment') && idx('comment') < idx('passmsg') && idx('passmsg') < idx('big'), '順序：分數 → 評語 → 過關提示 → 按鈕', order);
     ok((await page.textContent('.comment')).includes('全對'), '全對：最高一級評語');
     const btns = await page.$$eval('.big', es => es.map(e => e.innerText.split('\n')[0]));
-    ok(btns.join() === '下一關,再玩一次,主選單', '過關：下一關、再玩一次、主選單', btns);
+    ok(btns.join() === '下一關,再玩一次,分享成績,主選單', '過關：下一關、再玩一次、分享成績、主選單', btns);
     await shot(page, 'f_result_full');
     const cm = await page.evaluate(() => [0, 30, 40, 55, 60, 79, 80, 99, 100].map(s => commentKey(s, 100)));
     ok(cm.join() === 'cm0,cm0,cm1,cm1,cm2,cm2,cm3,cm3,cm4', '五級評語分界：0–39／40–59／60–79／80–99／100', cm);
